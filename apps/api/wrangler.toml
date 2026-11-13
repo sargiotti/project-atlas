@@ -14,12 +14,12 @@ run_worker_first = ["/api/*"]
 [observability]
 enabled = true
 
-# Local dev uses miniflare. database_id is a placeholder; the user replaces it with the
-# real id after `wrangler d1 create atlas --jurisdiction eu` (ADR 0007). Never commit secrets.
+# Local dev uses miniflare (ignores database_id). database_id is the remote D1 created with
+# `wrangler d1 create atlas --jurisdiction eu` (ADR 0007); it is an identifier, not a secret.
 [[d1_databases]]
 binding = "DB"
 database_name = "atlas"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "89a8b90a-1b1f-427d-ac87-63a0fa6d6b2b"
 migrations_dir = "migrations"
 
 # --- Rate limiting switch -------------------------------------------------------------
