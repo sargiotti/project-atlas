@@ -4,13 +4,20 @@ compatibility_date = "2026-11-01"
 workers_dev = true
 
 # One Worker serves the SPA (static assets) and the API.
-# Only /api/* invokes the Worker code. Everything else (SPA shell, /e/:slug via
-# the SPA fallback, JS/CSS, /maps/*.svg) is served as static assets, which are free
-# and do not count towards the request cap.
+# Only /api/* and /e/* invoke the Worker code (ADR 0009: /e/{slug} gets per-event link-preview meta
+# injected into the shell). Everything else (Home, JS/CSS, /maps, /covers, /og) is served as static
+# assets, which are free and do not count towards the request cap. Keep this list exact: no "/*", no "/".
 [assets]
 directory = "../web/dist"
+binding = "ASSETS"
 not_found_handling = "single-page-application"
-run_worker_first = ["/api/*"]
+run_worker_first = ["/api/*", "/e/*"]
+
+# Single source of truth for the public origin. The Worker builds og:url / og:image from it, and the web
+# build (vite.config.ts) reads this same line to bake the absolute Home og:image. Bare https origin,
+# no trailing slash. Changing it later leaves already-shared links on the old address.
+[vars]
+PUBLIC_ORIGIN = "https://atlas.sargiotti67.workers.dev"
 
 # Privacy (GDPR): invocation logs (automatic per-request logs that can include IP and request.cf geo)
 # are OFF. Our own console.* logs still go to Workers Logs. Metrics stay on.

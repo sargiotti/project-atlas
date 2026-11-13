@@ -5,18 +5,22 @@ import { listEvents } from "../application/list-events";
 import { applyNearOverride, parseVisitorLocation } from "../domain/nearby";
 import { D1EventMapRepository } from "../adapters/d1-event-map-repository";
 import { D1EventListRepository } from "../adapters/d1-event-list-repository";
+import { etagMatches, etagOf } from "./etag";
+import { handleEventPage } from "./event-page";
+import { API_CSP, HTML_CSP } from "./security-headers";
 
 export interface Env {
   DB: D1Database;
+  /** Static assets (the SPA shell). Used by the /e/* HTML route. */
+  ASSETS: Fetcher;
+  /** Fixed public origin (wrangler vars) for absolute og:url / og:image URLs. Never taken from the request. */
+  PUBLIC_ORIGIN: string;
   /** Optional: remove the [[ratelimits]] block in wrangler.toml to switch limiting off. */
   RATE_LIMITER?: { limit(options: { key: string }): Promise<{ success: boolean }> };
 }
 
 type AppEnv = { Bindings: Env; Variables: { requestId: string } };
 type AppContext = Context<AppEnv>;
-
-const API_CSP =
-  "default-src 'self'; script-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'";
 
 const MESSAGES: Record<ErrorCode, string> = {
   invalid_slug: "Invalid event slug.",
@@ -37,18 +41,6 @@ function errorResponse(
     "Cache-Control": cacheControl,
     ...extraHeaders,
   });
-}
-
-async function etagOf(body: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(body));
-  const hex = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
-  return `W/"${hex.slice(0, 16)}"`;
-}
-
-function etagMatches(header: string | undefined, etag: string): boolean {
-  if (!header) return false;
-  const strip = (v: string) => v.trim().replace(/^W\//, "");
-  return header.split(",").some((candidate) => candidate.trim() === "*" || strip(candidate) === strip(etag));
 }
 
 /** 200 JSON with weak ETag and the given Cache-Control, or 304 when If-None-Match matches. */
@@ -74,7 +66,7 @@ export function createApp() {
     await next();
     c.res.headers.set("X-Content-Type-Options", "nosniff");
     c.res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-    c.res.headers.set("Content-Security-Policy", API_CSP);
+    c.res.headers.set("Content-Security-Policy", c.req.path.startsWith("/e/") ? HTML_CSP : API_CSP);
   });
 
   // Per-IP rate limit (60 req / 60 s, configured in wrangler.toml). Fails open if the
@@ -124,6 +116,11 @@ export function createApp() {
     }
     return cachedJson(c, body, "private, max-age=300");
   });
+
+  // Link previews: the SPA shell with per-event meta. No rate limit here (R5): crawler bursts share IPs
+  // and a Worker-side limiter would not save invocations; D1 is protected by slug validation and the
+  // isolate cache. HEAD is answered by Hono from this GET handler (same headers, no body).
+  app.get("/e/*", handleEventPage);
 
   app.notFound((c) => errorResponse(c, 404, "not_found", "no-store"));
 

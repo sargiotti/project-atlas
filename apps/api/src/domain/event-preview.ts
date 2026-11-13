@@ -1,0 +1,116 @@
+/**
+ * Link-preview text for an event (slice 04). Pure: no I/O, no framework. English only (crawlers send
+ * no language). Copy rules: design deliverable 05, section 6.
+ */
+
+export interface StoredEventPreview {
+  slug: string;
+  name: string;
+  startDate: string; // YYYY-MM-DD
+  endDate: string;
+  city: string;
+  country: string; // ISO 3166-1 alpha-2
+  /** `{slug}.{hash8}.jpg` as stored; re-validated before it becomes a URL. */
+  ogKey: string | null;
+}
+
+export interface EventPreview {
+  title: string;
+  description: string;
+  /** Path under the public origin, e.g. `/og/havnelobet.0123abcd.jpg`. Null: keep the brand card. */
+  imagePath: string | null;
+  imageAlt: string;
+}
+
+export const MAX_TITLE = 120;
+export const MAX_DESCRIPTION = 200;
+export const MAX_ALT = 200;
+
+/** Same shape the build writes and the contract expects (B10). */
+export const OG_KEY_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*\.[0-9a-f]{8}\.jpg$/;
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
+const EN_DASH = String.fromCharCode(0x2013);
+const MIDDLE_DOT = String.fromCharCode(0xb7);
+
+// Invisible and direction-changing characters never belong in a one-line preview: C0/C1 controls
+// (whitespace is handled separately), zero-width, bidi overrides and isolates, BOM. Also < and >:
+// the rewriter encodes " and & in attribute values but leaves < and > as they are, and no real event
+// name needs them, so they are dropped rather than left for sloppy parsers to trip over.
+const hex = (n: number) => "\\u{" + n.toString(16) + "}";
+const charClass = (ranges: ReadonlyArray<readonly [number, number]>) =>
+  new RegExp("[" + ranges.map(([a, b]) => hex(a) + "-" + hex(b)).join("") + "]", "gu");
+const STRIP = charClass([[0x00, 0x08], [0x0b, 0x0c], [0x0e, 0x1f], [0x7f, 0x9f], [0x200b, 0x200f], [0x202a, 0x202e], [0x2066, 0x2069], [0xfeff, 0xfeff], [0x3c, 0x3c], [0x3e, 0x3e]]);
+// JS \s already covers U+2028 and U+2029.
+const WHITESPACE = /\s+/g;
+
+/** Strips invisible/bidi characters, collapses all whitespace to single spaces, trims, caps by code point. */
+export function cleanText(input: string, max: number): string {
+  const cleaned = input.replace(STRIP, "").replace(WHITESPACE, " ").trim();
+  const points = Array.from(cleaned);
+  if (points.length <= max) return cleaned;
+  return points.slice(0, max - 1).join("").trimEnd() + String.fromCharCode(0x2026);
+}
+
+interface Ymd {
+  y: number;
+  m: number; // 1-12
+  d: number;
+}
+
+function parseYmd(iso: string): Ymd {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  const m = match ? Number(match[2]) : 0;
+  if (!match || m < 1 || m > 12) throw new Error("invalid event date");
+  return { y: Number(match[1]), m, d: Number(match[3]) };
+}
+
+/** "4 Dec 2026", "10–22 Nov 2026", "28 Nov – 2 Dec 2026", "30 Dec 2026 – 2 Jan 2027". */
+export function formatDateRange(startIso: string, endIso: string): string {
+  const s = parseYmd(startIso);
+  const e = parseYmd(endIso);
+  const mon = (x: Ymd) => MONTHS[x.m - 1]!;
+  if (s.y === e.y && s.m === e.m && s.d === e.d) return `${s.d} ${mon(s)} ${s.y}`;
+  if (s.y === e.y && s.m === e.m) return `${s.d}${EN_DASH}${e.d} ${mon(s)} ${s.y}`;
+  if (s.y === e.y) return `${s.d} ${mon(s)} ${EN_DASH} ${e.d} ${mon(e)} ${e.y}`;
+  return `${s.d} ${mon(s)} ${s.y} ${EN_DASH} ${e.d} ${mon(e)} ${e.y}`;
+}
+
+let regionNames: Intl.DisplayNames | null | undefined;
+
+/** English country name for an ISO code; falls back to the code itself. */
+export function countryName(code: string): string {
+  if (regionNames === undefined) {
+    try {
+      regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+    } catch {
+      regionNames = null;
+    }
+  }
+  try {
+    const name = regionNames?.of(code);
+    // ICU answers "Unknown Region" for well-formed but unassigned codes: keep the code instead.
+    return name && name !== code && !name.startsWith("Unknown") ? name : code;
+  } catch {
+    return code;
+  }
+}
+
+export function buildEventPreview(event: StoredEventPreview): EventPreview {
+  const title = cleanText(event.name, MAX_TITLE);
+  const place = `${event.city}, ${countryName(event.country)}`;
+  let when: string | null = null;
+  try {
+    when = formatDateRange(event.startDate, event.endDate);
+  } catch {
+    // Malformed stored dates: still give the event a preview, without the date part.
+  }
+  const description = cleanText(when ? `${when} ${MIDDLE_DOT} ${place}` : place, MAX_DESCRIPTION);
+  const hasImage = event.ogKey !== null && OG_KEY_REGEX.test(event.ogKey);
+  return {
+    title,
+    description,
+    imagePath: hasImage ? `/og/${event.ogKey}` : null,
+    imageAlt: cleanText(`Cover illustration for ${event.name}`, MAX_ALT),
+  };
+}
