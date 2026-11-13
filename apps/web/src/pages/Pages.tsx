@@ -4,18 +4,11 @@ import { LogoMark } from "../markers/Pixel";
 import { Link } from "../lib/router";
 import { useI18n } from "../i18n/I18nProvider";
 
-// Names are event content, shown as-is. This list only exists for the demo landing page.
-const DEMO_EVENTS = [
-  { slug: "nightfall-meadows", name: "Nightfall Meadows Festival 2026", lang: "en" },
-  { slug: "fiestas-la-alameda", name: "Fiestas del Barrio de la Alameda 2026", lang: "es" },
-  { slug: "havnelobet", name: "Havneløbet 2026", lang: "da" },
-];
-
 /** Page frame for pages that are not the map: brand header + language selector. */
-export function Shell({ children }: { children: ReactNode }) {
+export function Shell({ children, wide }: { children: ReactNode; wide?: boolean }) {
   const { t } = useI18n();
   return (
-    <div className="app" data-theme="auto">
+    <div className={`app${wide ? " wide" : ""}`} data-theme="auto">
       <header className="shell-header">
         <Link to="/" className="brand">
           <LogoMark size={32} />
@@ -25,27 +18,6 @@ export function Shell({ children }: { children: ReactNode }) {
       </header>
       <main className="shell-main">{children}</main>
     </div>
-  );
-}
-
-export function Landing() {
-  const { t } = useI18n();
-  return (
-    <Shell>
-      <h1 className="hero-title">{t("tagline")}</h1>
-      <p className="lead">{t("landingIntro")}</p>
-      <h2 className="section-title">{t("demoEvents")}</h2>
-      <ul className="demo-list">
-        {DEMO_EVENTS.map((e) => (
-          <li key={e.slug}>
-            <Link to={`/e/${e.slug}`} className="demo-link" lang={e.lang}>
-              <span>{e.name}</span>
-              <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </Shell>
   );
 }
 

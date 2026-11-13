@@ -5,10 +5,15 @@ export const DEFAULT_LANG: Lang = "es";
 export const LANG_NAMES: Record<Lang, string> = { es: "Español", en: "English", da: "Dansk" };
 
 const es = {
+  events: "Eventos",
+  ended: "Finalizado",
+  loadingEvents: "Cargando eventos…",
+  emptyTitle: "Todavía no hay eventos",
+  emptyText: "Cuando un evento publique su mapa, va a aparecer acá.",
+  errorTitle: "No pudimos cargar los eventos",
+  errorText: "Revisá tu conexión y probá de nuevo.",
   appName: "Atlas",
   tagline: "El mapa de tu evento, en tu bolsillo.",
-  landingIntro: "Abrí el mapa de un evento, tocá los puntos y encontrá todo sin perderte.",
-  demoEvents: "Eventos de demostración",
   language: "Idioma",
   loading: "Cargando el mapa…",
   map: "Mapa",
@@ -56,10 +61,15 @@ const es = {
 type Messages = Record<keyof typeof es, string>;
 
 const en: Messages = {
+  events: "Events",
+  ended: "Ended",
+  loadingEvents: "Loading events…",
+  emptyTitle: "No events yet",
+  emptyText: "When an event publishes its map, it will show up here.",
+  errorTitle: "We couldn't load the events",
+  errorText: "Check your connection and try again.",
   appName: "Atlas",
   tagline: "Your event map, in your pocket.",
-  landingIntro: "Open an event map, tap the points and find everything without getting lost.",
-  demoEvents: "Demo events",
   language: "Language",
   loading: "Loading the map…",
   map: "Map",
@@ -105,10 +115,15 @@ const en: Messages = {
 };
 
 const da: Messages = {
+  events: "Events",
+  ended: "Afsluttet",
+  loadingEvents: "Henter events…",
+  emptyTitle: "Ingen events endnu",
+  emptyText: "Når et event udgiver sit kort, dukker det op her.",
+  errorTitle: "Vi kunne ikke hente events",
+  errorText: "Tjek din forbindelse, og prøv igen.",
   appName: "Atlas",
   tagline: "Dit eventkort, i lommen.",
-  landingIntro: "Åbn et eventkort, tryk på punkterne og find alt uden at fare vild.",
-  demoEvents: "Demo-events",
   language: "Sprog",
   loading: "Henter kortet…",
   map: "Kort",
