@@ -114,7 +114,7 @@ describe("language", () => {
     open("/e/test-fest", "es");
     expect(await screen.findByRole("button", { name: "Lista" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Dansk" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: "Idioma" }), "da");
     expect(screen.getByRole("button", { name: "Liste" })).toBeInTheDocument();
     expect(document.documentElement.lang).toBe("da");
     expect(screen.getByRole("heading", { level: 1, name: "Test Fest" })).toBeInTheDocument();
