@@ -7,6 +7,15 @@ export const DEFAULT_LANG: Lang = "es";
 export const LANG_NAMES: Record<Lang, string> = { es: "Español", en: "English", da: "Dansk" };
 
 const es = {
+  searchLabel: "Buscar eventos",
+  searchPlaceholder: "Buscar eventos, ciudades, países",
+  searchClear: "Borrar búsqueda",
+  searchCount: "{n} de {total}",
+  searchFound: "{n} eventos encontrados",
+  searchFoundOne: "1 evento encontrado",
+  searchNone: "No se encontraron eventos",
+  noMatch: "Ningún evento coincide con",
+  noMatchHint: "Probá con una ciudad, un país u otro nombre.",
   events: "Eventos",
   ended: "Finalizado",
   loadingEvents: "Cargando eventos…",
@@ -62,6 +71,15 @@ const es = {
 type Messages = Record<keyof typeof es, string>;
 
 const en: Messages = {
+  searchLabel: "Search events",
+  searchPlaceholder: "Search events, cities, countries",
+  searchClear: "Clear search",
+  searchCount: "{n} of {total}",
+  searchFound: "{n} events found",
+  searchFoundOne: "1 event found",
+  searchNone: "No events found",
+  noMatch: "No events match",
+  noMatchHint: "Try a city, a country or another name.",
   events: "Events",
   ended: "Ended",
   loadingEvents: "Loading events…",
@@ -115,6 +133,15 @@ const en: Messages = {
 };
 
 const da: Messages = {
+  searchLabel: "Søg i events",
+  searchPlaceholder: "Søg efter events, byer, lande",
+  searchClear: "Ryd søgning",
+  searchCount: "{n} af {total}",
+  searchFound: "{n} events fundet",
+  searchFoundOne: "1 event fundet",
+  searchNone: "Ingen events fundet",
+  noMatch: "Ingen events matcher",
+  noMatchHint: "Prøv en by, et land eller et andet navn.",
   events: "Events",
   ended: "Afsluttet",
   loadingEvents: "Henter events…",
