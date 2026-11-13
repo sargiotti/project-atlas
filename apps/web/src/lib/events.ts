@@ -11,13 +11,14 @@ export function isEnded(e: Pick<EventSummary, "endDate">, today: string) {
 }
 
 /**
- * In progress first (earliest start first), then upcoming by start date ascending,
+ * Nearby events first, then the rest; inside each group: in progress first (earliest start first), then upcoming by start date ascending,
  * then ended, most recently ended first. Dates are ISO strings, so string comparison is date comparison.
  */
 export function sortEvents(events: EventSummary[], today: string): EventSummary[] {
   const group = (e: EventSummary) => (e.endDate < today ? 2 : e.startDate > today ? 1 : 0);
   const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
   return [...events].sort((a, b) => {
+    if (a.nearby !== b.nearby) return a.nearby ? -1 : 1;
     const ga = group(a);
     const gb = group(b);
     if (ga !== gb) return ga - gb;
