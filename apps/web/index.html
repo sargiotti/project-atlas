@@ -6,7 +6,31 @@
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#6F55C8" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <title>Atlas</title>
+    <!--
+      Link-preview meta (slice 04, ADR 0009). Values are the Home / brand defaults, also served as the
+      404 shell. For /e/{slug} the Worker rewrites the content of: title, meta description, og:url,
+      og:title, og:description, og:image, og:image:alt and twitter:title, twitter:description,
+      twitter:image, twitter:image:alt (the other tags are constant). Each of those selectors must match
+      exactly once, so do not remove or duplicate them. The two double-underscore tokens are replaced
+      at build time by vite.config.ts.
+    -->
+    <title>Atlas — Find YOUR way</title>
+    <meta name="description" content="Free interactive maps for festivals, races and fiestas. Find the stage, the food and the exits." />
+    <meta property="og:site_name" content="Atlas" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="__PUBLIC_ORIGIN__/" />
+    <meta property="og:title" content="Atlas — Find YOUR way" />
+    <meta property="og:description" content="Free interactive maps for festivals, races and fiestas. Find the stage, the food and the exits." />
+    <meta property="og:image" content="__BRAND_CARD_URL__" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Atlas logo and the tagline Find your way over a collage of illustrated event maps" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Atlas — Find YOUR way" />
+    <meta name="twitter:description" content="Free interactive maps for festivals, races and fiestas. Find the stage, the food and the exits." />
+    <meta name="twitter:image" content="__BRAND_CARD_URL__" />
+    <meta name="twitter:image:alt" content="Atlas logo and the tagline Find your way over a collage of illustrated event maps" />
   </head>
   <body>
     <div id="root"></div>
