@@ -14,6 +14,7 @@ const ev = (slug: string, startDate: string, endDate: string, extra: any = {}) =
   city: "Valencia",
   country: "ES",
   cover: null,
+  nearby: false,
   ...extra,
 });
 
