@@ -4,10 +4,15 @@
  *   npm run seed -- --assets-only    validate, copy SVGs, write seed.sql (no database; used before build)
  *   npm run seed -- --remote         same as --local but against the remote D1 (needs the user's
  *                                    own Cloudflare credentials; the user runs it or approves it)
- * Options: --dir <folder with *.points.json> (default: design/assets/demo-maps)
+ * Options:
+ *   --svg-only        seed every event with its SVG map (design/assets/demo-maps) as before
+ *   --dir <folder>    seed from this folder instead (repeatable; a later folder replaces earlier
+ *                     events with the same slug). Overrides the default below.
+ * Default: SVG maps from design/assets/demo-maps, with the AI maps (WebP) in
+ * design/assets/demo-maps-ai replacing the same-slug events (fiesta, festival).
  */
 import { spawnSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildSeedStatements, loadAllSeeds } from "./seed-lib.ts";
@@ -18,12 +23,14 @@ const repoRoot = resolve(apiDir, "../..");
 
 const args = process.argv.slice(2).filter((a) => a !== "--");
 const flag = (name: string) => args.includes(name);
-const dirIdx = args.indexOf("--dir");
-const seedDir = resolve(dirIdx >= 0 && args[dirIdx + 1] ? (args[dirIdx + 1] as string) : join(repoRoot, "design/assets/demo-maps"));
+const explicitDirs = args.flatMap((a, i) => (a === "--dir" && args[i + 1] ? [resolve(args[i + 1] as string)] : []));
+const svgDir = join(repoRoot, "design/assets/demo-maps");
+const aiDir = join(repoRoot, "design/assets/demo-maps-ai");
+const seedDirs = explicitDirs.length ? explicitDirs : flag("--svg-only") ? [svgDir] : [svgDir, aiDir];
 
 const target = flag("--remote") ? "--remote" : flag("--local") ? "--local" : null;
 if (!target && !flag("--assets-only")) {
-  console.error("Usage: seed --local | --remote | --assets-only [--dir <folder>]");
+  console.error("Usage: seed --local | --remote | --assets-only [--svg-only] [--dir <folder>]...");
   process.exit(2);
 }
 if (flag("--remote") && flag("--local")) {
@@ -32,14 +39,14 @@ if (flag("--remote") && flag("--local")) {
 }
 
 // 1-2. Load and strictly validate every seed file (fails fast).
-const seeds = loadAllSeeds(seedDir);
+const seeds = loadAllSeeds(seedDirs);
 
-// 3. Copy SVGs to apps/web/public/maps/{slug}.{hash8}.svg (gitignored, regenerated).
+// 3. Write validated images to apps/web/public/maps/{slug}.{hash8}.{svg|webp} (gitignored, regenerated).
 const mapsDir = join(repoRoot, "apps/web/public/maps");
 mkdirSync(mapsDir, { recursive: true });
-for (const f of readdirSync(mapsDir).filter((f) => f.endsWith(".svg"))) rmSync(join(mapsDir, f));
+for (const f of readdirSync(mapsDir).filter((f) => /\.(svg|webp)$/.test(f))) rmSync(join(mapsDir, f));
 for (const s of seeds) {
-  copyFileSync(resolve(dirname(s.source), s.seed.map.file), join(mapsDir, s.imageKey));
+  writeFileSync(join(mapsDir, s.imageKey), s.bytes);
 }
 
 // 4. Idempotent seed.sql.

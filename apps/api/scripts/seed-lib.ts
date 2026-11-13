@@ -10,6 +10,7 @@ import {
   slugSchema,
 } from "@atlas/contract";
 import { findSvgViolations, readViewBox } from "./svg-safety.ts";
+import { inspectWebp } from "./webp-safety.ts";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 // No control characters (incl. NUL) in any seeded text.
@@ -40,7 +41,7 @@ export const seedFileSchema = z
       mapTheme: mapThemeSchema,
     }),
     map: z.strictObject({
-      file: z.string().regex(/^[A-Za-z0-9._-]+\.svg$/),
+      file: z.string().regex(/^[A-Za-z0-9._-]+\.(svg|webp)$/),
       width: z.number().int().positive(),
       height: z.number().int().positive(),
     }),
@@ -66,9 +67,11 @@ export type SeedFile = z.infer<typeof seedFileSchema>;
 export interface LoadedSeed {
   source: string;
   seed: SeedFile;
-  svg: Buffer;
+  format: "svg" | "webp";
+  /** Validated image bytes to publish (WebP has EXIF/XMP stripped). */
+  bytes: Buffer;
   hash8: string;
-  imageKey: string; // `{slug}.{hash8}.svg`
+  imageKey: string; // `{slug}.{hash8}.{svg|webp}`
 }
 
 export function loadSeed(jsonPath: string): LoadedSeed {
@@ -84,23 +87,38 @@ export function loadSeed(jsonPath: string): LoadedSeed {
   const svgPath = resolve(folder, seed.map.file);
   if (!svgPath.startsWith(folder + sep)) throw new Error(`${jsonAbs}: map.file escapes the seed folder`);
 
-  const svg = readFileSync(svgPath);
-  const svgText = svg.toString("utf8");
-  const violations = findSvgViolations(svgText);
-  if (violations.length) throw new Error(`${svgPath}: unsafe SVG: ${violations.join("; ")}`);
-  const box = readViewBox(svgText);
-  if (!box) throw new Error(`${svgPath}: missing or unsupported viewBox (expected "0 0 W H")`);
-  if (box.width !== seed.map.width || box.height !== seed.map.height) {
-    throw new Error(
-      `${svgPath}: viewBox ${box.width}x${box.height} does not match map ${seed.map.width}x${seed.map.height}`,
-    );
+  const format = seed.map.file.endsWith(".webp") ? "webp" : "svg";
+  const raw = readFileSync(svgPath);
+  let bytes: Buffer = raw;
+  if (format === "svg") {
+    const svgText = raw.toString("utf8");
+    const violations = findSvgViolations(svgText);
+    if (violations.length) throw new Error(`${svgPath}: unsafe SVG: ${violations.join("; ")}`);
+    const box = readViewBox(svgText);
+    if (!box) throw new Error(`${svgPath}: missing or unsupported viewBox (expected "0 0 W H")`);
+    if (box.width !== seed.map.width || box.height !== seed.map.height) {
+      throw new Error(
+        `${svgPath}: viewBox ${box.width}x${box.height} does not match map ${seed.map.width}x${seed.map.height}`,
+      );
+    }
+  } else {
+    let info;
+    try {
+      info = inspectWebp(raw);
+    } catch (e) {
+      throw new Error(`${svgPath}: unsafe WebP: ${(e as Error).message}`);
+    }
+    if (info.width !== seed.map.width || info.height !== seed.map.height) {
+      throw new Error(`${svgPath}: WebP is ${info.width}x${info.height}, does not match map ${seed.map.width}x${seed.map.height}`);
+    }
+    bytes = info.cleaned;
   }
 
-  const hash8 = createHash("sha256").update(svg).digest("hex").slice(0, 8);
-  return { source: jsonAbs, seed, svg, hash8, imageKey: `${seed.event.slug}.${hash8}.svg` };
+  const hash8 = createHash("sha256").update(bytes).digest("hex").slice(0, 8);
+  return { source: jsonAbs, seed, format, bytes, hash8, imageKey: `${seed.event.slug}.${hash8}.${format}` };
 }
 
-export function loadAllSeeds(dir: string): LoadedSeed[] {
+function loadDir(dir: string): LoadedSeed[] {
   const files = readdirSync(dir)
     .filter((f) => f.endsWith(".points.json"))
     .sort();
@@ -114,7 +132,20 @@ export function loadAllSeeds(dir: string): LoadedSeed[] {
   return loaded;
 }
 
-/** SQL string literal. Inputs are already validated; quotes are doubled for safety. */
+/** Loads one or more seed folders. A slug seeded by a later folder replaces the earlier one. */
+export function loadAllSeeds(dirs: string | string[]): LoadedSeed[] {
+  const bySlug = new Map<string, LoadedSeed>();
+  for (const dir of Array.isArray(dirs) ? dirs : [dirs]) {
+    for (const l of loadDir(dir)) bySlug.set(l.seed.event.slug, l);
+  }
+  return [...bySlug.values()].sort((a, b) => a.seed.event.slug.localeCompare(b.seed.event.slug));
+}
+
+/**
+ * SQL string literal. SEED-ONLY (N3): operator-run, from reviewed files. Never reuse this string
+ * building for HTTP writes; request-driven writes must use bound parameters.
+ * Inputs are already validated; quotes are doubled for safety.
+ */
 const q = (s: string) => `'${s.replaceAll("'", "''")}'`;
 const NOW = "(strftime('%s','now') * 1000)";
 
@@ -124,13 +155,13 @@ const NOW = "(strftime('%s','now') * 1000)";
  */
 export function buildSeedStatements(seeds: LoadedSeed[]): string[] {
   const out: string[] = [];
-  for (const { seed, imageKey } of seeds) {
+  for (const { seed, imageKey, format } of seeds) {
     const { slug } = seed.event;
     const eventId = `evt_${slug}`;
     const mapId = `map_${slug}_1`;
     out.push(
       `INSERT INTO events (id, slug, name, start_date, end_date, language, created_at, updated_at) VALUES (${q(eventId)}, ${q(slug)}, ${q(seed.event.name)}, ${q(seed.event.dates.start)}, ${q(seed.event.dates.end)}, ${q(seed.event.language)}, ${NOW}, ${NOW}) ON CONFLICT(slug) DO UPDATE SET name = excluded.name, start_date = excluded.start_date, end_date = excluded.end_date, language = excluded.language, updated_at = ${NOW}`,
-      `INSERT INTO event_maps (id, event_id, position, width, height, theme, image_key, image_format, created_at, updated_at) VALUES (${q(mapId)}, ${q(eventId)}, 1, ${seed.map.width}, ${seed.map.height}, ${q(seed.event.mapTheme)}, ${q(imageKey)}, 'svg', ${NOW}, ${NOW}) ON CONFLICT(id) DO UPDATE SET width = excluded.width, height = excluded.height, theme = excluded.theme, image_key = excluded.image_key, image_format = excluded.image_format, updated_at = ${NOW}`,
+      `INSERT INTO event_maps (id, event_id, position, width, height, theme, image_key, image_format, created_at, updated_at) VALUES (${q(mapId)}, ${q(eventId)}, 1, ${seed.map.width}, ${seed.map.height}, ${q(seed.event.mapTheme)}, ${q(imageKey)}, ${q(format)}, ${NOW}, ${NOW}) ON CONFLICT(id) DO UPDATE SET width = excluded.width, height = excluded.height, theme = excluded.theme, image_key = excluded.image_key, image_format = excluded.image_format, updated_at = ${NOW}`,
       `DELETE FROM points WHERE map_id = ${q(mapId)}`,
     );
     for (const p of seed.points) {
