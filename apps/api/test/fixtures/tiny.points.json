@@ -1,0 +1,9 @@
+{
+  "event": { "slug": "tiny-fest", "name": "Tiny Fest", "dates": { "start": "2026-07-10", "end": "2026-07-12" }, "language": "en", "mapTheme": "dark" },
+  "map": { "file": "tiny.svg", "width": 200, "height": 100 },
+  "points": [
+    { "id": "wc", "name": "Toilets", "category": "toilets", "description": "Near the gate. It's free.", "x": 0.1, "y": 0.9 },
+    { "id": "stage", "name": "Main Stage", "category": "stage", "description": "Headliners from 20:00.", "x": 0.5, "y": 0.3 },
+    { "id": "burgers", "name": "Burger Bus", "category": "food", "description": "", "x": 0.75, "y": 0.6 }
+  ]
+}
