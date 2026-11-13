@@ -1,6 +1,8 @@
 // All UI strings live here (ADR 0004). Event content (names, descriptions) is never translated.
 export const LANGS = ["es", "en", "da"] as const;
 export type Lang = (typeof LANGS)[number];
+// Brand line: intentionally not translated, shown in English in every UI language.
+export const BRAND_TAGLINE = "Find your way";
 export const DEFAULT_LANG: Lang = "es";
 export const LANG_NAMES: Record<Lang, string> = { es: "Español", en: "English", da: "Dansk" };
 
@@ -13,7 +15,6 @@ const es = {
   errorTitle: "No pudimos cargar los eventos",
   errorText: "Revisá tu conexión y probá de nuevo.",
   appName: "Atlas",
-  tagline: "El mapa de tu evento, en tu bolsillo.",
   language: "Idioma",
   loading: "Cargando el mapa…",
   map: "Mapa",
@@ -69,7 +70,6 @@ const en: Messages = {
   errorTitle: "We couldn't load the events",
   errorText: "Check your connection and try again.",
   appName: "Atlas",
-  tagline: "Your event map, in your pocket.",
   language: "Language",
   loading: "Loading the map…",
   map: "Map",
@@ -123,7 +123,6 @@ const da: Messages = {
   errorTitle: "Vi kunne ikke hente events",
   errorText: "Tjek din forbindelse, og prøv igen.",
   appName: "Atlas",
-  tagline: "Dit eventkort, i lommen.",
   language: "Sprog",
   loading: "Henter kortet…",
   map: "Kort",

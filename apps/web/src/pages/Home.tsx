@@ -4,6 +4,7 @@ import { fetchEvents } from "../api/events";
 import { countryName, formatEventDates, isEnded, localToday, sortEvents } from "../lib/events";
 import { Link } from "../lib/router";
 import { useI18n } from "../i18n/I18nProvider";
+import { BRAND_TAGLINE } from "../i18n/messages";
 import { LogoMark } from "../markers/Pixel";
 import { Shell } from "./Pages";
 
@@ -62,7 +63,7 @@ function Skeleton() {
 }
 
 export default function Home() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [state, setState] = useState<State>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
 
@@ -86,7 +87,7 @@ export default function Home() {
 
   return (
     <Shell wide>
-      <h1 className="h-tagline">{t("tagline")}</h1>
+      <h1 className="h-tagline" lang={lang === "en" ? undefined : "en"}>{BRAND_TAGLINE}</h1>
       <h2 className="section-title">{t("events")}</h2>
       {state.kind === "loading" && (
         <>
