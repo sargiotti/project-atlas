@@ -96,7 +96,9 @@ describe("home", () => {
     expect(img).toHaveAttribute("alt", "");
     expect(img).toHaveAttribute("width", "960");
 
-    expect(within(links[1]).getByText("Ended")).toBeInTheDocument();
+    // Screen readers get the name first and the Ended state last; the visual badge is aria-hidden.
+    expect(within(links[1]).getAllByText("Ended").filter((el) => !el.closest("[aria-hidden]"))).toHaveLength(1);
+    expect(links[1].querySelector(".ecard-body")!.lastElementChild).toHaveClass("sr-only");
     expect(within(links[1]).getByText("Galway, Ireland")).toBeInTheDocument();
   });
 

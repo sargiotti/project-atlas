@@ -31,12 +31,13 @@ function EventCard({ event, index, today }: { event: EventSummary; index: number
           ) : (
             <LogoMark size={56} />
           )}
-          {ended && <span className="ended-badge">{t("ended")}</span>}
+          {ended && <span className="ended-badge" aria-hidden="true">{t("ended")}</span>}
         </div>
         <div className="ecard-body">
           <h3 className="ecard-name">{event.name}</h3>
           <p className="meta">{formatEventDates(event.startDate, event.endDate, lang)}</p>
           <p className="meta">{`${event.city}, ${countryName(event.country, lang)}`}</p>
+          {ended && <span className="sr-only">{t("ended")}</span>}
         </div>
       </Link>
     </li>
