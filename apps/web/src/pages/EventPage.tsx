@@ -107,16 +107,18 @@ function EventView({ bundle, imageUrl }: { bundle: MapBundle; imageUrl: string }
         </button>
       </header>
 
-      <div className="view-switch" role="group" aria-label={t("viewSwitch")}>
-        <button type="button" className={view === "map" ? "on" : ""} aria-pressed={view === "map"} onClick={() => setView("map")}>
-          {t("map")}
-        </button>
-        <button type="button" className={view === "list" ? "on" : ""} aria-pressed={view === "list"} onClick={() => setView("list")}>
-          {t("list")}
-        </button>
+      {/* On phones the switch and the sheet stack in this dock, so the switch rides above the sheet. */}
+      <div className="bottom-dock">
+        <div className="view-switch" role="group" aria-label={t("viewSwitch")}>
+          <button type="button" className={view === "map" ? "on" : ""} aria-pressed={view === "map"} onClick={() => setView("map")}>
+            {t("map")}
+          </button>
+          <button type="button" className={view === "list" ? "on" : ""} aria-pressed={view === "list"} onClick={() => setView("list")}>
+            {t("list")}
+          </button>
+        </div>
+        {selected && view === "map" && <PointSheet point={selected} onClose={() => setSelectedId(null)} />}
       </div>
-
-      {selected && view === "map" && <PointSheet point={selected} onClose={() => setSelectedId(null)} />}
       {shareOpen && <ShareDialog slug={event.slug} eventName={event.name} onClose={() => setShareOpen(false)} />}
     </div>
   );

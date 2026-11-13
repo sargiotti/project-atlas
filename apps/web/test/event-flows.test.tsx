@@ -53,6 +53,21 @@ describe("map view", () => {
     expect(screen.getByRole("button", { name: "Taco Truck, Food" })).toHaveAttribute("aria-pressed", "true");
   });
 
+  it("the Map/List switch stays usable while a sheet is open: List hides the sheet, Map brings it back", async () => {
+    mockFetch(() => json(bundle));
+    const user = userEvent.setup();
+    open();
+    await user.click(await screen.findByRole("button", { name: "Main Stage, Stage" }));
+    expect(screen.getByRole("dialog", { name: "Main Stage" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "List" }));
+    expect(screen.queryByRole("dialog", { name: "Main Stage" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "List" })).toHaveAttribute("aria-pressed", "true");
+
+    await user.click(screen.getByRole("button", { name: "Map" }));
+    expect(screen.getByRole("dialog", { name: "Main Stage" })).toBeInTheDocument();
+  });
+
   it("the share dialog shows a link built from the origin and the slug, plus a QR code", async () => {
     mockFetch(() => json(bundle));
     const user = userEvent.setup();

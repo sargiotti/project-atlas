@@ -207,6 +207,19 @@ button, input { font: inherit; color: inherit; }
 .sheet-title { font-size: 1.4rem; line-height: 1.2; margin: 10px 0 6px; overflow-wrap: anywhere; }
 .sheet-desc { color: var(--ink-2); font-size: 1rem; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
 
+/* bottom dock: phones stack [Map/List switch, sheet] so the switch stays above an open sheet */
+.bottom-dock { display: contents; }
+@media (max-width: 767.98px) {
+  .bottom-dock {
+    display: flex; flex-direction: column; align-items: center; position: absolute; z-index: 30; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+  }
+  .bottom-dock > * { pointer-events: auto; }
+  .bottom-dock .view-switch { position: static; transform: none; margin-bottom: calc(22px + env(safe-area-inset-bottom)); }
+  .bottom-dock .view-switch:has(+ .sheet) { margin-bottom: 12px; }
+  .bottom-dock .sheet { position: relative; width: 100%; }
+}
+
 /* list */
 .list-pane { overflow-y: auto; background: var(--surface-2); padding: 82px 12px 104px; padding-top: calc(82px + env(safe-area-inset-top)); }
 .point-list { max-width: 720px; margin: 0 auto; }
