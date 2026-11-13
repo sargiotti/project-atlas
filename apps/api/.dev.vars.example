@@ -1,0 +1,1 @@
+# Slice 01 needs no secrets. Copy to .dev.vars (gitignored) if a later slice adds some.

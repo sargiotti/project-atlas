@@ -1,0 +1,34 @@
+name = "atlas"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+
+# One Worker serves the SPA (static assets) and the API.
+# Only /api/* invokes the Worker code. Everything else (SPA shell, /e/:slug via
+# the SPA fallback, JS/CSS, /maps/*.svg) is served as static assets, which are free
+# and do not count towards the request cap.
+[assets]
+directory = "../web/dist"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+[observability]
+enabled = true
+
+# Local dev uses miniflare. database_id is a placeholder; the user replaces it with the
+# real id after `wrangler d1 create atlas --jurisdiction eu` (ADR 0007). Never commit secrets.
+[[d1_databases]]
+binding = "DB"
+database_name = "atlas"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+# --- Rate limiting switch -------------------------------------------------------------
+# Workers Rate Limiting binding for /api/*. The code skips limiting when the binding is
+# absent, so to switch it OFF simply delete or comment out this block.
+# Limits are approximate and per Cloudflare location (see docs). 60 requests / 60 s per IP.
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "1001"
+  [ratelimits.simple]
+  limit = 60
+  period = 60

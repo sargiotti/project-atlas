@@ -1,0 +1,19 @@
+{
+  "name": "@atlas/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "db:migrate": "wrangler d1 migrations apply DB",
+    "seed": "tsx scripts/seed.ts",
+    "check:svg": "tsx scripts/check-svg.ts",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@atlas/contract": "*",
+    "hono": "^4.13.18",
+    "zod": "^4.6.0"
+  }
+}
