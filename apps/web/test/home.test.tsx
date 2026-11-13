@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { I18nProvider } from "../src/i18n/I18nProvider";
 import { Routes } from "../src/App";
@@ -14,6 +14,7 @@ const ev = (slug: string, startDate: string, endDate: string, extra: any = {}) =
   city: "Valencia",
   country: "ES",
   cover: null,
+  nearby: false,
   ...extra,
 });
 
@@ -50,10 +51,36 @@ describe("sortEvents", () => {
   });
 });
 
-function openHome(handler: () => Response | Promise<Response>, lang: "en" | "es" | "da" = "en") {
+describe("sortEvents with nearby", () => {
+  it("puts nearby first, keeping the date-state order inside each group", () => {
+    const list = [
+      ev("far-running", "2026-11-10", "2026-11-20"),
+      ev("near-ended", "2026-01-01", "2026-01-03", { nearby: true }),
+      ev("far-soon", "2026-11-14", "2026-11-15"),
+      ev("near-later", "2026-12-20", "2026-12-22", { nearby: true }),
+      ev("near-running", "2026-11-12", "2026-11-14", { nearby: true }),
+      ev("near-soon", "2026-11-15", "2026-11-16", { nearby: true }),
+    ];
+    expect(sortEvents(list, TODAY).map((e) => e.slug)).toEqual([
+      "near-running",
+      "near-soon",
+      "near-later",
+      "near-ended",
+      "far-running",
+      "far-soon",
+    ]);
+  });
+
+  it("with every nearby false, equals the plain date-state order", () => {
+    const list = [ev("old", "2026-01-01", "2026-01-03"), ev("soon", "2026-11-14", "2026-11-15"), ev("running", "2026-11-10", "2026-11-20")];
+    expect(sortEvents(list, TODAY).map((e) => e.slug)).toEqual(["running", "soon", "old"]);
+  });
+});
+
+function openHome(handler: () => Response | Promise<Response>, lang: "en" | "es" | "da" = "en", path = "/") {
   const fn = vi.fn(async () => handler());
   vi.stubGlobal("fetch", fn);
-  goTo("/");
+  goTo(path);
   render(
     <I18nProvider initial={lang}>
       <Routes />
@@ -139,5 +166,22 @@ describe("home", () => {
   it("shows the error state on a 500", async () => {
     openHome(() => json(errorBody("internal_error"), 500));
     expect(await screen.findByRole("button", { name: "Try again" })).toBeInTheDocument();
+  });
+
+  it("forwards a valid ?near= uppercased, and never forwards invalid values", async () => {
+    const urls = async (path: string) => {
+      const fn = openHome(() => json([]), "en", path);
+      await screen.findByText("No events yet");
+      return fn.mock.calls.map((c: any) => String(c[0]));
+    };
+    expect(await urls("/?near=es")).toEqual(["/api/v1/events?near=ES"]);
+    cleanup();
+    expect(await urls("/?near=none")).toEqual(["/api/v1/events?near=NONE"]);
+    cleanup();
+    expect(await urls("/?near=%3Cscript%3E")).toEqual(["/api/v1/events"]);
+    cleanup();
+    expect(await urls("/?near=ESP")).toEqual(["/api/v1/events"]);
+    cleanup();
+    expect(await urls("/")).toEqual(["/api/v1/events"]);
   });
 });

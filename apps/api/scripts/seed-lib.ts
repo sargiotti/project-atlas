@@ -12,6 +12,7 @@ import {
 import { findSvgViolations, readViewBox } from "./svg-safety.ts";
 import { COVER_LIMITS, MAP_LIMITS, inspectWebp } from "./webp-safety.ts";
 
+const round2 = (n: number) => Math.round(n * 100) / 100;
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 // No control characters (incl. NUL) in any seeded text.
 const text = (min: number, max: number) =>
@@ -41,6 +42,9 @@ export const seedFileSchema = z
       city: text(1, 80),
       /** ISO 3166-1 alpha-2. */
       country: z.string().regex(/^[A-Z]{2}$/),
+      /** City-level coordinates (both or neither), rounded to 2 decimals. Domain only, never public. */
+      latitude: z.number().finite().min(-90).max(90).transform(round2).optional(),
+      longitude: z.number().finite().min(-180).max(180).transform(round2).optional(),
       /**
        * Declared dims of the cover master. The file lives in the covers folder as `{slug}.webp`.
        * When the file is not there yet the event is seeded with `cover: null`.
@@ -57,6 +61,9 @@ export const seedFileSchema = z
     points: z.array(seedPointSchema).min(1).max(MAX_POINTS_PER_MAP),
   })
   .superRefine((seed, ctx) => {
+    if ((seed.event.latitude === undefined) !== (seed.event.longitude === undefined)) {
+      ctx.addIssue({ code: "custom", message: "latitude and longitude must be given together" });
+    }
     if (seed.event.dates.end < seed.event.dates.start) {
       ctx.addIssue({ code: "custom", message: "dates.end must be >= dates.start" });
     }
@@ -196,6 +203,8 @@ export function loadAllSeeds(dirs: string | string[], coversDir?: string): Loade
  * Inputs are already validated; quotes are doubled for safety.
  */
 const q = (s: string) => `'${s.replaceAll("'", "''")}'`;
+/** Validated, finite, range-checked numbers only (see seedFileSchema); fixed 2 decimals, never exponent form. */
+const coord = (n: number | undefined) => (n === undefined ? "NULL" : n.toFixed(2));
 const NOW = "(strftime('%s','now') * 1000)";
 
 /**
@@ -209,7 +218,7 @@ export function buildSeedStatements(seeds: LoadedSeed[]): string[] {
     const eventId = `evt_${slug}`;
     const mapId = `map_${slug}_1`;
     out.push(
-      `INSERT INTO events (id, slug, name, start_date, end_date, city, country, cover_key, cover_width, cover_height, language, created_at, updated_at) VALUES (${q(eventId)}, ${q(slug)}, ${q(seed.event.name)}, ${q(seed.event.dates.start)}, ${q(seed.event.dates.end)}, ${q(seed.event.city)}, ${q(seed.event.country)}, ${cover ? q(cover.key) : "NULL"}, ${cover ? cover.width : "NULL"}, ${cover ? cover.height : "NULL"}, ${q(seed.event.language)}, ${NOW}, ${NOW}) ON CONFLICT(slug) DO UPDATE SET name = excluded.name, start_date = excluded.start_date, end_date = excluded.end_date, city = excluded.city, country = excluded.country, cover_key = excluded.cover_key, cover_width = excluded.cover_width, cover_height = excluded.cover_height, language = excluded.language, updated_at = ${NOW}`,
+      `INSERT INTO events (id, slug, name, start_date, end_date, city, country, latitude, longitude, cover_key, cover_width, cover_height, language, created_at, updated_at) VALUES (${q(eventId)}, ${q(slug)}, ${q(seed.event.name)}, ${q(seed.event.dates.start)}, ${q(seed.event.dates.end)}, ${q(seed.event.city)}, ${q(seed.event.country)}, ${coord(seed.event.latitude)}, ${coord(seed.event.longitude)}, ${cover ? q(cover.key) : "NULL"}, ${cover ? cover.width : "NULL"}, ${cover ? cover.height : "NULL"}, ${q(seed.event.language)}, ${NOW}, ${NOW}) ON CONFLICT(slug) DO UPDATE SET name = excluded.name, start_date = excluded.start_date, end_date = excluded.end_date, city = excluded.city, country = excluded.country, latitude = excluded.latitude, longitude = excluded.longitude, cover_key = excluded.cover_key, cover_width = excluded.cover_width, cover_height = excluded.cover_height, language = excluded.language, updated_at = ${NOW}`,
       `INSERT INTO event_maps (id, event_id, position, width, height, theme, image_key, image_format, created_at, updated_at) VALUES (${q(mapId)}, ${q(eventId)}, 1, ${seed.map.width}, ${seed.map.height}, ${q(seed.event.mapTheme)}, ${q(imageKey)}, ${q(format)}, ${NOW}, ${NOW}) ON CONFLICT(id) DO UPDATE SET width = excluded.width, height = excluded.height, theme = excluded.theme, image_key = excluded.image_key, image_format = excluded.image_format, updated_at = ${NOW}`,
       `DELETE FROM points WHERE map_id = ${q(mapId)}`,
     );

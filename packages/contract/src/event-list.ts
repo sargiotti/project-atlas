@@ -14,8 +14,14 @@ export const coverImageSchema = z.object({
 });
 export type CoverImage = z.infer<typeof coverImageSchema>;
 
-/** Public summary of an event for the home page cards. Unknown keys are stripped. */
-export const eventSummarySchema = z.object({
+/**
+ * `?near=` override for /api/v1/events (slice 03): `none` or an ISO 3166-1 alpha-2 code.
+ * Applied after uppercasing the value. Anything else is ignored by the API.
+ */
+export const NEAR_OVERRIDE_REGEX = /^(NONE|[A-Z]{2})$/;
+
+/** Location-free part of an event summary (what the API caches and shares between visitors). */
+export const eventSummaryBaseSchema = z.object({
   slug: slugSchema,
   name: z.string().min(1).max(120),
   startDate: isoDate,
@@ -25,6 +31,13 @@ export const eventSummarySchema = z.object({
   /** ISO 3166-1 alpha-2. Show the localized name via Intl.DisplayNames. */
   country: z.string().regex(/^[A-Z]{2}$/),
   cover: coverImageSchema.nullable(),
+});
+export type EventSummaryBase = z.infer<typeof eventSummaryBaseSchema>;
+
+/** Public summary of an event for the home page cards. Unknown keys are stripped. */
+export const eventSummarySchema = eventSummaryBaseSchema.extend({
+  /** True when the event is near the visitor (coarse, server-side). Never reveals where the visitor is. */
+  nearby: z.boolean(),
 });
 export type EventSummary = z.infer<typeof eventSummarySchema>;
 

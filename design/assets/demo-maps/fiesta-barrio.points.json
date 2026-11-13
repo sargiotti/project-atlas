@@ -7,6 +7,8 @@
       "end": "2026-12-07"
     },
     "city": "Valencia",
+    "latitude": 39.47,
+    "longitude": -0.38,
     "country": "ES",
     "cover": {
       "width": 960,
