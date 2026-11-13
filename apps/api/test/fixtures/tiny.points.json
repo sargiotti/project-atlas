@@ -1,5 +1,5 @@
 {
-  "event": { "slug": "tiny-fest", "name": "Tiny Fest", "dates": { "start": "2026-07-10", "end": "2026-07-12" }, "language": "en", "mapTheme": "dark" },
+  "event": { "slug": "tiny-fest", "name": "Tiny Fest", "dates": { "start": "2026-07-10", "end": "2026-07-12" }, "city": "Testville", "country": "IE", "language": "en", "mapTheme": "dark" },
   "map": { "file": "tiny.svg", "width": 200, "height": 100 },
   "points": [
     { "id": "wc", "name": "Toilets", "category": "toilets", "description": "Near the gate. It's free.", "x": 0.1, "y": 0.9 },

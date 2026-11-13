@@ -3,8 +3,14 @@
     "slug": "havnelobet",
     "name": "Havneløbet 2026",
     "dates": {
-      "start": "2026-09-20",
-      "end": "2026-09-20"
+      "start": "2026-11-10",
+      "end": "2026-11-22"
+    },
+    "city": "København",
+    "country": "DK",
+    "cover": {
+      "width": 960,
+      "height": 640
     },
     "language": "da",
     "mapTheme": "light"

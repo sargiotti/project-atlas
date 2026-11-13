@@ -39,7 +39,8 @@ if (flag("--remote") && flag("--local")) {
 }
 
 // 1-2. Load and strictly validate every seed file (fails fast).
-const seeds = loadAllSeeds(seedDirs);
+const coversSrc = join(repoRoot, "design/assets/event-covers");
+const seeds = loadAllSeeds(seedDirs, coversSrc);
 
 // 3. Write validated images to apps/web/public/maps/{slug}.{hash8}.{svg|webp} (gitignored, regenerated).
 const mapsDir = join(repoRoot, "apps/web/public/maps");
@@ -49,13 +50,21 @@ for (const s of seeds) {
   writeFileSync(join(mapsDir, s.imageKey), s.bytes);
 }
 
+// 3b. Covers to apps/web/public/covers/{slug}.{hash8}.webp (gitignored, regenerated).
+const coversOut = join(repoRoot, "apps/web/public/covers");
+mkdirSync(coversOut, { recursive: true });
+for (const f of readdirSync(coversOut).filter((f) => f.endsWith(".webp"))) rmSync(join(coversOut, f));
+for (const s of seeds) {
+  if (s.cover) writeFileSync(join(coversOut, s.cover.key), s.cover.bytes);
+}
+
 // 4. Idempotent seed.sql.
 const seedOut = join(apiDir, ".seed");
 mkdirSync(seedOut, { recursive: true });
 const sqlPath = join(seedOut, "seed.sql");
 writeFileSync(sqlPath, buildSeedStatements(seeds).join(";\n") + ";\n");
 console.log(`Seeded ${seeds.length} event(s): ${seeds.map((s) => s.seed.event.slug).join(", ")}`);
-console.log(`Wrote ${sqlPath} and ${seeds.length} map(s) to ${mapsDir}`);
+console.log(`Wrote ${sqlPath} ${seeds.length} map(s) to ${mapsDir} and ${seeds.filter((s) => s.cover).length} cover(s) to ${coversOut}`);
 
 // 5. wrangler d1 execute.
 if (target) {

@@ -1,7 +1,9 @@
 import { Hono, type Context } from "hono";
 import { slugSchema, type ErrorCode } from "@atlas/contract";
 import { getMapBundle } from "../application/get-map-bundle";
+import { listEvents } from "../application/list-events";
 import { D1EventMapRepository } from "../adapters/d1-event-map-repository";
+import { D1EventListRepository } from "../adapters/d1-event-list-repository";
 
 export interface Env {
   DB: D1Database;
@@ -48,6 +50,19 @@ function etagMatches(header: string | undefined, etag: string): boolean {
   return header.split(",").some((candidate) => candidate.trim() === "*" || strip(candidate) === strip(etag));
 }
 
+/** 200 JSON with weak ETag and `public, max-age=300`, or 304 when If-None-Match matches. */
+async function cachedJson(c: AppContext, body: string): Promise<Response> {
+  const etag = await etagOf(body);
+  const headers = { "Cache-Control": "public, max-age=300", ETag: etag };
+  if (etagMatches(c.req.header("if-none-match"), etag)) {
+    return new Response(null, { status: 304, headers });
+  }
+  return new Response(body, {
+    status: 200,
+    headers: { ...headers, "Content-Type": "application/json; charset=utf-8" },
+  });
+}
+
 export function createApp() {
   const app = new Hono<AppEnv>();
 
@@ -84,16 +99,15 @@ export function createApp() {
     const bundle = await getMapBundle(new D1EventMapRepository(c.env.DB), parsed.data);
     if (!bundle) return errorResponse(c, 404, "event_not_found", "public, max-age=30");
 
-    const body = JSON.stringify(bundle);
-    const etag = await etagOf(body);
-    const headers = { "Cache-Control": "public, max-age=300", ETag: etag };
-    if (etagMatches(c.req.header("if-none-match"), etag)) {
-      return new Response(null, { status: 304, headers });
-    }
-    return new Response(body, {
-      status: 200,
-      headers: { ...headers, "Content-Type": "application/json; charset=utf-8" },
-    });
+    return cachedJson(c, JSON.stringify(bundle));
+  });
+
+  // Public, read-only, location-free: a pure function of the database. It deliberately ignores
+  // every header (except If-None-Match), cookie, IP, request.cf and query parameter, so the response
+  // is identical for every visitor and safe to cache anywhere. Date-state ordering is done client-side.
+  app.get("/api/v1/events", async (c) => {
+    const events = await listEvents(new D1EventListRepository(c.env.DB));
+    return cachedJson(c, JSON.stringify(events));
   });
 
   app.notFound((c) => errorResponse(c, 404, "not_found", "no-store"));

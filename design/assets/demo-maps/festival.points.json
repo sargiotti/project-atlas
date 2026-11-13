@@ -6,6 +6,12 @@
       "start": "2026-07-09",
       "end": "2026-07-12"
     },
+    "city": "Galway",
+    "country": "IE",
+    "cover": {
+      "width": 960,
+      "height": 640
+    },
     "language": "en",
     "mapTheme": "dark"
   },

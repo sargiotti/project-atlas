@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_WEBP_BYTES, hasWebpMagic, inspectWebp } from "../scripts/webp-safety";
+import { COVER_LIMITS, MAX_WEBP_BYTES, hasWebpMagic, inspectWebp } from "../scripts/webp-safety";
 
 const chunk = (id: string, payload: Buffer) => {
   const head = Buffer.alloc(8);
@@ -75,5 +75,17 @@ describe("inspectWebp", () => {
 
   it("rejects animated WebP", () => {
     expect(() => inspectWebp(riff(vp8x(100, 100, 0x02), vp8l(100, 100)))).toThrow(/animated/);
+  });
+
+  it("checks the file's own dimensions against the expected ones", () => {
+    const cover = riff(vp8l(960, 640));
+    const ok = inspectWebp(cover, { ...COVER_LIMITS, expectedWidth: 960, expectedHeight: 640 });
+    expect([ok.width, ok.height]).toEqual([960, 640]);
+    expect(() => inspectWebp(cover, { ...COVER_LIMITS, expectedWidth: 960, expectedHeight: 600 })).toThrow(/expected 960x600/);
+  });
+
+  it("applies the stricter cover caps (4 MP, 1 MB)", () => {
+    expect(() => inspectWebp(riff(vp8l(2500, 2000)), COVER_LIMITS)).toThrow(/pixels/);
+    expect(() => inspectWebp(Buffer.alloc(COVER_LIMITS.maxBytes + 1), COVER_LIMITS)).toThrow(/max/);
   });
 });

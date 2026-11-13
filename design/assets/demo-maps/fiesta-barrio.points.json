@@ -3,8 +3,14 @@
     "slug": "fiestas-la-alameda",
     "name": "Fiestas del Barrio de la Alameda 2026",
     "dates": {
-      "start": "2026-08-13",
-      "end": "2026-08-16"
+      "start": "2026-12-04",
+      "end": "2026-12-07"
+    },
+    "city": "Valencia",
+    "country": "ES",
+    "cover": {
+      "width": 960,
+      "height": 640
     },
     "language": "es",
     "mapTheme": "light"

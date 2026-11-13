@@ -5,6 +5,19 @@
 export const MAX_WEBP_BYTES = 4 * 1024 * 1024;
 export const MAX_WEBP_PIXELS = 16_000_000;
 
+export interface WebpLimits {
+  maxBytes: number;
+  maxPixels: number;
+  /** When set, the file's own dimensions must match exactly (the declared dims in the seed). */
+  expectedWidth?: number;
+  expectedHeight?: number;
+}
+
+/** Map images (default). */
+export const MAP_LIMITS: WebpLimits = { maxBytes: MAX_WEBP_BYTES, maxPixels: MAX_WEBP_PIXELS };
+/** Event cover images: at most 1 MB and 4 MP. */
+export const COVER_LIMITS: WebpLimits = { maxBytes: 1024 * 1024, maxPixels: 4_000_000 };
+
 export function hasWebpMagic(buf: Uint8Array): boolean {
   return (
     buf.length >= 12 &&
@@ -36,8 +49,8 @@ function bitstreamSize(kind: "VP8 " | "VP8L", p: Buffer): { width: number; heigh
 }
 
 /** Parses and validates a WebP. Throws an Error with a clear message when it is not acceptable. */
-export function inspectWebp(input: Buffer): WebpInfo {
-  if (input.length > MAX_WEBP_BYTES) throw new Error(`WebP is ${input.length} bytes, max ${MAX_WEBP_BYTES}`);
+export function inspectWebp(input: Buffer, limits: WebpLimits = MAP_LIMITS): WebpInfo {
+  if (input.length > limits.maxBytes) throw new Error(`WebP is ${input.length} bytes, max ${limits.maxBytes}`);
   if (!hasWebpMagic(input)) throw new Error("not a WebP file (bad RIFF/WEBP magic bytes)");
   const riffSize = input.readUInt32LE(4);
   if (riffSize + 8 !== input.length) throw new Error("RIFF size does not match the file length (truncated or trailing data)");
@@ -80,8 +93,16 @@ export function inspectWebp(input: Buffer): WebpInfo {
   if (canvas && (canvas.width !== image.width || canvas.height !== image.height)) {
     throw new Error("VP8X canvas size does not match the image data");
   }
-  if (dims.width * dims.height > MAX_WEBP_PIXELS) {
-    throw new Error(`${dims.width}x${dims.height} exceeds ${MAX_WEBP_PIXELS} pixels`);
+  if (dims.width * dims.height > limits.maxPixels) {
+    throw new Error(`${dims.width}x${dims.height} exceeds ${limits.maxPixels} pixels`);
+  }
+  if (
+    (limits.expectedWidth !== undefined && dims.width !== limits.expectedWidth) ||
+    (limits.expectedHeight !== undefined && dims.height !== limits.expectedHeight)
+  ) {
+    throw new Error(
+      `WebP is ${dims.width}x${dims.height}, expected ${limits.expectedWidth ?? "?"}x${limits.expectedHeight ?? "?"}`,
+    );
   }
 
   let cleaned = input;

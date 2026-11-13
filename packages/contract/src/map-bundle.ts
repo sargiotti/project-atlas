@@ -28,7 +28,7 @@ export const MAX_POINTS_PER_MAP = 500;
 export const mapThemeSchema = z.enum(["light", "dark"]);
 export type MapTheme = z.infer<typeof mapThemeSchema>;
 
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD");
+export const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD");
 
 /** Language of the event content (not of the UI). */
 export const contentLanguageSchema = z.string().regex(/^[a-z]{2}(-[A-Z]{2})?$/);
