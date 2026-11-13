@@ -95,8 +95,8 @@ describe("GET /e/{slug}", () => {
 
     // <title> is text content (setInnerContent): & is an entity, no raw angle brackets survive.
     const title = /<title>([^<]*)<\/title>/.exec(html)![1]!;
-    expect(title).toContain("alert(1)");
-    expect(title).toContain("&amp;");
+    expect(title).toBe(`"scriptalert(1)/script&amp;'`);
+    expect(html).not.toContain("&amp;amp;");
 
     // No raw angle brackets are injected anywhere (the rewriter would leave them raw inside attributes).
     expect(html.match(/</g)!.length).toBe(SHELL.match(/</g)!.length);
@@ -104,9 +104,11 @@ describe("GET /e/{slug}", () => {
     // metaContent stops at the first raw quote, so a leak would show up as a truncated value.
     for (const sel of ['property="og:title"', 'name="twitter:title"', 'property="og:image:alt"', 'name="twitter:image:alt"']) {
       const v = metaContent(html, sel)!;
+      if (sel === 'property="og:title"') expect(v).toBe("&quot;scriptalert(1)/script&amp;'");
       expect(v).toContain("&quot;");
       expect(v).toContain("alert(1)");
       expect(v).toContain("&amp;");
+      expect(v).not.toContain("&amp;amp;");
     }
 
     // Everything outside the rewritten tags is byte-identical to the shell.
