@@ -12,8 +12,15 @@ directory = "../web/dist"
 not_found_handling = "single-page-application"
 run_worker_first = ["/api/*"]
 
+# Privacy (GDPR): invocation logs (automatic per-request logs that can include IP and request.cf geo)
+# are OFF. Our own console.* logs still go to Workers Logs. Metrics stay on.
+# https://developers.cloudflare.com/workers/observability/logs/workers-logs/
 [observability]
 enabled = true
+
+[observability.logs]
+enabled = true
+invocation_logs = false
 
 # Local dev uses miniflare (ignores database_id). database_id is the remote D1 created with
 # `wrangler d1 create atlas --jurisdiction eu` (ADR 0007); it is an identifier, not a secret.
