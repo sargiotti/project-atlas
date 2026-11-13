@@ -15,5 +15,8 @@
     "@atlas/contract": "*",
     "hono": "^4.13.18",
     "zod": "^4.6.0"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.5"
   }
 }

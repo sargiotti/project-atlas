@@ -16,6 +16,7 @@ import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildSeedStatements, loadAllSeeds } from "./seed-lib.ts";
+import { loadBadge, loadBrandCard, renderEventOg } from "./og-image.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const apiDir = resolve(here, "..");
@@ -58,11 +59,29 @@ for (const s of seeds) {
   if (s.cover) writeFileSync(join(coversOut, s.cover.key), s.cover.bytes);
 }
 
+// 3c. Link-preview images to apps/web/public/og/ (gitignored, regenerated): the brand card (copied,
+// content-hashed) and one 1200x630 JPEG per event that has a cover. Events without a cover use the brand card.
+const ogDir = join(repoRoot, "apps/web/public/og");
+mkdirSync(ogDir, { recursive: true });
+for (const f of readdirSync(ogDir).filter((f) => f.endsWith(".jpg"))) rmSync(join(ogDir, f));
+const ogAssets = join(repoRoot, "design/assets/og");
+const brandCard = loadBrandCard(join(ogAssets, "brand-card.jpg"));
+writeFileSync(join(ogDir, brandCard.key), brandCard.bytes);
+const badge = loadBadge(join(ogAssets, "badge.png"));
+const ogKeys = new Map<string, string>();
+for (const s of seeds) {
+  if (!s.cover) continue;
+  const og = await renderEventOg(s.seed.event.slug, s.cover.bytes, badge);
+  writeFileSync(join(ogDir, og.key), og.bytes);
+  ogKeys.set(s.seed.event.slug, og.key);
+}
+console.log(`Wrote brand card ${brandCard.key} and ${ogKeys.size} event OG image(s) to ${ogDir}`);
+
 // 4. Idempotent seed.sql.
 const seedOut = join(apiDir, ".seed");
 mkdirSync(seedOut, { recursive: true });
 const sqlPath = join(seedOut, "seed.sql");
-writeFileSync(sqlPath, buildSeedStatements(seeds).join(";\n") + ";\n");
+writeFileSync(sqlPath, buildSeedStatements(seeds, ogKeys).join(";\n") + ";\n");
 console.log(`Seeded ${seeds.length} event(s): ${seeds.map((s) => s.seed.event.slug).join(", ")}`);
 console.log(`Wrote ${sqlPath} ${seeds.length} map(s) to ${mapsDir} and ${seeds.filter((s) => s.cover).length} cover(s) to ${coversOut}`);
 

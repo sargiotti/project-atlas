@@ -23,6 +23,7 @@ dist/
 apps/api/.seed/
 apps/web/public/maps/
 apps/web/public/covers/
+apps/web/public/og/
 
 # OS / editor
 .DS_Store

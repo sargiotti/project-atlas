@@ -23,6 +23,18 @@ const text = (min: number, max: number) =>
     // eslint-disable-next-line no-control-regex
     .refine((s) => !/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(s), "control characters not allowed");
 
+// Single-line display text that ends up in HTML meta tags (slice 04, R2): additionally rejects every C0
+// control (tab, CR, LF too), DEL and C1 controls, zero-width characters, line/paragraph separators and
+// bidi overrides/isolates (Trojan-source style spoofing in link previews), and angle brackets.
+const displayText = (min: number, max: number) =>
+  z
+    .string()
+    .min(min)
+    .max(max)
+    // eslint-disable-next-line no-control-regex
+    .refine((s) => !/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2066-\u2069\ufeff]/.test(s), "control, zero-width or bidi characters not allowed")
+    .refine((s) => !/[<>]/.test(s), "angle brackets not allowed");
+
 const seedPointSchema = z.strictObject({
   id: z.string().regex(/^[a-z0-9_-]{1,40}$/),
   name: text(1, 80),
@@ -36,10 +48,10 @@ export const seedFileSchema = z
   .strictObject({
     event: z.strictObject({
       slug: slugSchema,
-      name: text(1, 120),
+      name: displayText(1, 120),
       dates: z.strictObject({ start: isoDate, end: isoDate }),
       /** Plain text, stored as written (not translated). */
-      city: text(1, 80),
+      city: displayText(1, 80),
       /** ISO 3166-1 alpha-2. */
       country: z.string().regex(/^[A-Z]{2}$/),
       /** City-level coordinates (both or neither), rounded to 2 decimals. Domain only, never public. */
@@ -211,14 +223,14 @@ const NOW = "(strftime('%s','now') * 1000)";
  * Idempotent statements: upsert event and map, then delete + reinsert the map's points.
  * Deterministic ids: evt_{slug}, map_{slug}_1, {slug}-{seedId}.
  */
-export function buildSeedStatements(seeds: LoadedSeed[]): string[] {
+export function buildSeedStatements(seeds: LoadedSeed[], ogKeys: ReadonlyMap<string, string> = new Map()): string[] {
   const out: string[] = [];
   for (const { seed, imageKey, format, cover } of seeds) {
     const { slug } = seed.event;
     const eventId = `evt_${slug}`;
     const mapId = `map_${slug}_1`;
     out.push(
-      `INSERT INTO events (id, slug, name, start_date, end_date, city, country, latitude, longitude, cover_key, cover_width, cover_height, language, created_at, updated_at) VALUES (${q(eventId)}, ${q(slug)}, ${q(seed.event.name)}, ${q(seed.event.dates.start)}, ${q(seed.event.dates.end)}, ${q(seed.event.city)}, ${q(seed.event.country)}, ${coord(seed.event.latitude)}, ${coord(seed.event.longitude)}, ${cover ? q(cover.key) : "NULL"}, ${cover ? cover.width : "NULL"}, ${cover ? cover.height : "NULL"}, ${q(seed.event.language)}, ${NOW}, ${NOW}) ON CONFLICT(slug) DO UPDATE SET name = excluded.name, start_date = excluded.start_date, end_date = excluded.end_date, city = excluded.city, country = excluded.country, latitude = excluded.latitude, longitude = excluded.longitude, cover_key = excluded.cover_key, cover_width = excluded.cover_width, cover_height = excluded.cover_height, language = excluded.language, updated_at = ${NOW}`,
+      `INSERT INTO events (id, slug, name, start_date, end_date, city, country, latitude, longitude, cover_key, cover_width, cover_height, og_key, language, created_at, updated_at) VALUES (${q(eventId)}, ${q(slug)}, ${q(seed.event.name)}, ${q(seed.event.dates.start)}, ${q(seed.event.dates.end)}, ${q(seed.event.city)}, ${q(seed.event.country)}, ${coord(seed.event.latitude)}, ${coord(seed.event.longitude)}, ${cover ? q(cover.key) : "NULL"}, ${cover ? cover.width : "NULL"}, ${cover ? cover.height : "NULL"}, ${ogKeys.has(slug) ? q(ogKeys.get(slug)!) : "NULL"}, ${q(seed.event.language)}, ${NOW}, ${NOW}) ON CONFLICT(slug) DO UPDATE SET name = excluded.name, start_date = excluded.start_date, end_date = excluded.end_date, city = excluded.city, country = excluded.country, latitude = excluded.latitude, longitude = excluded.longitude, cover_key = excluded.cover_key, cover_width = excluded.cover_width, cover_height = excluded.cover_height, og_key = excluded.og_key, language = excluded.language, updated_at = ${NOW}`,
       `INSERT INTO event_maps (id, event_id, position, width, height, theme, image_key, image_format, created_at, updated_at) VALUES (${q(mapId)}, ${q(eventId)}, 1, ${seed.map.width}, ${seed.map.height}, ${q(seed.event.mapTheme)}, ${q(imageKey)}, ${q(format)}, ${NOW}, ${NOW}) ON CONFLICT(id) DO UPDATE SET width = excluded.width, height = excluded.height, theme = excluded.theme, image_key = excluded.image_key, image_format = excluded.image_format, updated_at = ${NOW}`,
       `DELETE FROM points WHERE map_id = ${q(mapId)}`,
     );
