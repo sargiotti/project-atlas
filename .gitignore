@@ -26,3 +26,7 @@ apps/web/public/maps/
 # OS / editor
 .DS_Store
 Thumbs.db
+
+# Design: only final approved assets are versioned (deliverables stay local)
+design/*
+!design/assets/
