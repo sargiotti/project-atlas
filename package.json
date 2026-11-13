@@ -1,0 +1,32 @@
+{
+  "name": "project-atlas",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "npm run seed:local && npm run dev -w @atlas/api",
+    "build": "npm run seed:build && npm run check:svg && npm run build -w @atlas/web",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "seed": "npm run seed -w @atlas/api --",
+    "seed:local": "npm run seed -w @atlas/api -- --local",
+    "seed:build": "npm run seed -w @atlas/api -- --assets-only",
+    "check:svg": "npm run check:svg -w @atlas/api",
+    "audit:prod": "npm audit --omit=dev"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "^1.8.2",
+    "@cloudflare/workers-types": "^5.20261113.1",
+    "@types/node": "^24.19.2",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.0",
+    "vitest": "^4.1.0",
+    "wrangler": "^4.162.0"
+  }
+}
