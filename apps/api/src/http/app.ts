@@ -112,8 +112,15 @@ export function createApp() {
 
   app.notFound((c) => errorResponse(c, 404, "not_found", "no-store"));
 
-  // Generic handler: never leak internals (stack traces, SQL, D1 messages).
-  app.onError((_err, c) => errorResponse(c, 500, "internal_error", "no-store"));
+  // Generic handler: never leak internals (stack traces, SQL, D1 messages) to the client.
+  // Workers invocation logs are off, so log one privacy-safe line: error name, message and request
+  // id only. Never the IP, headers, request.cf, URL (query string) or body. The stack is omitted too.
+  app.onError((err, c) => {
+    const name = err instanceof Error ? err.name : "NonError";
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[api-error] requestId=${c.get("requestId")} name=${name} message=${message}`);
+    return errorResponse(c, 500, "internal_error", "no-store");
+  });
 
   return app;
 }
