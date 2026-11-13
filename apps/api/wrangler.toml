@@ -47,3 +47,23 @@ namespace_id = "1001"
   [ratelimits.simple]
   limit = 60
   period = 60
+
+# --- Previews (Workers Builds, non-production branches) ---------------------------------
+# Workers Builds runs `npx wrangler preview` for non-production branches. Preview deployments do NOT
+# inherit bindings or vars from the top level, so everything the Worker needs is repeated here.
+# The preview D1 (atlas-preview, EU) is separate from production so branch code and migrations never
+# touch real data. database_id is an identifier, not a secret.
+[previews.vars]
+PUBLIC_ORIGIN = "https://atlas.sargiotti67.workers.dev"
+
+[[previews.d1_databases]]
+binding = "DB"
+database_name = "atlas-preview"
+database_id = "f755efdc-635c-4a62-9556-092b68d9cbbe"
+
+[[previews.ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "1001"
+  [previews.ratelimits.simple]
+  limit = 60
+  period = 60
