@@ -1,6 +1,7 @@
 name = "atlas"
 main = "src/index.ts"
 compatibility_date = "2026-11-01"
+workers_dev = true
 
 # One Worker serves the SPA (static assets) and the API.
 # Only /api/* invokes the Worker code. Everything else (SPA shell, /e/:slug via
