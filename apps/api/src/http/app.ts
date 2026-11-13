@@ -2,6 +2,7 @@ import { Hono, type Context } from "hono";
 import { slugSchema, type ErrorCode } from "@atlas/contract";
 import { getMapBundle } from "../application/get-map-bundle";
 import { listEvents } from "../application/list-events";
+import { applyNearOverride, parseVisitorLocation } from "../domain/nearby";
 import { D1EventMapRepository } from "../adapters/d1-event-map-repository";
 import { D1EventListRepository } from "../adapters/d1-event-list-repository";
 
@@ -50,10 +51,10 @@ function etagMatches(header: string | undefined, etag: string): boolean {
   return header.split(",").some((candidate) => candidate.trim() === "*" || strip(candidate) === strip(etag));
 }
 
-/** 200 JSON with weak ETag and `public, max-age=300`, or 304 when If-None-Match matches. */
-async function cachedJson(c: AppContext, body: string): Promise<Response> {
+/** 200 JSON with weak ETag and the given Cache-Control, or 304 when If-None-Match matches. */
+async function cachedJson(c: AppContext, body: string, cacheControl = "public, max-age=300"): Promise<Response> {
   const etag = await etagOf(body);
-  const headers = { "Cache-Control": "public, max-age=300", ETag: etag };
+  const headers = { "Cache-Control": cacheControl, ETag: etag };
   if (etagMatches(c.req.header("if-none-match"), etag)) {
     return new Response(null, { status: 304, headers });
   }
@@ -102,12 +103,26 @@ export function createApp() {
     return cachedJson(c, JSON.stringify(bundle));
   });
 
-  // Public, read-only, location-free: a pure function of the database. It deliberately ignores
-  // every header (except If-None-Match), cookie, IP, request.cf and query parameter, so the response
-  // is identical for every visitor and safe to cache anywhere. Date-state ordering is done client-side.
+  // Public and read-only. The body depends on the visitor's coarse location (a `nearby` flag per event),
+  // read from request.cf (or the `?near=` override) and used only to compute that flag: never stored,
+  // logged, returned or used as a cache key. Because it varies per visitor it is `private` (browser
+  // cache only), never `public`. Any `near` param, valid or not, switches to `no-store`, no ETag and
+  // no conditional requests, so the override is never cached or reflected.
   app.get("/api/v1/events", async (c) => {
-    const events = await listEvents(new D1EventListRepository(c.env.DB));
-    return cachedJson(c, JSON.stringify(events));
+    const url = new URL(c.req.url);
+    const hasNear = url.searchParams.has("near");
+    const visitor = applyNearOverride(
+      parseVisitorLocation((c.req.raw as { cf?: unknown }).cf),
+      hasNear ? url.searchParams.get("near") : null,
+    );
+    const body = JSON.stringify(await listEvents(new D1EventListRepository(c.env.DB), visitor));
+    if (hasNear) {
+      return new Response(body, {
+        status: 200,
+        headers: { "Cache-Control": "no-store", "Content-Type": "application/json; charset=utf-8" },
+      });
+    }
+    return cachedJson(c, body, "private, max-age=300");
   });
 
   app.notFound((c) => errorResponse(c, 404, "not_found", "no-store"));

@@ -9,6 +9,8 @@ interface EventRow {
   end_date: string;
   city: string;
   country: string;
+  latitude: number | null;
+  longitude: number | null;
   cover_key: string | null;
   cover_width: number | null;
   cover_height: number | null;
@@ -21,7 +23,7 @@ export class D1EventListRepository implements EventListRepository {
     // Explicit public columns only. ORDER BY matches idx_events_start_slug, so LIMIT bounds rows read.
     const { results } = await this.db
       .prepare(
-        `SELECT slug, name, start_date, end_date, city, country, cover_key, cover_width, cover_height
+        `SELECT slug, name, start_date, end_date, city, country, latitude, longitude, cover_key, cover_width, cover_height
          FROM events ORDER BY start_date, slug LIMIT ?1`,
       )
       .bind(MAX_EVENTS_IN_LIST)
@@ -33,6 +35,8 @@ export class D1EventListRepository implements EventListRepository {
       endDate: r.end_date,
       city: r.city,
       country: r.country,
+      latitude: r.latitude,
+      longitude: r.longitude,
       cover:
         r.cover_key !== null && r.cover_width !== null && r.cover_height !== null
           ? { key: r.cover_key, width: r.cover_width, height: r.cover_height }
