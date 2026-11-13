@@ -1,0 +1,99 @@
+{
+  "event": {
+    "slug": "nightfall-meadows",
+    "name": "Nightfall Meadows Festival 2026",
+    "dates": {
+      "start": "2026-07-09",
+      "end": "2026-07-12"
+    },
+    "language": "en",
+    "mapTheme": "dark"
+  },
+  "map": {
+    "file": "festival.webp",
+    "width": 1104,
+    "height": 1472
+  },
+  "points": [
+    {
+      "id": "aurora-main-stage",
+      "name": "Aurora Main Stage",
+      "category": "stage",
+      "description": "The main stage for headliners, from 20:00 until 02:00. Big screen and light show; the field in front fills up early.",
+      "x": 0.4982,
+      "y": 0.3057
+    },
+    {
+      "id": "hollow-tent",
+      "name": "The Hollow Tent",
+      "category": "stage",
+      "description": "Striped circus tent for electronic sets and late-night shows. Gets busy after midnight.",
+      "x": 0.163,
+      "y": 0.4688
+    },
+    {
+      "id": "ember-pizza",
+      "name": "Ember Pizza Truck",
+      "category": "food",
+      "description": "Pizza by the slice until 03:00, from the truck next to the picnic tables.",
+      "x": 0.8469,
+      "y": 0.428
+    },
+    {
+      "id": "night-market",
+      "name": "Night Market Picnic Area",
+      "category": "food",
+      "description": "Picnic tables next to the food truck, with vegan and gluten-free options. Free water refills.",
+      "x": 0.788,
+      "y": 0.5163
+    },
+    {
+      "id": "lakeside-bar",
+      "name": "Lakeside Bar",
+      "category": "drinks",
+      "description": "A quieter bar on the wooden deck over the pond, with low-alcohol and alcohol-free drinks.",
+      "x": 0.6341,
+      "y": 0.5978
+    },
+    {
+      "id": "toilets",
+      "name": "Toilets",
+      "category": "toilets",
+      "description": "Portable toilets with one accessible cabin, between the pond and the main gate.",
+      "x": 0.2264,
+      "y": 0.6997
+    },
+    {
+      "id": "medical-tent",
+      "name": "Medical Tent",
+      "category": "first-aid",
+      "description": "Paramedics on site around the clock, in the tent with the red cross. Free earplugs, sunscreen and water too.",
+      "x": 0.1857,
+      "y": 0.8356
+    },
+    {
+      "id": "main-gate",
+      "name": "Main Gate",
+      "category": "entrance-exit",
+      "description": "Main entrance and exit with bag checks. Shuttle buses stop just outside.",
+      "x": 0.4964,
+      "y": 0.8322
+    },
+    {
+      "id": "camping-gate",
+      "name": "Campsite",
+      "category": "entrance-exit",
+      "description": "Follow the lit path east to the campsite. You need a wristband with camping access.",
+      "x": 0.8967,
+      "y": 0.7337
+    },
+    {
+      "id": "merch-tent",
+      "name": "Merch Tent",
+      "category": "merch",
+      "description": "Official T-shirts, posters and tote bags, in the sand-colored tent by the lit path. Card payment only.",
+      "x": 0.779,
+      "y": 0.8458
+    }
+  ]
+}

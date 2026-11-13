@@ -1,0 +1,123 @@
+{
+  "event": {
+    "slug": "nightfall-meadows",
+    "name": "Nightfall Meadows Festival 2026",
+    "dates": {
+      "start": "2026-07-09",
+      "end": "2026-07-12"
+    },
+    "language": "en",
+    "mapTheme": "dark"
+  },
+  "map": {
+    "file": "festival.svg",
+    "width": 1200,
+    "height": 1500
+  },
+  "points": [
+    {
+      "id": "aurora-main-stage",
+      "name": "Aurora Main Stage",
+      "category": "stage",
+      "description": "The main stage for headliners, from 20:00 until 02:00. Accessible viewing platform on the right side.",
+      "x": 0.5,
+      "y": 0.1467
+    },
+    {
+      "id": "hollow-tent",
+      "name": "The Hollow Tent",
+      "category": "stage",
+      "description": "Circus tent for electronic sets and late-night shows. Gets busy after midnight.",
+      "x": 0.2,
+      "y": 0.4267
+    },
+    {
+      "id": "night-market",
+      "name": "Night Market Food Court",
+      "category": "food",
+      "description": "Food trucks around shared picnic tables, with vegan and gluten-free options.",
+      "x": 0.75,
+      "y": 0.5067
+    },
+    {
+      "id": "ember-pizza",
+      "name": "Ember Pizza Wagon",
+      "category": "food",
+      "description": "Wood-fired pizza by the slice until 03:00.",
+      "x": 0.35,
+      "y": 0.6733
+    },
+    {
+      "id": "main-bar",
+      "name": "Main Bar",
+      "category": "drinks",
+      "description": "Beer, cocktails and free water refills. Bring your reusable cup.",
+      "x": 0.7667,
+      "y": 0.2667
+    },
+    {
+      "id": "lakeside-bar",
+      "name": "Lakeside Bar",
+      "category": "drinks",
+      "description": "A quieter bar on a deck by the pond, with low-alcohol and alcohol-free drinks.",
+      "x": 0.3583,
+      "y": 0.8
+    },
+    {
+      "id": "toilets-north",
+      "name": "Toilets North",
+      "category": "toilets",
+      "description": "Portable toilets with one accessible cabin, close to the main stage field.",
+      "x": 0.1,
+      "y": 0.2533
+    },
+    {
+      "id": "toilets-east",
+      "name": "Toilets East",
+      "category": "toilets",
+      "description": "Larger toilet block with handwashing stations, near the food court.",
+      "x": 0.9,
+      "y": 0.6933
+    },
+    {
+      "id": "medical-tent",
+      "name": "Medical Tent",
+      "category": "first-aid",
+      "description": "Paramedics on site around the clock. Free earplugs, sunscreen and water too.",
+      "x": 0.6,
+      "y": 0.7467
+    },
+    {
+      "id": "info-point",
+      "name": "Info Point",
+      "category": "info",
+      "description": "Lost and found, phone charging and help with your wristband.",
+      "x": 0.5,
+      "y": 0.8667
+    },
+    {
+      "id": "main-gate",
+      "name": "Main Gate",
+      "category": "entrance-exit",
+      "description": "Main entrance and exit with bag checks. Shuttle buses stop just outside.",
+      "x": 0.5,
+      "y": 0.96
+    },
+    {
+      "id": "camping-gate",
+      "name": "Camping Gate",
+      "category": "entrance-exit",
+      "description": "Gate to the campsite. You need a wristband with camping access.",
+      "x": 0.9583,
+      "y": 0.4267
+    },
+    {
+      "id": "merch-tent",
+      "name": "Merch Tent",
+      "category": "merch",
+      "description": "Official T-shirts, posters and tote bags. Card payment only.",
+      "x": 0.6833,
+      "y": 0.8667
+    }
+  ]
+}

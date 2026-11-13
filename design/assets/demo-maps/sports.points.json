@@ -1,0 +1,131 @@
+{
+  "event": {
+    "slug": "havnelobet",
+    "name": "Havneløbet 2026",
+    "dates": {
+      "start": "2026-09-20",
+      "end": "2026-09-20"
+    },
+    "language": "da",
+    "mapTheme": "light"
+  },
+  "map": {
+    "file": "sports.svg",
+    "width": 1000,
+    "height": 1800
+  },
+  "points": [
+    {
+      "id": "start",
+      "name": "Start",
+      "category": "entrance-exit",
+      "description": "Løberne går ind i startbåsene her fra kl. 8.30. Starten går kl. 9.00 i bølger.",
+      "x": 0.3,
+      "y": 0.8667
+    },
+    {
+      "id": "maal-og-podie",
+      "name": "Mål og podie",
+      "category": "stage",
+      "description": "Målstregen og podiet, hvor præmieoverrækkelsen holdes kl. 12.30.",
+      "x": 0.7,
+      "y": 0.8667
+    },
+    {
+      "id": "vaeskedepot-1",
+      "name": "Væskedepot 1",
+      "category": "drinks",
+      "description": "Vand og sportsdrik efter ca. 3 km. Smid kopperne i containerne lige efter depotet.",
+      "x": 0.37,
+      "y": 0.6389
+    },
+    {
+      "id": "vaeskedepot-2",
+      "name": "Væskedepot 2",
+      "category": "drinks",
+      "description": "Vand og sportsdrik i parken. Her er også en vandpost, hvor du kan fylde din flaske.",
+      "x": 0.215,
+      "y": 0.1667
+    },
+    {
+      "id": "energidepot",
+      "name": "Energidepot",
+      "category": "food",
+      "description": "Bananer, rosiner og energigel cirka halvvejs på ruten.",
+      "x": 0.58,
+      "y": 0.1083
+    },
+    {
+      "id": "vaeskedepot-3",
+      "name": "Væskedepot 3",
+      "category": "drinks",
+      "description": "Sidste væskedepot ved kajen, ca. 2 km før mål.",
+      "x": 0.81,
+      "y": 0.6833
+    },
+    {
+      "id": "toiletter-start",
+      "name": "Toiletter ved start",
+      "category": "toilets",
+      "description": "Mobiltoiletter ved startområdet. Der er ofte kø lige før start, så kom i god tid.",
+      "x": 0.16,
+      "y": 0.8444
+    },
+    {
+      "id": "toiletter-parken",
+      "name": "Toiletter i parken",
+      "category": "toilets",
+      "description": "Mobiltoiletter ved parkens indgang, lige ved ruten.",
+      "x": 0.38,
+      "y": 0.3278
+    },
+    {
+      "id": "foerstehjaelp-broen",
+      "name": "Førstehjælp ved broen",
+      "category": "first-aid",
+      "description": "Samaritter med førstehjælpsudstyr lige efter broen over kanalen.",
+      "x": 0.38,
+      "y": 0.5278
+    },
+    {
+      "id": "foerstehjaelp-maal",
+      "name": "Førstehjælp i mål",
+      "category": "first-aid",
+      "description": "Ambulance og læger lige efter målstregen.",
+      "x": 0.86,
+      "y": 0.8333
+    },
+    {
+      "id": "information",
+      "name": "Information og nummerudlevering",
+      "category": "info",
+      "description": "Hent startnummer og tidtagningschip her fra kl. 7.00. Her finder du også garderobe og glemte sager.",
+      "x": 0.44,
+      "y": 0.9444
+    },
+    {
+      "id": "heppezonen",
+      "name": "Heppezonen",
+      "category": "stage",
+      "description": "DJ og trommer på torvet. Det bedste sted for tilskuere, der vil heppe på løberne.",
+      "x": 0.65,
+      "y": 0.2889
+    },
+    {
+      "id": "loebsbutik",
+      "name": "Løbsbutik",
+      "category": "merch",
+      "description": "Løbe-T-shirts, kasketter og sokker med årets logo.",
+      "x": 0.6,
+      "y": 0.9556
+    },
+    {
+      "id": "metro",
+      "name": "Metro – udgang",
+      "category": "entrance-exit",
+      "description": "Nærmeste metrostation. Der kører ekstra tog efter løbet.",
+      "x": 0.93,
+      "y": 0.9667
+    }
+  ]
+}

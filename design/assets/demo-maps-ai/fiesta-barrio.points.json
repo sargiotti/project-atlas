@@ -1,0 +1,107 @@
+{
+  "event": {
+    "slug": "fiestas-la-alameda",
+    "name": "Fiestas del Barrio de la Alameda 2026",
+    "dates": {
+      "start": "2026-08-13",
+      "end": "2026-08-16"
+    },
+    "language": "es",
+    "mapTheme": "light"
+  },
+  "map": {
+    "file": "fiesta-barrio.webp",
+    "width": 1104,
+    "height": 1472
+  },
+  "points": [
+    {
+      "id": "escenario-plaza",
+      "name": "Escenario de la Plaza Mayor",
+      "category": "stage",
+      "description": "Orquestas y verbena cada noche desde las 22:00. Pista de baile bajo las banderitas, frente a la iglesia.",
+      "x": 0.4937,
+      "y": 0.5197
+    },
+    {
+      "id": "churreria",
+      "name": "Churrería La Abuela Rosario",
+      "category": "food",
+      "description": "Churros y chocolate caliente desde las 18:00 hasta el cierre. Ideal después de la verbena.",
+      "x": 0.3125,
+      "y": 0.3023
+    },
+    {
+      "id": "paella",
+      "name": "Paella popular de la Peña El Cántaro",
+      "category": "food",
+      "description": "La gran paella del domingo a las 14:00. Las raciones se recogen con el ticket de la oficina de la Comisión.",
+      "x": 0.3351,
+      "y": 0.4178
+    },
+    {
+      "id": "bocatas",
+      "name": "Bocatas y tapas Casa Julián",
+      "category": "food",
+      "description": "Bocadillos, tortilla de patatas y raciones. Con opción vegetariana y sin gluten.",
+      "x": 0.2645,
+      "y": 0.4905
+    },
+    {
+      "id": "barra-pena",
+      "name": "Barra de la Peña",
+      "category": "drinks",
+      "description": "Refrescos, cerveza y tinto de verano a la entrada de la plaza. Vasos reutilizables con fianza de 1 €.",
+      "x": 0.4149,
+      "y": 0.3295
+    },
+    {
+      "id": "chiringuito",
+      "name": "Chiringuito de la Explanada",
+      "category": "drinks",
+      "description": "Barra en la explanada, junto a los bancos, abierta hasta el final de la verbena. Agua gratis para niños.",
+      "x": 0.433,
+      "y": 0.8302
+    },
+    {
+      "id": "puesto-sanitario",
+      "name": "Puesto sanitario",
+      "category": "first-aid",
+      "description": "Voluntarios sanitarios en el bajo de la casa de la esquina, todas las noches de 20:00 a 04:00. En una urgencia, llama al 112.",
+      "x": 0.7201,
+      "y": 0.7269
+    },
+    {
+      "id": "caseta-informacion",
+      "name": "Oficina de la Comisión",
+      "category": "info",
+      "description": "Programa de fiestas, objetos perdidos y tickets de la paella. Abierta de 11:00 a 14:00 y de 18:00 a 00:00.",
+      "x": 0.4665,
+      "y": 0.2785
+    },
+    {
+      "id": "acceso-calle-mayor",
+      "name": "Acceso Calle Mayor",
+      "category": "entrance-exit",
+      "description": "Entrada principal desde la parada de autobús. Recomendada para carritos y sillas de ruedas.",
+      "x": 0.0815,
+      "y": 0.3023
+    },
+    {
+      "id": "acceso-explanada",
+      "name": "Acceso de la Explanada",
+      "category": "entrance-exit",
+      "description": "Salida hacia el aparcamiento y la parada de taxis. Se cierra a las 05:00.",
+      "x": 0.7971,
+      "y": 0.856
+    },
+    {
+      "id": "tienda-comision",
+      "name": "Tienda de la Comisión de Fiestas",
+      "category": "merch",
+      "description": "Pañuelos, camisetas y abanicos de las fiestas de este año. Lo recaudado ayuda a pagar las fiestas.",
+      "x": 0.1857,
+      "y": 0.7948
+    }
+  ]
+}

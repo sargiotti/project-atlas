@@ -1,0 +1,131 @@
+{
+  "event": {
+    "slug": "fiestas-la-alameda",
+    "name": "Fiestas del Barrio de la Alameda 2026",
+    "dates": {
+      "start": "2026-08-13",
+      "end": "2026-08-16"
+    },
+    "language": "es",
+    "mapTheme": "light"
+  },
+  "map": {
+    "file": "fiesta-barrio.svg",
+    "width": 1200,
+    "height": 1600
+  },
+  "points": [
+    {
+      "id": "escenario-plaza",
+      "name": "Escenario de la Plaza Mayor",
+      "category": "stage",
+      "description": "Orquestas y verbena cada noche desde las 22:00. Frente a la iglesia, con pista de baile alrededor de la fuente.",
+      "x": 0.5167,
+      "y": 0.3625
+    },
+    {
+      "id": "escenario-explanada",
+      "name": "Escenario de la Explanada",
+      "category": "stage",
+      "description": "Conciertos de grupos del barrio y la sesión de DJs del sábado. Hay bancos al fondo para descansar.",
+      "x": 0.5167,
+      "y": 0.9
+    },
+    {
+      "id": "churreria",
+      "name": "Churrería La Abuela Rosario",
+      "category": "food",
+      "description": "Churros y chocolate caliente desde las 18:00 hasta el cierre. Ideal después de la verbena.",
+      "x": 0.15,
+      "y": 0.1875
+    },
+    {
+      "id": "paella",
+      "name": "Paella popular de la Peña El Cántaro",
+      "category": "food",
+      "description": "La gran paella del domingo a las 14:00. Las raciones se recogen con el ticket del punto de información.",
+      "x": 0.3917,
+      "y": 0.575
+    },
+    {
+      "id": "bocatas",
+      "name": "Bocatas y tapas Casa Julián",
+      "category": "food",
+      "description": "Bocadillos, tortilla de patatas y raciones. Con opción vegetariana y sin gluten.",
+      "x": 0.75,
+      "y": 0.675
+    },
+    {
+      "id": "barra-pena",
+      "name": "Barra de la Peña",
+      "category": "drinks",
+      "description": "Refrescos, cerveza y tinto de verano junto a la fuente. Vasos reutilizables con fianza de 1 €.",
+      "x": 0.6667,
+      "y": 0.475
+    },
+    {
+      "id": "chiringuito",
+      "name": "Chiringuito de la Explanada",
+      "category": "drinks",
+      "description": "Barra junto al escenario grande, abierta hasta el final de los conciertos. Agua gratis para niños.",
+      "x": 0.6583,
+      "y": 0.825
+    },
+    {
+      "id": "banos-calle-pozo",
+      "name": "Baños de la Calle del Pozo",
+      "category": "toilets",
+      "description": "Cabinas portátiles, una de ellas adaptada. Se limpian cada dos horas.",
+      "x": 0.2833,
+      "y": 0.6875
+    },
+    {
+      "id": "banos-explanada",
+      "name": "Baños de la Explanada",
+      "category": "toilets",
+      "description": "Cabinas portátiles junto al escenario grande, con cambiador para bebés.",
+      "x": 0.3667,
+      "y": 0.95
+    },
+    {
+      "id": "puesto-sanitario",
+      "name": "Puesto sanitario",
+      "category": "first-aid",
+      "description": "Voluntarios sanitarios todas las noches de 20:00 a 04:00. En una urgencia, llama al 112.",
+      "x": 0.8833,
+      "y": 0.1875
+    },
+    {
+      "id": "caseta-informacion",
+      "name": "Caseta de información de la Comisión",
+      "category": "info",
+      "description": "Programa de fiestas, objetos perdidos y tickets de la paella. Abierta de 11:00 a 14:00 y de 18:00 a 00:00.",
+      "x": 0.3583,
+      "y": 0.3563
+    },
+    {
+      "id": "acceso-calle-mayor",
+      "name": "Acceso Calle Mayor",
+      "category": "entrance-exit",
+      "description": "Entrada principal desde la parada de autobús. Recomendada para carritos y sillas de ruedas.",
+      "x": 0.2833,
+      "y": 0.025
+    },
+    {
+      "id": "acceso-explanada",
+      "name": "Acceso de la Explanada",
+      "category": "entrance-exit",
+      "description": "Salida hacia el aparcamiento y la parada de taxis. Se cierra a las 05:00.",
+      "x": 0.75,
+      "y": 0.975
+    },
+    {
+      "id": "tienda-comision",
+      "name": "Tienda de la Comisión de Fiestas",
+      "category": "merch",
+      "description": "Pañuelos, camisetas y abanicos de las fiestas de este año. Lo recaudado ayuda a pagar las fiestas.",
+      "x": 0.8833,
+      "y": 0.7625
+    }
+  ]
+}
