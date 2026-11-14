@@ -10,6 +10,7 @@ import { handleEventPage } from "./event-page";
 import { API_CSP, HTML_CSP } from "./security-headers";
 import { errorResponse } from "./errors";
 import { registerAuthRoutes } from "./auth-routes";
+import { registerPanelRoutes } from "./panel-routes";
 import type { AppContext, AppEnv } from "./types";
 
 export type { Env } from "./types";
@@ -57,6 +58,7 @@ export function createApp() {
   });
 
   registerAuthRoutes(app);
+  registerPanelRoutes(app);
 
   app.get("/api/v1/events/:slug/map-bundle", async (c) => {
     const parsed = slugSchema.safeParse(c.req.param("slug"));

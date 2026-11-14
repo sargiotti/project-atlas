@@ -61,6 +61,15 @@ namespace_id = "1002"
   limit = 10
   period = 60
 
+# Slice 07: per-organizer write limit for panel event create/edit/delete, keyed on the organizer id (not the IP):
+# ~20 requests / 60 s. Fails open and can be switched off by deleting the block, like the others.
+[[ratelimits]]
+name = "PANEL_WRITE_LIMITER"
+namespace_id = "1003"
+  [ratelimits.simple]
+  limit = 20
+  period = 60
+
 # --- Previews (Workers Builds, non-production branches) ---------------------------------
 # Workers Builds runs `npx wrangler preview` for non-production branches. Preview deployments do NOT
 # inherit bindings or vars from the top level, so everything the Worker needs is repeated here.
@@ -86,4 +95,11 @@ name = "AUTH_LIMITER"
 namespace_id = "2002"
   [previews.ratelimits.simple]
   limit = 10
+  period = 60
+
+[[previews.ratelimits]]
+name = "PANEL_WRITE_LIMITER"
+namespace_id = "2003"
+  [previews.ratelimits.simple]
+  limit = 20
   period = 60

@@ -78,28 +78,31 @@ const authLimiter: MiddlewareHandler<AppEnv> = async (c, next) => {
   await next();
 };
 
-/** State-changing requests: same-origin only, JSON only (POST), small bodies. */
-const guardMutations: MiddlewareHandler<AppEnv> = async (c, next) => {
+/**
+ * State-changing requests: same-origin only, JSON only on methods that carry a body, small bodies.
+ * Every method other than GET/HEAD/OPTIONS counts as state-changing (POST, PUT, PATCH, DELETE, anything else).
+ */
+export const guardMutations: MiddlewareHandler<AppEnv> = async (c, next) => {
   const method = c.req.method;
-  if (method !== "POST" && method !== "DELETE") return next();
+  if (method === "GET" || method === "HEAD" || method === "OPTIONS") return next();
   const origin = c.req.header("origin");
   const site = c.req.header("sec-fetch-site");
   if (!origin || origin !== new URL(c.req.url).origin || (site !== undefined && site !== "same-origin")) {
     return errorResponse(c, 403, "invalid_origin", "no-store");
   }
-  if (method === "POST" && !/^application\/json\s*(;|$)/i.test(c.req.header("content-type") ?? "")) {
+  if ((method === "POST" || method === "PUT" || method === "PATCH") && !/^application\/json\s*(;|$)/i.test(c.req.header("content-type") ?? "")) {
     return errorResponse(c, 415, "unsupported_media_type", "no-store");
   }
   return next();
 };
 
-const limitBody = bodyLimit({
+export const limitBody = bodyLimit({
   maxSize: BODY_LIMIT_BYTES,
   onError: (c) => errorResponse(c as AppContext, 413, "payload_too_large", "no-store"),
 });
 
 /** Loads the session and the role from D1 on every request. */
-const requireAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
+export const requireAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
   const token = getCookie(c, SESSION_COOKIE);
   if (!token || !TOKEN_43.test(token)) return errorResponse(c, 401, "unauthenticated", "no-store");
   const user = await new D1AuthRepository(c.env.DB).loadSession(await sha256Hex(token), Date.now());

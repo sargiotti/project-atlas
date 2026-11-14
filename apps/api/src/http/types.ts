@@ -13,6 +13,8 @@ export interface Env {
   RATE_LIMITER?: Limiter;
   /** Optional, stricter limiter for auth start/callback, invite inspect/create/revoke (slice 06). Fails open. */
   AUTH_LIMITER?: Limiter;
+  /** Slice 07: ~20 writes / 60 s per organizer id on panel event create/edit/delete. Fails open. */
+  PANEL_WRITE_LIMITER?: Limiter;
   /** Slice 06 secrets (wrangler secret put). Absent on previews/local: sign-in then reports `not_configured`. */
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
