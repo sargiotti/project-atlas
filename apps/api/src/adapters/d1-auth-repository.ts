@@ -1,5 +1,5 @@
 import { MAX_PENDING_INVITES, type Role } from "@atlas/contract";
-import type { InviteState } from "../domain/auth";
+import { INVITE_RETENTION_MS, type InviteState } from "../domain/auth";
 
 export interface SessionUser {
   id: string;
@@ -52,6 +52,7 @@ export class D1AuthRepository {
         )
         .bind(a.organizerId, a.googleSub, a.email, a.displayName, a.now),
       this.insertSession(a.sessionHash, a.organizerId, a.now, a.sessionExpiresAt),
+      this.pruneExpiredSessions(a.now),
     ]);
   }
 
@@ -82,6 +83,7 @@ export class D1AuthRepository {
            SELECT ?1, ?2, ?3, ?4 WHERE EXISTS (SELECT 1 FROM organizers WHERE id = ?2)`,
         )
         .bind(a.sessionHash, a.organizerId, a.now, a.sessionExpiresAt),
+      this.pruneExpiredSessions(a.now),
     ]);
     return results[1]?.meta.changes === 1;
   }
@@ -94,12 +96,14 @@ export class D1AuthRepository {
       .bind(hash, organizerId, now, expiresAt);
   }
 
-  /** New session for an existing account; also prunes that account's expired sessions (no cron needed). */
+  /** Global prune of expired sessions (all users), run on every session creation (no cron needed). */
+  private pruneExpiredSessions(now: number): D1PreparedStatement {
+    return this.db.prepare("DELETE FROM sessions WHERE expires_at <= ?1").bind(now);
+  }
+
+  /** New session for an existing account; also prunes every expired session. */
   async createSession(organizerId: string, hash: string, now: number, expiresAt: number): Promise<void> {
-    await this.db.batch([
-      this.db.prepare("DELETE FROM sessions WHERE organizer_id = ?1 AND expires_at <= ?2").bind(organizerId, now),
-      this.insertSession(hash, organizerId, now, expiresAt),
-    ]);
+    await this.db.batch([this.insertSession(hash, organizerId, now, expiresAt), this.pruneExpiredSessions(now)]);
   }
 
   /** Role is read from D1 on every request, never from the cookie. Expired sessions are deleted when seen. */
@@ -179,6 +183,17 @@ export class D1AuthRepository {
       .bind(i.email, i.now)
       .first();
     return pending ? "invite_already_pending" : "invite_cap_reached";
+  }
+
+  /**
+   * Retention: delete invites that ended more than INVITE_RETENTION_MS ago. End = used_at, else revoked_at,
+   * else expires_at. A pending, unexpired invite always ends in the future, so it is never deleted.
+   */
+  async purgeEndedInvites(now: number): Promise<void> {
+    await this.db
+      .prepare("DELETE FROM invites WHERE COALESCE(used_at, revoked_at, expires_at) < ?1")
+      .bind(now - INVITE_RETENTION_MS)
+      .run();
   }
 
   async listPendingInvites(now: number): Promise<PendingInvite[]> {

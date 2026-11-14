@@ -266,7 +266,10 @@ export function registerAuthRoutes(app: Hono<AppEnv>): void {
   });
 
   app.get("/api/v1/admin/invites", async (c) => {
-    const pending = await new D1AuthRepository(c.env.DB).listPendingInvites(Date.now());
+    const repo = new D1AuthRepository(c.env.DB);
+    const now = Date.now();
+    await repo.purgeEndedInvites(now);
+    const pending = await repo.listPendingInvites(now);
     const body: InviteListResponse = {
       invites: pending.map((i) => ({
         id: i.id,

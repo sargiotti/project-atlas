@@ -3,6 +3,8 @@ import { INVITE_TTL_DAYS, SESSION_TTL_DAYS, type AuthRedirectError, type Role } 
 export const DAY_MS = 86_400_000;
 export const INVITE_TTL_MS = INVITE_TTL_DAYS * DAY_MS;
 export const SESSION_TTL_MS = SESSION_TTL_DAYS * DAY_MS;
+/** Privacy notice: invites (and the invitee email in them) are deleted this long after they end. */
+export const INVITE_RETENTION_MS = 30 * DAY_MS;
 export const CLOCK_SKEW_SECONDS = 60;
 
 /** Trim + lowercase, exact otherwise: no Gmail dot or plus normalization. */

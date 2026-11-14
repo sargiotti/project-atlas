@@ -485,6 +485,90 @@ describe("invites: create, inspect, accept", () => {
   });
 });
 
+describe("retention: invite purge and session prune", () => {
+  const DAY = 86_400_000;
+  const insertInvite = (id: string, f: { expires: number; used?: number; revoked?: number }, by: string) =>
+    env.DB.prepare(
+      "INSERT INTO invites (id, token_hash, email, created_by, created_at, expires_at, used_at, revoked_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+    )
+      .bind(id, `hash-${id}`, `${id}@example.com`, by, 0, f.expires, f.used ?? null, f.revoked ?? null)
+      .run();
+  const inviteIds = async () =>
+    ((await env.DB.prepare("SELECT id FROM invites ORDER BY id").all<{ id: string }>()).results ?? []).map((r) => r.id);
+  const adminId = async () => (await env.DB.prepare("SELECT id FROM organizers").first<{ id: string }>())!.id;
+
+  async function seedInvites(by: string) {
+    const now = Date.now();
+    await insertInvite("old-used", { expires: now + DAY, used: now - 31 * DAY }, by);
+    await insertInvite("old-revoked", { expires: now + DAY, revoked: now - 31 * DAY }, by);
+    await insertInvite("old-expired", { expires: now - 31 * DAY }, by);
+    await insertInvite("recent-used", { expires: now + DAY, used: now - 29 * DAY }, by);
+    await insertInvite("recent-revoked", { expires: now + DAY, revoked: now - 29 * DAY }, by);
+    await insertInvite("recent-expired", { expires: now - 29 * DAY }, by);
+    // The end instant is used_at, not the (older) expiry: kept while used_at is recent.
+    await insertInvite("used-recently-expired-long-ago", { expires: now - 60 * DAY, used: now - 2 * DAY }, by);
+    await insertInvite("pending", { expires: now + 3 * DAY }, by);
+  }
+  const KEPT = ["pending", "recent-expired", "recent-revoked", "recent-used", "used-recently-expired-long-ago"];
+
+  it("creating an invite deletes invites that ended more than 30 days ago and keeps the rest", async () => {
+    const admin = await adminSession();
+    await seedInvites(await adminId());
+    await createInviteFor(admin, "new@example.com");
+    const ids = await inviteIds();
+    expect(ids.filter((i) => !i.startsWith("inv_"))).toEqual(KEPT);
+    expect(ids).toHaveLength(KEPT.length + 1);
+  });
+
+  it("listing invites runs the same purge, and the pending invite is still listed", async () => {
+    const admin = await adminSession();
+    await seedInvites(await adminId());
+    const body = (await (await authed("/api/v1/admin/invites", admin)).json()) as { invites: Array<{ id: string }> };
+    expect(await inviteIds()).toEqual(KEPT);
+    expect(body.invites.map((i) => i.id)).toEqual(["pending"]);
+  });
+
+  it("an invite that ended exactly 30 days ago is kept, one millisecond more is deleted", async () => {
+    const admin = await adminSession();
+    const by = await adminId();
+    const fixed = Date.now();
+    vi.spyOn(Date, "now").mockReturnValue(fixed);
+    await insertInvite("edge-keep", { expires: fixed + DAY, used: fixed - 30 * DAY }, by);
+    await insertInvite("edge-drop", { expires: fixed + DAY, used: fixed - 30 * DAY - 1 }, by);
+    await authed("/api/v1/admin/invites", admin);
+    expect(await inviteIds()).toEqual(["edge-keep"]);
+  });
+
+  it("a new sign-in removes expired sessions of other users and keeps active ones", async () => {
+    await adminSession();
+    const now = Date.now();
+    await env.DB.prepare(
+      "INSERT INTO organizers (id, google_sub, email, display_name, role, created_at) VALUES ('org_other', 'sub-o', 'o@example.com', 'Other', 'organizer', 0)",
+    ).run();
+    const ins = (h: string, exp: number) =>
+      env.DB.prepare("INSERT INTO sessions (token_hash, organizer_id, created_at, expires_at) VALUES (?1, 'org_other', 0, ?2)")
+        .bind(h, exp)
+        .run();
+    await ins("expired-other", now - 1);
+    await ins("active-other", now + DAY);
+    await signIn(ADMIN); // existing account: a new session
+    const hashes = ((await env.DB.prepare("SELECT token_hash FROM sessions WHERE organizer_id = 'org_other'").all<{ token_hash: string }>()).results ?? []).map((r) => r.token_hash);
+    expect(hashes).toEqual(["active-other"]);
+    expect(await count("sessions")).toBe(3); // first admin session, active-other, the new admin session
+  });
+
+  it("the prune also runs when an invited person's first sign-in creates the session", async () => {
+    const admin = await adminSession();
+    await env.DB.prepare(
+      "INSERT INTO organizers (id, google_sub, email, display_name, role, created_at) VALUES ('org_other', 'sub-o', 'o@example.com', 'Other', 'organizer', 0)",
+    ).run();
+    await env.DB.prepare("INSERT INTO sessions (token_hash, organizer_id, created_at, expires_at) VALUES ('stale', 'org_other', 0, 1)").run();
+    const { token } = await createInviteFor(admin, ANA.email);
+    expect((await signIn(ANA, { invite: token })).location).toBe("/panel");
+    expect(await env.DB.prepare("SELECT 1 AS x FROM sessions WHERE token_hash = 'stale'").first()).toBeNull();
+  });
+});
+
 describe("access control and request guards", () => {
   it("an organizer gets 403 on every admin endpoint, and no session gets 401", async () => {
     const admin = await adminSession();

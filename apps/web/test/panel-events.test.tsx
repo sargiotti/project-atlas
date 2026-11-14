@@ -24,7 +24,7 @@ const EV = {
   createdAt: "2026-11-14T10:00:00.000Z",
   updatedAt: "2026-11-14T10:00:00.000Z",
 };
-const me = { organizer: { id: "o1", displayName: "Sergio", email: "s@example.com", role: "organizer" } };
+const me = { organizer: { id: "o1", displayName: "Ada", email: "s@example.com", role: "organizer" } };
 
 type Handler = (url: string, init?: RequestInit) => Response | Promise<Response>;
 function mockApi(routes: Record<string, Handler>) {

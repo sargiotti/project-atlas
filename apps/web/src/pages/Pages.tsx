@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import LangSwitch from "../components/LangSwitch";
 import { LogoMark } from "../markers/Pixel";
 import { Link } from "../lib/router";
+import { SiteFooter } from "../components/PrivacyLink";
 import { useI18n } from "../i18n/I18nProvider";
 
 /** Page frame for pages that are not the map: brand header + language selector. */
@@ -17,6 +18,7 @@ export function Shell({ children, wide }: { children: ReactNode; wide?: boolean 
         <LangSwitch />
       </header>
       <main className="shell-main">{children}</main>
+      <SiteFooter />
     </div>
   );
 }

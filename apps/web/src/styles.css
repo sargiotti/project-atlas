@@ -640,3 +640,16 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
   .sched.has-sheet .gpad { height: 96px; }
 }
 @media (prefers-reduced-motion: no-preference) { .hscroll { scroll-behavior: smooth; } }
+
+/* slice 12: privacy notice + footer link */
+.site-footer { max-width: 720px; margin: 0 auto; padding: 8px 16px 32px; font-size: 0.88rem; text-align: center; }
+.app.wide .site-footer { max-width: 960px; }
+.site-footer a { color: var(--ink-2); display: inline-block; padding: 10px 8px; }
+.privacy h1 { font-size: 1.7rem; line-height: 1.2; margin-bottom: 6px; }
+.privacy h2 { font-size: 1.15rem; margin: 28px 0 8px; }
+.privacy p { margin: 0 0 10px; line-height: 1.55; max-width: 68ch; overflow-wrap: anywhere; }
+.event-privacy {
+  position: absolute; z-index: 25; left: 8px; bottom: calc(2px + env(safe-area-inset-bottom));
+  padding: 4px 8px; font-size: 0.75rem; color: var(--ink-2); background: var(--surface); border-radius: 999px; opacity: 0.9;
+}
+@media (min-width: 768px) { .event-privacy { bottom: calc(8px + env(safe-area-inset-bottom)); } }

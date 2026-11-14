@@ -14,6 +14,7 @@ export async function createInvite(
   adminEmail: string | undefined,
   now: number,
 ): Promise<CreateInviteResult> {
+  await repo.purgeEndedInvites(now);
   const normalized = normalizeEmail(email);
   // The configured Admin email is an account in waiting: inviting it would be the same as "already registered".
   if (adminEmail && normalizeEmail(adminEmail) === normalized) return { ok: false, code: "email_already_registered" };

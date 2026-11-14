@@ -7,7 +7,7 @@ import { errorBody, goTo, json } from "./fixtures";
 
 const TOKEN = "A".repeat(43);
 const me = (role: "admin" | "organizer") => ({
-  organizer: { id: "o1", displayName: "Sergio Admin", email: "sergio@example.com", role },
+  organizer: { id: "o1", displayName: "Ada Admin", email: "ada@example.com", role },
 });
 const invite = (id: string, email: string) => ({
   id,
@@ -137,10 +137,10 @@ describe("invite page", () => {
   const inspect = (body: unknown, status = 200) => ({ "POST /invites/inspect": () => json(body, status) });
 
   it("valid: shows inviter and the invited email, and continues with the token", async () => {
-    const fetchMock = mockApi(inspect({ status: "valid", email: "ana@havnelobet.dk", inviterName: "Sergio A." }));
+    const fetchMock = mockApi(inspect({ status: "valid", email: "ana@havnelobet.dk", inviterName: "Ada L." }));
     renderAt(`/panel/invite/${TOKEN}`);
     expect(await screen.findByText("ana@havnelobet.dk")).toBeInTheDocument();
-    expect(screen.getByText("Sergio A.")).toBeInTheDocument();
+    expect(screen.getByText("Ada L.")).toBeInTheDocument();
     expect(screen.getByText(/invited you to publish event maps on Atlas/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Continue with Google" })).toHaveAttribute(
       "href",
@@ -174,7 +174,7 @@ describe("invite page", () => {
   });
 
   it("email mismatch: shows only the invited email and offers another Google account", async () => {
-    mockApi(inspect({ status: "valid", email: "ana@havnelobet.dk", inviterName: "Sergio A." }));
+    mockApi(inspect({ status: "valid", email: "ana@havnelobet.dk", inviterName: "Ada L." }));
     goTo(`/panel/invite/${TOKEN}?error=invite_email_mismatch`);
     render(<I18nProvider initial="en"><Routes /></I18nProvider>);
     expect(await screen.findByRole("heading", { name: "This invite is for a different email" })).toBeInTheDocument();
@@ -186,7 +186,7 @@ describe("invite page", () => {
   });
 
   it("other callback errors show a fixed message above the button", async () => {
-    mockApi(inspect({ status: "valid", email: "ana@havnelobet.dk", inviterName: "Sergio A." }));
+    mockApi(inspect({ status: "valid", email: "ana@havnelobet.dk", inviterName: "Ada L." }));
     goTo(`/panel/invite/${TOKEN}?error=email_not_verified`);
     render(<I18nProvider initial="en"><Routes /></I18nProvider>);
     expect(await screen.findByRole("alert")).toHaveTextContent("isn't verified");
@@ -269,5 +269,21 @@ describe("admin invites", () => {
     await user.click(screen.getByRole("button", { name: "Revoke" }));
     await waitFor(() => expect(screen.queryByText("mette@kulturnat.dk")).not.toBeInTheDocument());
     expect(screen.getByText("No pending invites")).toBeInTheDocument();
+  });
+});
+
+describe("privacy notice links", () => {
+  it("is reachable from the login page and renders the notice in the UI language", async () => {
+    mockApi({});
+    renderAt("/panel/login");
+    await userEvent.click(await screen.findByRole("link", { name: "Privacy" }));
+    expect(await screen.findByRole("heading", { name: "Privacy notice" })).toBeInTheDocument();
+    expect(screen.getByText(/closed test and not yet open to the public/)).toBeInTheDocument();
+  });
+
+  it("is reachable from the invite page", async () => {
+    mockApi({});
+    renderAt(`/panel/invite/${TOKEN}`);
+    expect(await screen.findByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/privacy");
   });
 });

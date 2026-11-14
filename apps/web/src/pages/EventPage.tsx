@@ -11,6 +11,7 @@ import { LogoMark } from "../markers/Pixel";
 import { Link } from "../lib/router";
 import { parseAt, withTimes, type TimedSession } from "../lib/schedule";
 import { EventNotFound, Loading, Unavailable } from "./Pages";
+import { EventPrivacyLink } from "../components/PrivacyLink";
 
 // The map viewer (gestures + marker art) is the heavy part: load it only on event pages.
 const MapViewer = lazy(() => import("../components/MapViewer"));
@@ -197,6 +198,7 @@ function EventView({ bundle, imageUrl }: { bundle: MapBundle; imageUrl: string }
           />
         )}
       </div>
+      <EventPrivacyLink />
       {shareOpen && <ShareDialog slug={event.slug} eventName={event.name} onClose={() => setShareOpen(false)} />}
     </div>
   );

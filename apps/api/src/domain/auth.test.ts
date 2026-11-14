@@ -30,7 +30,7 @@ describe("decideSignIn", () => {
 
   it("rejects a different email without consuming anything, and does not treat Gmail dots or plus as equal", () => {
     expect(decideSignIn(facts({ email: "bob@example.com" }))).toEqual({ kind: "reject", code: "invite_email_mismatch" });
-    expect(decideSignIn(facts({ invite: { ...validInvite, email: "a.na@gmail.com" }, email: "ana@gmail.com" }))).toEqual({
+    expect(decideSignIn(facts({ invite: { ...validInvite, email: "a.na@example.com" }, email: "ana@example.com" }))).toEqual({
       kind: "reject",
       code: "invite_email_mismatch",
     });
@@ -107,7 +107,7 @@ describe("checkIdTokenClaims", () => {
 
 describe("small helpers", () => {
   it("normalizeEmail trims and lowercases only", () => {
-    expect(normalizeEmail("  A.B+c@Gmail.COM ")).toBe("a.b+c@gmail.com");
+    expect(normalizeEmail("  A.B+c@Example.COM ")).toBe("a.b+c@example.com");
   });
   it("displayNameFrom strips control characters, caps length and falls back to the email local part", () => {
     expect(displayNameFrom("  Ana\u0000  ‮Lopez ", "x@y.z")).toBe("Ana Lopez");

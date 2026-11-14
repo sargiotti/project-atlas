@@ -6,6 +6,7 @@ import { useI18n } from "../../i18n/I18nProvider";
 import type { MessageKey } from "../../i18n/messages";
 import { LogoMark } from "../../markers/Pixel";
 import { Link } from "../../lib/router";
+import { SiteFooter } from "../../components/PrivacyLink";
 
 export function Brand({ to = "/panel" }: { to?: string }) {
   const { t } = useI18n();
@@ -27,6 +28,7 @@ export function AuthFrame({ children }: { children: ReactNode }) {
         <LangSwitch />
       </div>
       <main>{children}</main>
+      <SiteFooter />
     </div>
   );
 }
