@@ -7,10 +7,11 @@ import { D1EventMapRepository } from "../adapters/d1-event-map-repository";
 import { D1EventListRepository } from "../adapters/d1-event-list-repository";
 import { etagMatches, etagOf } from "./etag";
 import { handleEventPage } from "./event-page";
-import { API_CSP, HTML_CSP } from "./security-headers";
+import { API_CSP, HTML_CSP, MEDIA_CSP } from "./security-headers";
 import { errorResponse } from "./errors";
 import { registerAuthRoutes } from "./auth-routes";
 import { registerPanelRoutes } from "./panel-routes";
+import { registerMediaRoutes } from "./map-routes";
 import type { AppContext, AppEnv } from "./types";
 
 export type { Env } from "./types";
@@ -38,7 +39,9 @@ export function createApp() {
     await next();
     c.res.headers.set("X-Content-Type-Options", "nosniff");
     c.res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-    c.res.headers.set("Content-Security-Policy", c.req.path.startsWith("/e/") ? HTML_CSP : API_CSP);
+    const path = c.req.path;
+    c.res.headers.set("Content-Security-Policy", path.startsWith("/e/") ? HTML_CSP : path.startsWith("/media/") ? MEDIA_CSP : API_CSP);
+    if (path.startsWith("/media/")) c.res.headers.set("Cross-Origin-Resource-Policy", "same-site");
   });
 
   // Per-IP rate limit (60 req / 60 s, configured in wrangler.toml). Fails open if the
@@ -59,6 +62,7 @@ export function createApp() {
 
   registerAuthRoutes(app);
   registerPanelRoutes(app);
+  registerMediaRoutes(app);
 
   app.get("/api/v1/events/:slug/map-bundle", async (c) => {
     const parsed = slugSchema.safeParse(c.req.param("slug"));

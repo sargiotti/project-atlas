@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import type { MapBundle } from "@atlas/contract";
-import { fetchMapBundle, type BundleResult } from "../api/mapBundle";
+import { fetchMapBundle, safeVariants, type BundleResult } from "../api/mapBundle";
 import { useI18n } from "../i18n/I18nProvider";
 import LangSwitch from "../components/LangSwitch";
 import PointList from "../components/PointList";
@@ -58,6 +58,7 @@ export default function EventPage({ slug }: { slug: string }) {
 function EventView({ bundle, imageUrl }: { bundle: MapBundle; imageUrl: string }) {
   const { t, lang } = useI18n();
   const { event, map, points, sessions } = bundle;
+  const variants = useMemo(() => safeVariants(map.image.variants), [map.image.variants]);
   const [view, setView] = useState<"map" | "list" | "schedule">("map");
   const [scheduleSeen, setScheduleSeen] = useState(false);
   // Slice 10: the Session whose block was tapped in the grid; the sheet opens on its day with it outlined.
@@ -122,6 +123,7 @@ function EventView({ bundle, imageUrl }: { bundle: MapBundle; imageUrl: string }
           <Suspense fallback={<div className="map-status" role="status">{t("loading")}</div>}>
             <MapViewer
               imageUrl={imageUrl}
+              variants={variants}
               width={map.width}
               height={map.height}
               points={points}

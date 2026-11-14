@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { EVENT_INPUT_FIELDS, FIELD_ERROR_CODES, type EventInputField, type FieldError, type FieldErrorCode } from "./field-errors.ts";
 import { EVENT_TIME_ZONES } from "./time-zones.ts";
-import { eventSchema, pointSchema, sessionSchema, slugSchema } from "./map-bundle.ts";
+import { eventMapSchema, eventSchema, mapThemeSchema, pointSchema, sessionSchema, slugSchema } from "./map-bundle.ts";
 
 const FIELD_CODE_SET: ReadonlySet<string> = new Set(FIELD_ERROR_CODES);
 
@@ -205,6 +205,38 @@ export function toFieldErrors(error: z.ZodError): FieldError[] {
 
 // --- Responses -------------------------------------------------------------------------------
 
+// --- Slice 08a: map upload ---------------------------------------------------------------------
+/** Server limits for the two variants the browser sends (bytes and pixels). */
+export const MAP_FULL_MAX_BYTES = 1_500_000;
+export const MAP_SMALL_MAX_BYTES = 400_000;
+export const MAP_UPLOAD_BODY_LIMIT = 2 * 1024 * 1024;
+export const MAP_FULL_MIN_LONG_SIDE = 1600;
+export const MAP_FULL_MAX_LONG_SIDE = 2400;
+export const MAP_SMALL_MAX_LONG_SIDE = 1200;
+/** Aspect ratio window 1:3 to 3:1. */
+export const MAP_MAX_ASPECT = 3;
+
+export const mapUploadThemeSchema = z.enum(["light", "dark"]);
+export const mapThemeInputSchema = z.strictObject({ theme: mapUploadThemeSchema });
+export type MapThemeInput = z.infer<typeof mapThemeInputSchema>;
+
+const panelMapVariantSchema = z.object({
+  /** Same-origin path, e.g. `/media/maps/{eventId}/{hex32}-full.webp`. */
+  url: z.string().min(1),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+});
+export const panelMapSchema = z.object({
+  theme: mapThemeSchema,
+  format: z.enum(["webp", "jpeg"]),
+  full: panelMapVariantSchema,
+  small: panelMapVariantSchema,
+  updatedAt: z.iso.datetime(),
+});
+export type PanelMap = z.infer<typeof panelMapSchema>;
+export const panelMapResponseSchema = z.object({ map: panelMapSchema });
+export type PanelMapResponse = z.infer<typeof panelMapResponseSchema>;
+
 export const panelEventSchema = z.object({
   id: z.string().min(1),
   slug: slugSchema,
@@ -218,6 +250,7 @@ export const panelEventSchema = z.object({
   language: z.string(),
   description: z.string().nullable(),
   website: z.string().nullable(),
+  map: panelMapSchema.nullable(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });
@@ -239,7 +272,7 @@ export const eventPreviewResponseSchema = z.object({
       website: z.string().optional(),
     }),
   ),
-  map: z.null(),
+  map: eventMapSchema.nullable(),
   points: z.array(pointSchema).max(0),
   sessions: z.array(sessionSchema).max(0),
 });

@@ -21,6 +21,7 @@ const EV = {
   language: "es",
   description: null,
   website: null,
+  map: null,
   createdAt: "2026-11-14T10:00:00.000Z",
   updatedAt: "2026-11-14T10:00:00.000Z",
 };

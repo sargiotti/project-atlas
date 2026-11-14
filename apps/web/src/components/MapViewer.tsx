@@ -15,6 +15,8 @@ type Size = { w: number; h: number };
 
 type Props = {
   imageUrl: string;
+  /** Same-origin image variants, ascending by width (small, full). The viewer starts on the smallest that is sharp enough and only ever upgrades. */
+  variants?: { url: string; width: number }[];
   width: number;
   height: number;
   points: Point[];
@@ -26,7 +28,7 @@ type Props = {
   categoryLabel: (category: string) => string;
 };
 
-export default function MapViewer({ imageUrl, width: W, height: H, points, theme, selectedId, onSelect, focusRequest, categoryLabel }: Props) {
+export default function MapViewer({ imageUrl, variants, width: W, height: H, points, theme, selectedId, onSelect, focusRequest, categoryLabel }: Props) {
   const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<Size>({ w: 0, h: 0 });
@@ -34,6 +36,7 @@ export default function MapViewer({ imageUrl, width: W, height: H, points, theme
   const [animate, setAnimate] = useState(false);
   const [imgState, setImgState] = useState<"loading" | "ok" | "error">("loading");
   const viewRef = useRef(view);
+  const [level, setLevel] = useState(0);
   const touched = useRef(false);
   const animTimer = useRef<number | undefined>(undefined);
 
@@ -91,6 +94,24 @@ export default function MapViewer({ imageUrl, width: W, height: H, points, theme
     },
     [apply, maxK, minK],
   );
+
+  // Variant choice: device pixels needed for the current zoom vs variant widths. Upgrades preload first (no blank frame).
+  const sharp = variants?.length ? variants : null;
+  useEffect(() => {
+    if (!sharp || !size.w || level >= sharp.length - 1) return;
+    const need = W * view.k * (window.devicePixelRatio || 1);
+    const want = sharp.findIndex((v) => v.width >= need);
+    const idx = want === -1 ? sharp.length - 1 : want;
+    if (idx <= level) return;
+    let live = true;
+    const pre = new Image();
+    pre.onload = pre.onerror = () => live && setLevel((l) => Math.max(l, idx));
+    pre.src = sharp[idx]!.url;
+    return () => {
+      live = false;
+    };
+  }, [variants, sharp, size.w, view.k, W, level]);
+  const src = sharp ? sharp[Math.min(level, sharp.length - 1)]!.url : imageUrl;
 
   // Measure the container.
   useLayoutEffect(() => {
@@ -297,7 +318,7 @@ export default function MapViewer({ imageUrl, width: W, height: H, points, theme
         {/* Event maps are shown through <img> only, never inlined (SVG could carry scripts). */}
         <img
           className="map-image"
-          src={imageUrl}
+          src={src}
           alt={t("mapImageAlt")}
           width={W}
           height={H}

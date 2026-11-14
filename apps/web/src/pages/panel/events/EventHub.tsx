@@ -7,6 +7,7 @@ import { daysInclusive } from "../../../lib/eventForm";
 import { Link, navigate } from "../../../lib/router";
 import { zoneLabel, zoneOffset } from "../../../lib/timeZones";
 import { WebsiteLink } from "./About";
+import MapCard from "./MapCard";
 import { Dialog, DayTile, Ic, LoadError, Loading, PanelNotFound, Toast, dateRange, pastel, setFlash, useDocTitle, useFlashToast } from "./common";
 
 /** /panel/events/:id after a save: what the event looks like, how to publish it, and (quietly) delete. */
@@ -83,12 +84,25 @@ export default function EventHub({ id }: { id: string }) {
           </div>
         </section>
 
+        <MapCard
+          eventId={e.id}
+          map={e.map}
+          onMap={(map) => setState((cur) => (typeof cur === "object" ? { ...cur, map } : cur))}
+          onUnauthenticated={() => navigate("/panel/login", true, true)}
+          onNotFound={() => setState("missing")}
+          onReload={() => void getEvent(id).then((r) => r.status === "ok" && setState(r.event)).catch(() => {})}
+        />
+
         <section className="pe-hcardw pe-hpath">
           <h2 className="pe-ctitle">{t("pePathTitle")}</h2>
           <ol className="pe-trail">
             <li className="done"><span className="node"><Ic n="check" /></span><div><b>{t("peStep1")}</b><small>{t("peStep1Done")}</small></div></li>
-            <li className="nextstep"><span className="node">2</span><div><b>{t("peStep2")}</b><small>{t("peStep2S")}</small></div></li>
-            <li><span className="node"><Ic n="lock" size={18} /></span><div><b>{t("peStep3")}</b><small>{t("peStep3S")}</small></div></li>
+            {e.map ? (
+              <li className="done"><span className="node"><Ic n="check" /></span><div><b>{t("peStep2")}</b><small>{t("peStep1Done")}</small></div></li>
+            ) : (
+              <li className="nextstep"><span className="node">2</span><div><b>{t("peStep2")}</b><small>{t("peStep2Now")}</small></div></li>
+            )}
+            <li><span className="node"><Ic n="lock" size={18} /></span><div><b>{t("peStep3")}</b><small>{t("peStep3Soon")}</small></div></li>
           </ol>
         </section>
 

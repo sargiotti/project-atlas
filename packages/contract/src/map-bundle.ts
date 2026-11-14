@@ -72,7 +72,7 @@ export const imageVariantSchema = z.object({
 });
 
 export const mapImageSchema = z.object({
-  format: z.enum(["svg", "webp"]),
+  format: z.enum(["svg", "webp", "jpeg"]),
   variants: z.array(imageVariantSchema).min(1),
 });
 
@@ -205,13 +205,37 @@ export const ERROR_CODES = [
   "invite_cap_reached",
   // Slice 07 (organizer events).
   "event_limit_reached",
+  // Slice 08a (map upload).
+  "event_not_draft",
+  "map_changed",
+  "map_not_found",
+  "unsupported_image_type",
+  "invalid_upload",
 ] as const;
 export const errorCodeSchema = z.enum(ERROR_CODES);
 export type ErrorCode = z.infer<typeof errorCodeSchema>;
 
+/** Slice 08a: why an upload was refused (`error.reason` of `invalid_upload`). Stable codes, never user text. */
+export const INVALID_UPLOAD_REASONS = [
+  "missing_part",
+  "unknown_part",
+  "bad_theme",
+  "corrupt_image",
+  "mixed_formats",
+  "full_size_out_of_range",
+  "small_size_out_of_range",
+  "aspect_out_of_range",
+  "aspect_mismatch",
+  "metadata_present",
+] as const;
+export const invalidUploadReasonSchema = z.enum(INVALID_UPLOAD_REASONS);
+export type InvalidUploadReason = z.infer<typeof invalidUploadReasonSchema>;
+
 export const errorResponseSchema = z.object({
   error: z.object({
     code: errorCodeSchema,
+    /** Only on `invalid_upload`. */
+    reason: invalidUploadReasonSchema.optional(),
     message: z.string(),
     requestId: z.string(),
     /** Only on `validation_error` of the panel event endpoints. Codes only, never the submitted values. */

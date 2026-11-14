@@ -15,6 +15,10 @@ export interface Env {
   AUTH_LIMITER?: Limiter;
   /** Slice 07: ~20 writes / 60 s per organizer id on panel event create/edit/delete. Fails open. */
   PANEL_WRITE_LIMITER?: Limiter;
+  /** Slice 08a: map images (R2, EU jurisdiction). Private bucket: only the Worker reads and writes it. */
+  MAPS: R2Bucket;
+  /** Slice 08a: ~5 map uploads / 60 s per organizer id. Fails open; the D1 daily counter is the real cap. */
+  UPLOAD_LIMITER?: Limiter;
   /** Slice 06 secrets (wrangler secret put). Absent on previews/local: sign-in then reports `not_configured`. */
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;

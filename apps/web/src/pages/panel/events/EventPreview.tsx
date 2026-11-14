@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState } from "react";
 import { getPreview } from "../../../api/panelEvents";
+import { safeVariants } from "../../../api/mapBundle";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { Link, navigate } from "../../../lib/router";
 import { LogoMark } from "../../../markers/Pixel";
@@ -7,8 +8,11 @@ import { AboutRows } from "./About";
 import { Ic, LoadError, Loading, PanelNotFound, dateRange, useDocTitle } from "./common";
 import type { EventPreviewResponse } from "@atlas/contract";
 
+const MapViewer = lazy(() => import("../../../components/MapViewer"));
+const noop = () => {};
+
 /**
- * /panel/events/:id/preview: the event as visitors will see it, with "Map coming soon". A /panel route, so
+ * /panel/events/:id/preview: the event as visitors will see it: the uploaded map, or "Map coming soon" while there is none. A /panel route, so
  * noindex and no-store. The band is not dismissible; there is no Share and no visitor language switch.
  */
 export default function EventPreview({ id }: { id: string }) {
@@ -42,8 +46,11 @@ function PreviewView({ id, data }: { id: string; data: EventPreviewResponse }) {
   const { t, lang } = useI18n();
   const e = data.event;
   const uid = useId().replace(/:/g, "");
-  // The sheet opens by itself while there is no map (always, in this slice).
-  const [open, setOpen] = useState(true);
+  const map = data.map;
+  const variants = useMemo(() => (map ? safeVariants(map.image.variants) : []), [map]);
+  const mapUrl = variants[0]?.url ?? null;
+  // The sheet opens by itself while there is no map; with a map the map comes first.
+  const [open, setOpen] = useState(!mapUrl);
   const infoBtn = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -86,13 +93,32 @@ function PreviewView({ id, data }: { id: string; data: EventPreviewResponse }) {
             <Ic n="info" size={22} />
           </button>
         </div>
-        <div className="pe-soon">
-          <div className="tilebox">
-            <Ic n="map" size={36} />
-            <h2>{t("pePvMapSoon")}</h2>
-            <p>{t("pePvMapText")}</p>
+        {map && mapUrl ? (
+          <div className="pe-pvmap" data-theme={map.theme}>
+            <Suspense fallback={<div className="map-status" role="status">{t("loading")}</div>}>
+              <MapViewer
+                imageUrl={mapUrl}
+                variants={variants}
+                width={map.width}
+                height={map.height}
+                points={[]}
+                theme={map.theme}
+                selectedId={null}
+                onSelect={noop}
+                focusRequest={null}
+                categoryLabel={String}
+              />
+            </Suspense>
           </div>
-        </div>
+        ) : (
+          <div className="pe-soon">
+            <div className="tilebox">
+              <Ic n="map" size={36} />
+              <h2>{t("pePvMapSoon")}</h2>
+              <p>{t("pePvMapText")}</p>
+            </div>
+          </div>
+        )}
         {open && (
           <section className="pe-about" id={`${uid}-about`} role="dialog" aria-label={t("pePvAbout")}>
             <div className="pe-ahead">

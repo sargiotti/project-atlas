@@ -7,13 +7,16 @@ import {
   type PanelEventResponse,
 } from "@atlas/contract";
 import { D1PanelEventRepository, type OwnedEvent } from "../adapters/d1-panel-event-repository";
+import { mediaUrl } from "../adapters/d1-map-image-repository";
 import { generateSlug } from "../domain/slug";
 import { errorResponse } from "./errors";
-import { guardMutations, limitBody, requireAuth } from "./auth-routes";
+import { guardMutations, guardOrigin, limitBody, requireAuth } from "./auth-routes";
+import { deleteEventMapObjects, registerMapRoutes } from "./map-routes";
 import type { AppContext, AppEnv } from "./types";
 
 const EVENT_ID = /^[a-z0-9-]{1,64}$/;
 const SLUG_ATTEMPTS = 3;
+const MAP_UPLOAD_PATH = /^\/api\/v1\/panel\/events\/[^/]+\/map$/;
 
 /** One privacy-safe line per write: request id, action, outcome, internal ids. Never user text, IP or body. */
 function logPanel(c: AppContext, action: string, outcome: string, eventId?: string, codes?: string[]): void {
@@ -39,7 +42,7 @@ const panelWriteLimiter: MiddlewareHandler<AppEnv> = async (c, next) => {
   await next();
 };
 
-const toPanelEvent = ({ dayStart: _dayStart, ...e }: OwnedEvent) => e;
+const toPanelEvent = ({ dayStart: _dayStart, storedMap: _storedMap, ...e }: OwnedEvent) => e;
 
 async function readJson(c: AppContext): Promise<unknown> {
   try {
@@ -56,7 +59,16 @@ export function registerPanelRoutes(app: Hono<AppEnv>): void {
     c.res.headers.set("Cache-Control", "private, no-store");
   });
   // Deny by default: every route under the prefix needs a session. Any role may use it (own events only).
-  app.use("/api/v1/panel/*", guardMutations, limitBody, requireAuth, panelWriteLimiter);
+  // The map upload is multipart with its own 2 MiB limit (set in map-routes after the owner check): it keeps the
+  // Origin / Sec-Fetch-Site check but skips the JSON-only rule and the 8 KB limit.
+  const isMapUpload = (c: AppContext) => c.req.method === "POST" && MAP_UPLOAD_PATH.test(c.req.path);
+  app.use(
+    "/api/v1/panel/*",
+    (c, next) => (isMapUpload(c) ? guardOrigin(c, next) : guardMutations(c, next)),
+    (c, next) => (isMapUpload(c) ? next() : limitBody(c, next)),
+    requireAuth,
+    panelWriteLimiter,
+  );
 
   const notFound = (c: AppContext) => errorResponse(c, 404, "event_not_found", "private, no-store");
 
@@ -131,11 +143,13 @@ export function registerPanelRoutes(app: Hono<AppEnv>): void {
     const id = c.req.param("id");
     if (!EVENT_ID.test(id)) return notFound(c);
     if (!(await new D1PanelEventRepository(c.env.DB).delete(id, c.get("user").id))) return notFound(c);
+    // Event row (and its map row, by cascade) is gone: now remove every stored object under maps/{id}/.
+    await deleteEventMapObjects(c, id);
     logPanel(c, "event_deleted", "ok", id);
     return c.body(null, 204);
   });
 
-  // The event as visitors will see it after publishing (slice 08): public-shaped fields, no map yet.
+  // The event as visitors will see it after publishing: public-shaped fields, with the uploaded map when there is one.
   app.get("/api/v1/panel/events/:id/preview", async (c) => {
     const id = c.req.param("id");
     if (!EVENT_ID.test(id)) return notFound(c);
@@ -155,10 +169,26 @@ export function registerPanelRoutes(app: Hono<AppEnv>): void {
         ...(e.description ? { description: e.description } : {}),
         ...(e.website ? { website: e.website } : {}),
       },
-      map: null,
+      map: e.storedMap
+        ? {
+            id: e.id,
+            theme: e.storedMap.theme,
+            width: e.storedMap.fullWidth,
+            height: e.storedMap.fullHeight,
+            image: {
+              format: e.storedMap.format,
+              variants: [
+                { url: mediaUrl(e.storedMap.smallKey), width: e.storedMap.smallWidth },
+                { url: mediaUrl(e.storedMap.fullKey), width: e.storedMap.fullWidth },
+              ].sort((a, b) => a.width - b.width),
+            },
+          }
+        : null,
       points: [],
       sessions: [],
     };
     return c.json(body);
   });
+
+  registerMapRoutes(app);
 }

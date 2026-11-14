@@ -4,14 +4,14 @@ compatibility_date = "2026-11-01"
 workers_dev = true
 
 # One Worker serves the SPA (static assets) and the API.
-# Only /api/* and /e/* invoke the Worker code (ADR 0009: /e/{slug} gets per-event link-preview meta
-# injected into the shell). Everything else (Home, JS/CSS, /maps, /covers, /og) is served as static
+# Only /api/*, /e/* and /media/* invoke the Worker code (ADR 0009: /e/{slug} gets per-event link-preview meta
+# injected into the shell; slice 08a: /media/* serves uploaded map images from R2 with draft gating). Everything else (Home, JS/CSS, /maps, /covers, /og) is served as static
 # assets, which are free and do not count towards the request cap. Keep this list exact: no "/*", no "/".
 [assets]
 directory = "../web/dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
-run_worker_first = ["/api/*", "/e/*"]
+run_worker_first = ["/api/*", "/e/*", "/media/*"]
 
 # Single source of truth for the public origin. The Worker builds og:url / og:image from it, and the web
 # build (vite.config.ts) reads this same line to bake the absolute Home og:image. Bare https origin,
@@ -41,6 +41,15 @@ database_name = "atlas"
 database_id = "89a8b90a-1b1f-427d-ac87-63a0fa6d6b2b"
 migrations_dir = "migrations"
 
+# Slice 08a: uploaded map images (ADR 0013). Private bucket, EU jurisdiction (user decision 2026-11-14): only this
+# Worker reads and writes it, never r2.dev. Create with `wrangler r2 bucket create atlas-maps --jurisdiction eu`
+# (and atlas-maps-preview). A jurisdiction bucket must be bound with the same jurisdiction. Local dev and tests use
+# the miniflare R2 emulation, so the bucket does not need to exist to run locally.
+[[r2_buckets]]
+binding = "MAPS"
+bucket_name = "atlas-maps"
+jurisdiction = "eu"
+
 # --- Rate limiting switch -------------------------------------------------------------
 # Workers Rate Limiting binding for /api/*. The code skips limiting when the binding is
 # absent, so to switch it OFF simply delete or comment out this block.
@@ -68,6 +77,15 @@ name = "PANEL_WRITE_LIMITER"
 namespace_id = "1003"
   [ratelimits.simple]
   limit = 20
+  period = 60
+
+# Slice 08a: per-organizer map upload limit, keyed on the organizer id: ~5 uploads / 60 s. Fails open (the D1
+# daily counter of 30 uploads per organizer is the real cap). Delete the block to switch it off.
+[[ratelimits]]
+name = "UPLOAD_LIMITER"
+namespace_id = "1004"
+  [ratelimits.simple]
+  limit = 5
   period = 60
 
 # --- Previews (Workers Builds, non-production branches) ---------------------------------
@@ -103,3 +121,15 @@ namespace_id = "2003"
   [previews.ratelimits.simple]
   limit = 20
   period = 60
+
+[[previews.ratelimits]]
+name = "UPLOAD_LIMITER"
+namespace_id = "2004"
+  [previews.ratelimits.simple]
+  limit = 5
+  period = 60
+
+[[previews.r2_buckets]]
+binding = "MAPS"
+bucket_name = "atlas-maps-preview"
+jurisdiction = "eu"

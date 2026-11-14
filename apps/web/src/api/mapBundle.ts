@@ -1,5 +1,10 @@
 import { POINT_CATEGORIES, mapBundleSchema, slugSchema, type MapBundle } from "@atlas/contract";
 
+/** Image variants (ascending by width) whose URLs are same-origin paths; anything else is dropped. */
+export function safeVariants(variants: { url: string; width: number }[]): { url: string; width: number }[] {
+  return variants.filter((v) => safeImageUrl(v.url)).sort((a, b) => a.width - b.width);
+}
+
 export type BundleResult =
   | { status: "ok"; bundle: MapBundle; imageUrl: string }
   | { status: "not-found" }

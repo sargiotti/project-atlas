@@ -1,4 +1,4 @@
-import type { ErrorCode, FieldError } from "@atlas/contract";
+import type { ErrorCode, FieldError, InvalidUploadReason } from "@atlas/contract";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { AppContext } from "./types";
 
@@ -28,6 +28,11 @@ const MESSAGES: Record<ErrorCode, string> = {
   invite_already_pending: "That email already has a pending invite.",
   invite_cap_reached: "Too many pending invites. Revoke one first.",
   event_limit_reached: "You reached the limit of 10 events.",
+  event_not_draft: "Only draft events can change their map.",
+  map_changed: "The map was changed by another request. Reload and try again.",
+  map_not_found: "This event has no map.",
+  unsupported_image_type: "Unsupported image type.",
+  invalid_upload: "The uploaded image was refused.",
 };
 
 export function errorResponse(
@@ -37,8 +42,9 @@ export function errorResponse(
   cacheControl: string,
   extraHeaders: Record<string, string> = {},
   fields?: FieldError[],
+  reason?: InvalidUploadReason,
 ): Response {
-  return c.json({ error: { code, message: MESSAGES[code], requestId: c.get("requestId"), ...(fields ? { fields } : {}) } }, status, {
+  return c.json({ error: { code, ...(reason ? { reason } : {}), message: MESSAGES[code], requestId: c.get("requestId"), ...(fields ? { fields } : {}) } }, status, {
     "Cache-Control": cacheControl,
     ...extraHeaders,
   });

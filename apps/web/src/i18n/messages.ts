@@ -8,10 +8,12 @@ export const LANG_NAMES: Record<Lang, string> = { es: "Español", en: "English",
 
 import { panelDa, panelEn, panelEs } from "./panelMessages";
 import { eventDa, eventEn, eventEs } from "./eventMessages";
+import { mapDa, mapEn, mapEs } from "./mapMessages";
 
 const es = {
   ...panelEs,
   ...eventEs,
+  ...mapEs,
   searchLabel: "Buscar eventos",
   searchPlaceholder: "Buscar eventos, ciudades, países",
   searchClear: "Borrar búsqueda",
@@ -112,6 +114,7 @@ type Messages = Record<keyof typeof es, string>;
 const en: Messages = {
   ...panelEn,
   ...eventEn,
+  ...mapEn,
   searchLabel: "Search events",
   searchPlaceholder: "Search events, cities, countries",
   searchClear: "Clear search",
@@ -210,6 +213,7 @@ const en: Messages = {
 const da: Messages = {
   ...panelDa,
   ...eventDa,
+  ...mapDa,
   searchLabel: "Søg i events",
   searchPlaceholder: "Søg efter events, byer, lande",
   searchClear: "Ryd søgning",

@@ -78,18 +78,30 @@ const authLimiter: MiddlewareHandler<AppEnv> = async (c, next) => {
   await next();
 };
 
+/** Same-origin check for state-changing requests (CSRF defence for the SameSite=Lax cookie). */
+function originRejected(c: AppContext): boolean {
+  const origin = c.req.header("origin");
+  const site = c.req.header("sec-fetch-site");
+  return !origin || origin !== new URL(c.req.url).origin || (site !== undefined && site !== "same-origin");
+}
+
+const isRead = (method: string) => method === "GET" || method === "HEAD" || method === "OPTIONS";
+
+/** Origin / Sec-Fetch-Site check only. The multipart map upload uses this instead of `guardMutations`. */
+export const guardOrigin: MiddlewareHandler<AppEnv> = async (c, next) => {
+  if (isRead(c.req.method)) return next();
+  if (originRejected(c)) return errorResponse(c, 403, "invalid_origin", "no-store");
+  return next();
+};
+
 /**
  * State-changing requests: same-origin only, JSON only on methods that carry a body, small bodies.
  * Every method other than GET/HEAD/OPTIONS counts as state-changing (POST, PUT, PATCH, DELETE, anything else).
  */
 export const guardMutations: MiddlewareHandler<AppEnv> = async (c, next) => {
   const method = c.req.method;
-  if (method === "GET" || method === "HEAD" || method === "OPTIONS") return next();
-  const origin = c.req.header("origin");
-  const site = c.req.header("sec-fetch-site");
-  if (!origin || origin !== new URL(c.req.url).origin || (site !== undefined && site !== "same-origin")) {
-    return errorResponse(c, 403, "invalid_origin", "no-store");
-  }
+  if (isRead(method)) return next();
+  if (originRejected(c)) return errorResponse(c, 403, "invalid_origin", "no-store");
   if ((method === "POST" || method === "PUT" || method === "PATCH") && !/^application\/json\s*(;|$)/i.test(c.req.header("content-type") ?? "")) {
     return errorResponse(c, 415, "unsupported_media_type", "no-store");
   }

@@ -1,6 +1,7 @@
 import { MAX_EVENTS_PER_ORGANIZER, type EventInput, type PanelEvent } from "@atlas/contract";
+import { MAP_JOIN_COLUMNS, storedMapFromJoin, toPanelMap, type MapJoinRow, type StoredMapImage } from "./d1-map-image-repository";
 
-interface Row {
+interface Row extends MapJoinRow {
   id: string;
   slug: string;
   status: "draft" | "published";
@@ -18,14 +19,21 @@ interface Row {
   updated_at: number;
 }
 
-const COLUMNS = `id, slug, status, name, start_date, end_date, time_zone, city, country, language,
-  description, website, day_start, created_at, updated_at`;
+const COLUMNS = `e.id AS id, e.slug AS slug, e.status AS status, e.name AS name, e.start_date AS start_date,
+  e.end_date AS end_date, e.time_zone AS time_zone, e.city AS city, e.country AS country, e.language AS language,
+  e.description AS description, e.website AS website, e.day_start AS day_start, e.created_at AS created_at,
+  e.updated_at AS updated_at, ${MAP_JOIN_COLUMNS}`;
+const FROM = `events e LEFT JOIN event_map_images m ON m.event_id = e.id`;
 
 export interface OwnedEvent extends PanelEvent {
   dayStart: string;
+  /** Same map as `map`, as stored (the preview route needs the raw numbers and keys). */
+  storedMap: StoredMapImage | null;
 }
 
-const toEvent = (r: Row): OwnedEvent => ({
+const toEvent = (r: Row): OwnedEvent => {
+  const storedMap = storedMapFromJoin(r);
+  return {
   id: r.id,
   slug: r.slug,
   status: r.status,
@@ -39,9 +47,12 @@ const toEvent = (r: Row): OwnedEvent => ({
   description: r.description,
   website: r.website,
   dayStart: r.day_start,
+  map: storedMap ? toPanelMap(storedMap) : null,
+  storedMap,
   createdAt: new Date(r.created_at).toISOString(),
   updatedAt: new Date(r.updated_at).toISOString(),
-});
+  };
+};
 
 export type InsertOutcome = "inserted" | "limit_reached" | "slug_taken";
 
@@ -54,7 +65,7 @@ export class D1PanelEventRepository {
 
   async list(ownerId: string): Promise<OwnedEvent[]> {
     const { results } = await this.db
-      .prepare(`SELECT ${COLUMNS} FROM events WHERE owner_id = ?1 ORDER BY created_at DESC, id LIMIT ?2`)
+      .prepare(`SELECT ${COLUMNS} FROM ${FROM} WHERE e.owner_id = ?1 ORDER BY e.created_at DESC, e.id LIMIT ?2`)
       .bind(ownerId, MAX_EVENTS_PER_ORGANIZER)
       .all<Row>();
     return results.map(toEvent);
@@ -62,7 +73,7 @@ export class D1PanelEventRepository {
 
   async get(id: string, ownerId: string): Promise<OwnedEvent | null> {
     const row = await this.db
-      .prepare(`SELECT ${COLUMNS} FROM events WHERE id = ?1 AND owner_id = ?2`)
+      .prepare(`SELECT ${COLUMNS} FROM ${FROM} WHERE e.id = ?1 AND e.owner_id = ?2`)
       .bind(id, ownerId)
       .first<Row>();
     return row ? toEvent(row) : null;
@@ -117,6 +128,7 @@ export class D1PanelEventRepository {
   /** Hard delete. Maps, points and sessions go with it (ON DELETE CASCADE). */
   async delete(id: string, ownerId: string): Promise<boolean> {
     const res = await this.db.prepare(`DELETE FROM events WHERE id = ?1 AND owner_id = ?2`).bind(id, ownerId).run();
-    return res.meta.changes === 1;
+    // D1 counts rows removed by ON DELETE CASCADE in `changes` (a map, points...), so "at least one", not "exactly one".
+    return res.meta.changes > 0;
   }
 }
