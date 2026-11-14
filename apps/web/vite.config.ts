@@ -8,18 +8,23 @@ import react from "@vitejs/plugin-react";
  * PUBLIC_ORIGIN in apps/api/wrangler.toml (the Worker builds the /e/{slug} URLs from the same value).
  * The brand card is the content-hashed file the seed step wrote to public/og/ (npm run seed:build).
  */
+const here = import.meta.dirname;
+function readPublicOrigin(): string {
+  const toml = readFileSync(resolve(here, "../api/wrangler.toml"), "utf8");
+  const origin = /^PUBLIC_ORIGIN\s*=\s*"([^"]+)"\s*$/m.exec(toml)?.[1];
+  if (!origin || !/^https:\/\/[a-z0-9.-]+(:\d+)?$/.test(origin)) {
+    throw new Error("PUBLIC_ORIGIN in apps/api/wrangler.toml must be a bare https origin");
+  }
+  return origin;
+}
+
 function linkPreviewMeta(): Plugin {
-  const here = import.meta.dirname;
   return {
     name: "atlas-link-preview-meta",
     transformIndexHtml: {
       order: "pre",
       handler(html) {
-        const toml = readFileSync(resolve(here, "../api/wrangler.toml"), "utf8");
-        const origin = /^PUBLIC_ORIGIN\s*=\s*"([^"]+)"\s*$/m.exec(toml)?.[1];
-        if (!origin || !/^https:\/\/[a-z0-9.-]+(:\d+)?$/.test(origin)) {
-          throw new Error("PUBLIC_ORIGIN in apps/api/wrangler.toml must be a bare https origin");
-        }
+        const origin = readPublicOrigin();
         let cards: string[] = [];
         try {
           cards = readdirSync(resolve(here, "public/og")).filter((f) => /^brand-card\.[0-9a-f]{8}\.jpg$/.test(f));
@@ -42,6 +47,8 @@ const worker = "http://localhost:8787";
 
 export default defineConfig({
   plugins: [react(), linkPreviewMeta()],
+  // Slice 09: the same origin is baked into the calendar link-back (https://<origin>/e/<slug>).
+  define: { __PUBLIC_ORIGIN__: JSON.stringify(readPublicOrigin()) },
   server: {
     proxy: { "/api": worker, "/maps": worker },
   },

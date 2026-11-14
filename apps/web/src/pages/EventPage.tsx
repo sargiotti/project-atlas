@@ -8,6 +8,7 @@ import PointSheet from "../components/PointSheet";
 import ShareDialog from "../components/ShareDialog";
 import { LogoMark } from "../markers/Pixel";
 import { Link } from "../lib/router";
+import { parseAt, withTimes, type TimedSession } from "../lib/schedule";
 import { EventNotFound, Loading, Unavailable } from "./Pages";
 
 // The map viewer (gestures + marker art) is the heavy part: load it only on event pages.
@@ -45,12 +46,19 @@ export default function EventPage({ slug }: { slug: string }) {
 
 function EventView({ bundle, imageUrl }: { bundle: MapBundle; imageUrl: string }) {
   const { t, lang } = useI18n();
-  const { event, map, points } = bundle;
+  const { event, map, points, sessions } = bundle;
   const [view, setView] = useState<"map" | "list">("map");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [focusRequest, setFocusRequest] = useState<{ id: string; nonce: number } | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const selected = useMemo(() => points.find((p) => p.id === selectedId) ?? null, [points, selectedId]);
+  // Slice 09: sessions grouped by Point. `?at=` only changes what "now" means while rendering.
+  const sessionsByPoint = useMemo(() => {
+    const m = new Map<string, TimedSession[]>();
+    for (const s of withTimes(sessions, event.timeZone, event.dayStart)) m.set(s.pointId, [...(m.get(s.pointId) ?? []), s]);
+    return m;
+  }, [sessions, event.timeZone, event.dayStart]);
+  const atMs = useMemo(() => parseAt(window.location.search, event.timeZone), [event.timeZone]);
 
   useEffect(() => {
     const prev = document.title;
@@ -117,7 +125,15 @@ function EventView({ bundle, imageUrl }: { bundle: MapBundle; imageUrl: string }
             {t("list")}
           </button>
         </div>
-        {selected && view === "map" && <PointSheet point={selected} onClose={() => setSelectedId(null)} />}
+        {selected && view === "map" && (
+          <PointSheet
+            point={selected}
+            onClose={() => setSelectedId(null)}
+            event={event}
+            sessions={sessionsByPoint.get(selected.id)}
+            atMs={atMs}
+          />
+        )}
       </div>
       {shareOpen && <ShareDialog slug={event.slug} eventName={event.name} onClose={() => setShareOpen(false)} />}
     </div>

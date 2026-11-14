@@ -10,6 +10,7 @@ export const CATEGORY_INFO: Record<string, { deep: string; light: string; base: 
   toilets: { deep: "#2F3A80", light: "#D7DCFA", base: "#6371C6" },
   "first-aid": { deep: "#7D1F28", light: "#FBD0CF", base: "#C4434C" },
   info: { deep: "#3B3550", light: "#EFECF6", base: "#8A84A2" },
+  landmark: { deep: "#4E4A12", light: "#EEEBC0", base: "#8F8A2E" },
   "entrance-exit": { deep: "#22552C", light: "#CDEDC4", base: "#4B9752" },
 };
 
