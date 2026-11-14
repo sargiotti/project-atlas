@@ -40,3 +40,21 @@ export function initialLang(): Lang {
   const langs = nav?.languages?.length ? nav.languages : nav?.language ? [nav.language] : [];
   return loadStoredLang() ?? pickLang(langs);
 }
+
+/**
+ * Organizer panel default (slice 07): the first browser language whose language part is en, es or da,
+ * otherwise English (the visitor default stays Spanish). An explicit stored choice wins.
+ */
+export function pickPanelLang(browserLangs: readonly string[] | undefined | null): Lang {
+  for (const tag of browserLangs ?? []) {
+    const primary = String(tag).toLowerCase().split(/[-_]/)[0];
+    if (isLang(primary)) return primary;
+  }
+  return "en";
+}
+
+export function initialPanelLang(): Lang {
+  const nav = typeof navigator !== "undefined" ? navigator : undefined;
+  const langs = nav?.languages?.length ? nav.languages : nav?.language ? [nav.language] : [];
+  return loadStoredLang() ?? pickPanelLang(langs);
+}

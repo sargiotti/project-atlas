@@ -11,7 +11,18 @@ export function usePath() {
   return path;
 }
 
-export function navigate(to: string, replace = false) {
+// A page with unsaved work (the event form) can veto in-app navigation: the guard returns false to cancel
+// and is then responsible for asking the user. `force` skips it (redirects, navigation after a save).
+let guard: ((to: string) => boolean) | null = null;
+export function setNavigationGuard(g: (to: string) => boolean) {
+  guard = g;
+  return () => {
+    if (guard === g) guard = null;
+  };
+}
+
+export function navigate(to: string, replace = false, force = false) {
+  if (!force && guard && !guard(to)) return;
   if (replace) window.history.replaceState({}, "", to);
   else window.history.pushState({}, "", to);
   window.dispatchEvent(new PopStateEvent("popstate"));
@@ -47,4 +58,12 @@ export function matchInviteToken(path: string): string | null {
   } catch {
     return "";
   }
+}
+
+const ID = "[a-z0-9-]{1,64}";
+/** `/panel/events/<id>[/edit|/preview]` -> { id, view }. `new` is matched before this. Bad ids give null. */
+export function matchPanelEvent(path: string): { id: string; view: "hub" | "edit" | "preview" } | null {
+  const m = new RegExp(`^/panel/events/(${ID})(?:/(edit|preview))?$`).exec(path);
+  if (!m) return null;
+  return { id: m[1], view: (m[2] as "edit" | "preview" | undefined) ?? "hub" };
 }
