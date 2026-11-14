@@ -91,6 +91,27 @@ export const ERROR_CODES = [
   "not_found",
   "rate_limited",
   "internal_error",
+  // Slice 06 (organizer accounts). The first group is also used as `?error=` on the login/invite redirects.
+  "invalid_state",
+  "oauth_failed",
+  "email_not_verified",
+  "no_access",
+  "not_configured",
+  "invite_not_found",
+  "invite_email_mismatch",
+  "invite_expired",
+  "invite_used",
+  "invite_revoked",
+  // JSON API errors of the invite/admin/auth endpoints.
+  "unauthenticated",
+  "forbidden",
+  "invalid_origin",
+  "unsupported_media_type",
+  "payload_too_large",
+  "validation_error",
+  "email_already_registered",
+  "invite_already_pending",
+  "invite_cap_reached",
 ] as const;
 export const errorCodeSchema = z.enum(ERROR_CODES);
 export type ErrorCode = z.infer<typeof errorCodeSchema>;

@@ -1,0 +1,11 @@
+# Used ONLY by scripts/preview-deploy.mjs to apply migrations to the PREVIEW D1 (atlas-preview, EU).
+# `wrangler d1 migrations apply` reads the top-level binding, which in wrangler.toml is production,
+# so this separate config points the same binding name at the preview database instead.
+name = "atlas-preview-migrate"
+compatibility_date = "2026-11-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "atlas-preview"
+database_id = "f755efdc-635c-4a62-9556-092b68d9cbbe"
+migrations_dir = "migrations"

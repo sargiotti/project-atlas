@@ -1,1 +1,6 @@
-# Slice 01 needs no secrets. Copy to .dev.vars (gitignored) if a later slice adds some.
+# Copy to .dev.vars (gitignored). Real Google sign-in only works on production (the only registered redirect URI),
+# so locally these are placeholders and sign-in reports not_configured unless OAUTH_REDIRECT_URI is also set.
+# Production values are set by the user with `wrangler secret put`, never committed.
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+ADMIN_EMAIL=
