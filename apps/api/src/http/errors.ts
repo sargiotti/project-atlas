@@ -1,4 +1,4 @@
-import type { ErrorCode } from "@atlas/contract";
+import type { ErrorCode, FieldError } from "@atlas/contract";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { AppContext } from "./types";
 
@@ -27,6 +27,7 @@ const MESSAGES: Record<ErrorCode, string> = {
   email_already_registered: "That email already has an account.",
   invite_already_pending: "That email already has a pending invite.",
   invite_cap_reached: "Too many pending invites. Revoke one first.",
+  event_limit_reached: "You reached the limit of 10 events.",
 };
 
 export function errorResponse(
@@ -35,8 +36,9 @@ export function errorResponse(
   code: ErrorCode,
   cacheControl: string,
   extraHeaders: Record<string, string> = {},
+  fields?: FieldError[],
 ): Response {
-  return c.json({ error: { code, message: MESSAGES[code], requestId: c.get("requestId") } }, status, {
+  return c.json({ error: { code, message: MESSAGES[code], requestId: c.get("requestId"), ...(fields ? { fields } : {}) } }, status, {
     "Cache-Control": cacheControl,
     ...extraHeaders,
   });

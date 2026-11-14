@@ -85,7 +85,7 @@ function UserMenu({ me }: { me: Organizer }) {
 
 function Frame({ me, children }: { me: Organizer; children: ReactNode }) {
   return (
-    <div className="app" data-theme="auto">
+    <div className="app pe" data-theme="auto">
       <header className="ptop">
         <Brand />
         <span className="sp" />
@@ -112,7 +112,7 @@ export function NoAccess() {
  * Every panel route goes through here: GET /auth/me first. 401 sends to /panel/login. The client role
  * check only decides what to render; the server enforces access on every admin call regardless.
  */
-export default function PanelGuard({ admin, children }: { admin?: boolean; children: ReactNode }) {
+export default function PanelGuard({ admin, bare, children }: { admin?: boolean; bare?: boolean; children: ReactNode }) {
   const { t } = useI18n();
   const [state, setState] = useState<{ kind: "loading" | "error" } | { kind: "ok"; me: Organizer }>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
@@ -147,5 +147,6 @@ export default function PanelGuard({ admin, children }: { admin?: boolean; child
       </div>
     );
   }
+  if (bare) return <div className="app pe" data-theme="auto">{children}</div>;
   return <Frame me={state.me}>{admin && state.me.role !== "admin" ? <NoAccess /> : children}</Frame>;
 }

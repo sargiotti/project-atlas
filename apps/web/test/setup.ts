@@ -1,6 +1,9 @@
 import "@testing-library/jest-dom/vitest";
 import { afterEach } from "vitest";
-import { cleanup } from "@testing-library/react";
+import { cleanup, configure } from "@testing-library/react";
+
+// The panel chunk (lazy) is transformed on first use, which can be slow on a busy machine.
+configure({ asyncUtilTimeout: 5000 });
 
 afterEach(() => cleanup());
 

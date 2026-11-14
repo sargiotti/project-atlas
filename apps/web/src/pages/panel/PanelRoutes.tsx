@@ -1,13 +1,31 @@
-import { matchInviteToken, usePath } from "../../lib/router";
+import { useMemo } from "react";
+import { I18nProvider } from "../../i18n/I18nProvider";
+import { initialPanelLang } from "../../i18n/detect";
+import { matchInviteToken, matchPanelEvent, usePath } from "../../lib/router";
 import { PageNotFound } from "../Pages";
 import AdminInvites from "./AdminInvites";
 import InvitePage from "./InvitePage";
 import PanelGuard from "./PanelGuard";
-import PanelHome from "./PanelHome";
 import PanelLogin from "./PanelLogin";
+import EventForm from "./events/EventForm";
+import EventHub from "./events/EventHub";
+import EventPreview from "./events/EventPreview";
+import EventsList from "./events/EventsList";
 
-/** Everything under /panel. Loaded lazily so visitors never download it. */
+/**
+ * Everything under /panel. Loaded lazily so visitors never download it. The panel has its own default
+ * language: the browser's if it is en, es or da, otherwise English (the visitor default stays Spanish).
+ */
 export default function PanelRoutes() {
+  const initial = useMemo(initialPanelLang, []);
+  return (
+    <I18nProvider initial={initial}>
+      <Screens />
+    </I18nProvider>
+  );
+}
+
+function Screens() {
   const path = usePath().replace(/\/+$/, "");
   const token = matchInviteToken(path);
   if (token !== null) return <InvitePage key={token} token={token} />;
@@ -15,7 +33,36 @@ export default function PanelRoutes() {
   if (path === "/panel") {
     return (
       <PanelGuard>
-        <PanelHome />
+        <EventsList />
+      </PanelGuard>
+    );
+  }
+  if (path === "/panel/events/new") {
+    return (
+      <PanelGuard>
+        <EventForm key="new" />
+      </PanelGuard>
+    );
+  }
+  const ev = matchPanelEvent(path);
+  if (ev?.view === "hub") {
+    return (
+      <PanelGuard>
+        <EventHub key={ev.id} id={ev.id} />
+      </PanelGuard>
+    );
+  }
+  if (ev?.view === "edit") {
+    return (
+      <PanelGuard>
+        <EventForm key={ev.id} id={ev.id} />
+      </PanelGuard>
+    );
+  }
+  if (ev?.view === "preview") {
+    return (
+      <PanelGuard bare>
+        <EventPreview key={ev.id} id={ev.id} />
       </PanelGuard>
     );
   }
