@@ -1,6 +1,7 @@
 import { MAX_EVENTS_IN_LIST } from "@atlas/contract";
 import type { EventPreviewRepository } from "../application/get-event-preview";
 import type { StoredEventPreview } from "../domain/event-preview";
+import { publishedEvent } from "./sql";
 
 interface Row {
   slug: string;
@@ -20,7 +21,7 @@ export class D1EventPreviewRepository implements EventPreviewRepository {
     const { results } = await this.db
       .prepare(
         `SELECT slug, name, start_date, end_date, city, country, og_key
-         FROM events ORDER BY start_date, slug LIMIT ?1`,
+         FROM events WHERE ${publishedEvent()} ORDER BY start_date, slug LIMIT ?1`,
       )
       .bind(MAX_EVENTS_IN_LIST)
       .all<Row>();

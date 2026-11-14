@@ -1,8 +1,9 @@
 import type { EventMapRepository } from "../application/get-map-bundle";
 import type { StoredEventMap } from "../domain/map-bundle";
+import { publishedEvent } from "./sql";
 
 const FIRST_MAP_ID = `(SELECT m.id FROM event_maps m JOIN events e ON e.id = m.event_id
-  WHERE e.slug = ?1 ORDER BY m.position LIMIT 1)`;
+  WHERE e.slug = ?1 AND ${publishedEvent("e")} ORDER BY m.position LIMIT 1)`;
 
 interface MapRow {
   slug: string;
@@ -50,7 +51,7 @@ export class D1EventMapRepository implements EventMapRepository {
           `SELECT e.slug, e.name, e.start_date, e.end_date, e.language, e.time_zone, e.day_start,
                   m.id AS map_id, m.theme, m.width, m.height, m.image_key, m.image_format
            FROM event_maps m JOIN events e ON e.id = m.event_id
-           WHERE m.id = ${FIRST_MAP_ID}`,
+           WHERE m.id = ${FIRST_MAP_ID} AND ${publishedEvent("e")}`,
         )
         .bind(slug),
       this.db
@@ -63,7 +64,7 @@ export class D1EventMapRepository implements EventMapRepository {
       this.db
         .prepare(
           `SELECT s.id, s.point_id, s.title, s.description, s.start_utc, s.end_utc
-           FROM point_sessions s WHERE s.event_id = (SELECT id FROM events WHERE slug = ?1)
+           FROM point_sessions s WHERE s.event_id = (SELECT id FROM events WHERE slug = ?1 AND ${publishedEvent()})
            ORDER BY s.start_utc, s.end_utc, s.id LIMIT 1001`,
         )
         .bind(slug),
