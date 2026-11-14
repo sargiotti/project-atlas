@@ -118,7 +118,13 @@ export default function MapViewer({ imageUrl, width: W, height: H, points, theme
       const k = zoomIn ? Math.max(viewRef.current.k, fitK * 2.5) : viewRef.current.k;
       // Aim a bit above the middle so the bottom sheet on phones does not cover it.
       const tx = size.w / 2;
-      const ty = SAFE_TOP + availH * (size.w < 768 ? 0.3 : 0.5);
+      let ty = SAFE_TOP + availH * (size.w < 768 ? 0.3 : 0.5);
+      // A sheet that is already open (e.g. "See on map" from the Schedule): centre in the free area above it.
+      const sheet = size.w < 768 ? box.current?.ownerDocument.querySelector(".sheet") : null;
+      if (sheet && box.current) {
+        const free = sheet.getBoundingClientRect().top - box.current.getBoundingClientRect().top;
+        if (free > SAFE_TOP + 40) ty = SAFE_TOP + (free - SAFE_TOP) / 2;
+      }
       touched.current = true;
       apply({ x: tx - p.x * W * k, y: ty - p.y * H * k, k }, true);
     },

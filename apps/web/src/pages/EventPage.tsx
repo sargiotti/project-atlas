@@ -5,6 +5,7 @@ import { useI18n } from "../i18n/I18nProvider";
 import LangSwitch from "../components/LangSwitch";
 import PointList from "../components/PointList";
 import PointSheet from "../components/PointSheet";
+import ScheduleView, { ScheduleBoundary } from "../components/ScheduleView";
 import ShareDialog from "../components/ShareDialog";
 import { LogoMark } from "../markers/Pixel";
 import { Link } from "../lib/router";
@@ -23,6 +24,15 @@ function formatDates(start: string, end: string, lang: string) {
   } catch {
     return start === end ? start : `${start} – ${end}`;
   }
+}
+
+function ScheduleFailed() {
+  const { t } = useI18n();
+  return (
+    <p className="sched-empty" role="alert">
+      {t("schError")}
+    </p>
+  );
 }
 
 export default function EventPage({ slug }: { slug: string }) {
@@ -47,17 +57,22 @@ export default function EventPage({ slug }: { slug: string }) {
 function EventView({ bundle, imageUrl }: { bundle: MapBundle; imageUrl: string }) {
   const { t, lang } = useI18n();
   const { event, map, points, sessions } = bundle;
-  const [view, setView] = useState<"map" | "list">("map");
+  const [view, setView] = useState<"map" | "list" | "schedule">("map");
+  const [scheduleSeen, setScheduleSeen] = useState(false);
+  // Slice 10: the Session whose block was tapped in the grid; the sheet opens on its day with it outlined.
+  const [focus, setFocus] = useState<{ sessionId: string; day: string; nonce: number } | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [focusRequest, setFocusRequest] = useState<{ id: string; nonce: number } | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const selected = useMemo(() => points.find((p) => p.id === selectedId) ?? null, [points, selectedId]);
   // Slice 09: sessions grouped by Point. `?at=` only changes what "now" means while rendering.
+  const timed = useMemo(() => withTimes(sessions, event.timeZone, event.dayStart), [sessions, event.timeZone, event.dayStart]);
   const sessionsByPoint = useMemo(() => {
     const m = new Map<string, TimedSession[]>();
-    for (const s of withTimes(sessions, event.timeZone, event.dayStart)) m.set(s.pointId, [...(m.get(s.pointId) ?? []), s]);
+    for (const s of timed) m.set(s.pointId, [...(m.get(s.pointId) ?? []), s]);
     return m;
-  }, [sessions, event.timeZone, event.dayStart]);
+  }, [timed]);
+  const hasSchedule = timed.length > 0;
   const atMs = useMemo(() => parseAt(window.location.search, event.timeZone), [event.timeZone]);
 
   useEffect(() => {
@@ -70,6 +85,29 @@ function EventView({ bundle, imageUrl }: { bundle: MapBundle; imageUrl: string }
 
   const categoryLabel = useCallback((c: string) => t(`cat_${c}` as any), [t]);
 
+  const showView = (v: "map" | "list" | "schedule") => {
+    if (v === "schedule") {
+      setScheduleSeen(true);
+      // A sheet left over from the map would hide the view switch on phones: start the grid clean.
+      setSelectedId(null);
+      setFocus(null);
+    }
+    setView(v);
+  };
+  const selectPoint = (id: string | null) => {
+    setSelectedId(id);
+    setFocus(null);
+  };
+  const pickSession = (s: TimedSession) => {
+    setSelectedId(s.pointId); // from the bundle, never from the URL
+    setFocus((f) => ({ sessionId: s.id, day: s.day, nonce: (f?.nonce ?? 0) + 1 }));
+  };
+  const seeOnMap = () => {
+    if (!selectedId) return;
+    setView("map");
+    setFocusRequest((r) => ({ id: selectedId, nonce: (r?.nonce ?? 0) + 1 }));
+  };
+
   const pickFromList = (id: string) => {
     setView("map");
     setSelectedId(id);
@@ -77,7 +115,7 @@ function EventView({ bundle, imageUrl }: { bundle: MapBundle; imageUrl: string }
   };
 
   return (
-    <div className="app event-page" data-theme={map.theme}>
+    <div className={`app event-page v-${view}${selected && view !== "list" ? " sheet-open" : ""}`} data-theme={map.theme}>
       <div className="stage" aria-hidden={shareOpen || undefined}>
         <div className="view-pane" hidden={view !== "map"}>
           <Suspense fallback={<div className="map-status" role="status">{t("loading")}</div>}>
@@ -88,7 +126,7 @@ function EventView({ bundle, imageUrl }: { bundle: MapBundle; imageUrl: string }
               points={points}
               theme={map.theme}
               selectedId={selectedId}
-              onSelect={setSelectedId}
+              onSelect={selectPoint}
               focusRequest={focusRequest}
               categoryLabel={categoryLabel}
             />
@@ -97,6 +135,23 @@ function EventView({ bundle, imageUrl }: { bundle: MapBundle; imageUrl: string }
         <div className="view-pane list-pane" hidden={view !== "list"}>
           <PointList points={points} onPick={pickFromList} />
         </div>
+        {hasSchedule && scheduleSeen && (
+          <div className="view-pane schedule-pane" hidden={view !== "schedule"}>
+            <ScheduleBoundary fallback={<ScheduleFailed />}>
+              <ScheduleView
+                active={view === "schedule"}
+                event={event}
+                points={points}
+                sessions={timed}
+                atMs={atMs}
+                selectedSessionId={focus && selected ? focus.sessionId : null}
+                sheetOpen={!!selected && view === "schedule"}
+                revealNonce={focus?.nonce ?? 0}
+                onPickSession={pickSession}
+              />
+            </ScheduleBoundary>
+          </div>
+        )}
       </div>
 
       <header className="topbar">
@@ -118,17 +173,24 @@ function EventView({ bundle, imageUrl }: { bundle: MapBundle; imageUrl: string }
       {/* On phones the switch and the sheet stack in this dock, so the switch rides above the sheet. */}
       <div className="bottom-dock">
         <div className="view-switch" role="group" aria-label={t("viewSwitch")}>
-          <button type="button" className={view === "map" ? "on" : ""} aria-pressed={view === "map"} onClick={() => setView("map")}>
+          <button type="button" className={view === "map" ? "on" : ""} aria-pressed={view === "map"} onClick={() => showView("map")}>
             {t("map")}
           </button>
-          <button type="button" className={view === "list" ? "on" : ""} aria-pressed={view === "list"} onClick={() => setView("list")}>
+          <button type="button" className={view === "list" ? "on" : ""} aria-pressed={view === "list"} onClick={() => showView("list")}>
             {t("list")}
           </button>
+          {hasSchedule && (
+            <button type="button" className={view === "schedule" ? "on" : ""} aria-pressed={view === "schedule"} onClick={() => showView("schedule")}>
+              {t("schedule")}
+            </button>
+          )}
         </div>
-        {selected && view === "map" && (
+        {selected && (view === "map" || view === "schedule") && (
           <PointSheet
             point={selected}
-            onClose={() => setSelectedId(null)}
+            onClose={() => selectPoint(null)}
+            focus={focus}
+            onSeeOnMap={view === "schedule" ? seeOnMap : undefined}
             event={event}
             sessions={sessionsByPoint.get(selected.id)}
             atMs={atMs}

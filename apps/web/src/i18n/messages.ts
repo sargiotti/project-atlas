@@ -88,6 +88,20 @@ const es = {
   tzCaption: "Horarios en la hora local del evento ({offset})",
   aboutPlace: "Sobre este lugar",
   unitH: "h",
+  schedule: "Programa",
+  schStarts: "Empieza el {date} · {time}",
+  schOver: "Este evento terminó",
+  schGap: "Ahora no hay nada · Siguiente: {when}",
+  schNone: "Este evento todavía no tiene programa.",
+  schZoom: "Zoom del programa",
+  schZoomCompact: "Compacta",
+  schZoomNormal: "Normal",
+  schZoomDetail: "Detalle",
+  schHours: "Ir a la hora",
+  schGrid: "Programa de {day}",
+  schNoDay: "No hay actividades este día.",
+  schError: "No pudimos mostrar el programa. El mapa y la lista siguen funcionando.",
+  seeOnMap: "Ver en el mapa",
 };
 
 type Messages = Record<keyof typeof es, string>;
@@ -172,6 +186,20 @@ const en: Messages = {
   tzCaption: "Times in the event's local time ({offset})",
   aboutPlace: "About this place",
   unitH: "h",
+  schedule: "Schedule",
+  schStarts: "Starts {date} · {time}",
+  schOver: "This event has ended",
+  schGap: "Nothing on now · Next: {when}",
+  schNone: "This event has no programme yet.",
+  schZoom: "Schedule zoom",
+  schZoomCompact: "Compact",
+  schZoomNormal: "Normal",
+  schZoomDetail: "Detail",
+  schHours: "Jump to hour",
+  schGrid: "Schedule for {day}",
+  schNoDay: "Nothing is scheduled on this day.",
+  schError: "We could not show the schedule. The map and the list still work.",
+  seeOnMap: "See on map",
 };
 
 const da: Messages = {
@@ -254,6 +282,20 @@ const da: Messages = {
   tzCaption: "Tider i begivenhedens lokale tid ({offset})",
   aboutPlace: "Om stedet",
   unitH: "t",
+  schedule: "Program",
+  schStarts: "Starter {date} · {time}",
+  schOver: "Begivenheden er slut",
+  schGap: "Intet lige nu · Næste: {when}",
+  schNone: "Begivenheden har ikke noget program endnu.",
+  schZoom: "Programzoom",
+  schZoomCompact: "Kompakt",
+  schZoomNormal: "Normal",
+  schZoomDetail: "Detaljeret",
+  schHours: "Gå til time",
+  schGrid: "Program for {day}",
+  schNoDay: "Der er intet på programmet denne dag.",
+  schError: "Vi kunne ikke vise programmet. Kortet og listen virker stadig.",
+  seeOnMap: "Se på kortet",
 };
 
 export type MessageKey = keyof Messages;

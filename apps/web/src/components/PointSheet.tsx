@@ -13,6 +13,8 @@ export default function PointSheet({
   event,
   sessions = [],
   atMs = null,
+  focus = null,
+  onSeeOnMap,
 }: {
   point: Point;
   onClose: () => void;
@@ -21,6 +23,10 @@ export default function PointSheet({
   sessions?: TimedSession[];
   /** Simulated "now" (`?at=`), render only. */
   atMs?: number | null;
+  /** Slice 10: a Session tapped in the grid; the panel opens on its day with it outlined. */
+  focus?: { sessionId: string; day: string; nonce: number } | null;
+  /** Slice 10: shown only when the sheet was opened from the Schedule grid. */
+  onSeeOnMap?: () => void;
 }) {
   const { t } = useI18n();
   const ref = useRef<HTMLElement>(null);
@@ -69,9 +75,18 @@ export default function PointSheet({
         </button>
       </div>
       <h2 id="sheet-title" className="sheet-title">{point.name}</h2>
+      {onSeeOnMap && (
+        <button type="button" className="btn primary see-map" onClick={onSeeOnMap}>
+          <svg className="ln" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" />
+            <circle cx="12" cy="9.5" r="2.5" />
+          </svg>
+          {t("seeOnMap")}
+        </button>
+      )}
       {event && sessions.length > 0 ? (
         <>
-          <SessionsPanel key={point.id} point={point} event={event} sessions={sessions} atMs={atMs} />
+          <SessionsPanel key={`${point.id}:${focus?.nonce ?? 0}`} point={point} event={event} sessions={sessions} atMs={atMs} focusId={focus?.sessionId} focusDay={focus?.day} />
           {point.description && (
             <p className="sheet-desc about">
               <b>{t("aboutPlace")}.</b> {point.description}

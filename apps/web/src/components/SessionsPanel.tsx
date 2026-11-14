@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { sessionDay, type EventInfo, type Point } from "@atlas/contract";
 import { useI18n } from "../i18n/I18nProvider";
 import AddToCalendar from "./AddToCalendar";
@@ -34,18 +34,32 @@ export default function SessionsPanel({
   event,
   sessions,
   atMs,
+  focusId,
+  focusDay,
 }: {
   point: Point;
   event: Pick<EventInfo, "slug" | "name" | "timeZone" | "dayStart">;
   sessions: TimedSession[];
   atMs: number | null;
+  /** Session to outline (tapped in the Schedule grid) and its day. */
+  focusId?: string;
+  focusDay?: string;
 }) {
   const { t, lang } = useI18n();
   const { timeZone, dayStart } = event;
   const now = useNow(atMs);
   const days = useMemo(() => daysOf(sessions), [sessions]);
-  const [picked, setPicked] = useState<string | null>(null);
-  const [showEarlier, setShowEarlier] = useState(false);
+  const [picked, setPicked] = useState<string | null>(focusDay ?? null);
+  // "Earlier" opens when the outlined Session is a finished one.
+  const [showEarlier, setShowEarlier] = useState(() => {
+    const f = focusId ? sessions.find((s) => s.id === focusId) : null;
+    return !!f && f.endMs <= now;
+  });
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = root.current?.querySelector<HTMLElement>(".sel");
+    if (el && !el.classList.contains("hero")) el.scrollIntoView?.({ block: "nearest" });
+  }, []);
   const day = picked && days.includes(picked) ? picked : defaultDay(days, now, timeZone, dayStart);
   const isToday = day === sessionDay(now, timeZone, dayStart);
   const todays = useMemo(() => sessions.filter((s) => s.day === day), [sessions, day]);
@@ -79,7 +93,7 @@ export default function SessionsPanel({
     : 0;
 
   return (
-    <div className="sessions">
+    <div className="sessions" ref={root}>
       <div className="days" role="group" aria-label={t("sDays")}>
         {days.map((d) => (
           <button
@@ -99,7 +113,7 @@ export default function SessionsPanel({
       {differentZone && <p className="tz-caption">{t("tzCaption", { offset: utcOffsetLabel(now, timeZone) })}</p>}
 
       {hero && (
-        <div className="hero" data-state={running ? "now" : "next"}>
+        <div className={"hero" + (hero.id === focusId ? " sel" : "")} data-state={running ? "now" : "next"}>
           <div className="hero-head">
             <span className={"pill " + (running ? "now" : "next")}>{running ? t("sNow") : t("sNext")}</span>
             {heroSub && <small>{heroSub}</small>}
@@ -125,7 +139,7 @@ export default function SessionsPanel({
           <p className="minihead">{running ? t("sNext") : t("sLater")}</p>
           <ul className="alist">
             {rest.map((s) => (
-              <li key={s.id}>
+              <li key={s.id} className={s.id === focusId ? "sel" : undefined}>
                 <span className="tm">
                   {clock(s.startMs)}
                   <small>{clock(s.endMs)}</small>
@@ -154,7 +168,7 @@ export default function SessionsPanel({
           {(showEarlier || !hero) && (
             <ul className="alist past">
               {past.map((s) => (
-                <li key={s.id}>
+                <li key={s.id} className={s.id === focusId ? "sel" : undefined}>
                   <span className="tm">
                     {clock(s.startMs)}
                     <small>{clock(s.endMs)}</small>
