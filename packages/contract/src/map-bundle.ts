@@ -9,6 +9,7 @@ import {
   localToUtc,
   parseUtcInstant,
 } from "./schedule.ts";
+import { fieldErrorSchema } from "./field-errors.ts";
 
 export const SLUG_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
@@ -202,6 +203,8 @@ export const ERROR_CODES = [
   "email_already_registered",
   "invite_already_pending",
   "invite_cap_reached",
+  // Slice 07 (organizer events).
+  "event_limit_reached",
 ] as const;
 export const errorCodeSchema = z.enum(ERROR_CODES);
 export type ErrorCode = z.infer<typeof errorCodeSchema>;
@@ -211,6 +214,8 @@ export const errorResponseSchema = z.object({
     code: errorCodeSchema,
     message: z.string(),
     requestId: z.string(),
+    /** Only on `validation_error` of the panel event endpoints. Codes only, never the submitted values. */
+    fields: z.array(fieldErrorSchema).optional(),
   }),
 });
 export type ErrorResponse = z.infer<typeof errorResponseSchema>;
