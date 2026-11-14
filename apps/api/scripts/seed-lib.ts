@@ -3,11 +3,21 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve, sep } from "node:path";
 import { z } from "zod";
 import {
+  DAY_START_REGEX,
+  DEFAULT_DAY_START,
   MAX_POINTS_PER_MAP,
+  MAX_SESSIONS_PER_EVENT,
+  addDays,
   contentLanguageSchema,
+  formatUtcInstant,
+  localToUtc,
   mapThemeSchema,
+  parseUtcInstant,
   pointCategorySchema,
+  sessionSchema,
   slugSchema,
+  timeZoneSchema,
+  type Session,
 } from "@atlas/contract";
 import { findSvgViolations, readViewBox } from "./svg-safety.ts";
 import { COVER_LIMITS, MAP_LIMITS, inspectWebp } from "./webp-safety.ts";
@@ -44,6 +54,20 @@ const seedPointSchema = z.strictObject({
   y: z.number().min(0).max(1),
 });
 
+const localDateTime = z.string().regex(/^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):[0-5]\d$/, "Expected YYYY-MM-DDTHH:MM (event local time)");
+
+/** A programme item, authored in the Event's local wall-clock time; converted to UTC when seeding. */
+const seedSessionSchema = z.strictObject({
+  /** Stored id is `{slug}-s-{id}`. */
+  id: z.string().regex(/^[a-z0-9_-]{1,30}$/),
+  /** Seed id of a point of this file. */
+  point: z.string().regex(/^[a-z0-9_-]{1,40}$/),
+  title: z.string(),
+  start: localDateTime,
+  end: localDateTime,
+  description: z.string().optional(),
+});
+
 export const seedFileSchema = z
   .strictObject({
     event: z.strictObject({
@@ -64,6 +88,9 @@ export const seedFileSchema = z
       cover: z.strictObject({ width: z.number().int().positive(), height: z.number().int().positive() }).optional(),
       language: contentLanguageSchema,
       mapTheme: mapThemeSchema,
+      /** IANA zone of the Event. */
+      timeZone: timeZoneSchema,
+      dayStart: z.string().regex(DAY_START_REGEX).default(DEFAULT_DAY_START),
     }),
     map: z.strictObject({
       file: z.string().regex(/^[A-Za-z0-9._-]+\.(svg|webp)$/),
@@ -71,6 +98,7 @@ export const seedFileSchema = z
       height: z.number().int().positive(),
     }),
     points: z.array(seedPointSchema).min(1).max(MAX_POINTS_PER_MAP),
+    sessions: z.array(seedSessionSchema).max(MAX_SESSIONS_PER_EVENT).default([]),
   })
   .superRefine((seed, ctx) => {
     if ((seed.event.latitude === undefined) !== (seed.event.longitude === undefined)) {
@@ -91,6 +119,38 @@ export const seedFileSchema = z
   });
 
 export type SeedFile = z.infer<typeof seedFileSchema>;
+
+/**
+ * Converts the seed's local-time sessions to contract sessions (UTC) and validates them against the contract
+ * (text rules, end > start, at most 24 h) and the Event (start within its dates, point in this file, unique ids).
+ */
+export function resolveSessions(seed: SeedFile): Session[] {
+  const { slug, timeZone, dates } = seed.event;
+  const pointIds = new Set(seed.points.map((p) => p.id));
+  const from = localToUtc(dates.start, "00:00", timeZone);
+  const until = localToUtc(addDays(dates.end, 1), "00:00", timeZone);
+  const ids = new Set<string>();
+  return seed.sessions.map((s) => {
+    if (!pointIds.has(s.point)) throw new Error(`${slug}: session ${s.id} refers to unknown point ${s.point}`);
+    if (ids.has(s.id)) throw new Error(`${slug}: duplicate session id ${s.id}`);
+    ids.add(s.id);
+    const at = (local: string) => formatUtcInstant(localToUtc(local.slice(0, 10), local.slice(11), timeZone));
+    const candidate = {
+      id: `${slug}-s-${s.id}`,
+      pointId: `${slug}-${s.point}`,
+      title: s.title,
+      start: at(s.start),
+      end: at(s.end),
+      ...(s.description ? { description: s.description } : {}),
+    };
+    const parsed = sessionSchema.safeParse(candidate);
+    if (!parsed.success) throw new Error(`${slug}: invalid session ${s.id}
+${z.prettifyError(parsed.error)}`);
+    const start = parseUtcInstant(parsed.data.start)!;
+    if (start < from || start >= until) throw new Error(`${slug}: session ${s.id} starts outside the event dates`);
+    return parsed.data;
+  });
+}
 
 export interface LoadedSeed {
   source: string;
@@ -230,13 +290,20 @@ export function buildSeedStatements(seeds: LoadedSeed[], ogKeys: ReadonlyMap<str
     const eventId = `evt_${slug}`;
     const mapId = `map_${slug}_1`;
     out.push(
-      `INSERT INTO events (id, slug, name, start_date, end_date, city, country, latitude, longitude, cover_key, cover_width, cover_height, og_key, language, created_at, updated_at) VALUES (${q(eventId)}, ${q(slug)}, ${q(seed.event.name)}, ${q(seed.event.dates.start)}, ${q(seed.event.dates.end)}, ${q(seed.event.city)}, ${q(seed.event.country)}, ${coord(seed.event.latitude)}, ${coord(seed.event.longitude)}, ${cover ? q(cover.key) : "NULL"}, ${cover ? cover.width : "NULL"}, ${cover ? cover.height : "NULL"}, ${ogKeys.has(slug) ? q(ogKeys.get(slug)!) : "NULL"}, ${q(seed.event.language)}, ${NOW}, ${NOW}) ON CONFLICT(slug) DO UPDATE SET name = excluded.name, start_date = excluded.start_date, end_date = excluded.end_date, city = excluded.city, country = excluded.country, latitude = excluded.latitude, longitude = excluded.longitude, cover_key = excluded.cover_key, cover_width = excluded.cover_width, cover_height = excluded.cover_height, og_key = excluded.og_key, language = excluded.language, updated_at = ${NOW}`,
+      `INSERT INTO events (id, slug, name, start_date, end_date, city, country, latitude, longitude, cover_key, cover_width, cover_height, og_key, language, time_zone, day_start, created_at, updated_at) VALUES (${q(eventId)}, ${q(slug)}, ${q(seed.event.name)}, ${q(seed.event.dates.start)}, ${q(seed.event.dates.end)}, ${q(seed.event.city)}, ${q(seed.event.country)}, ${coord(seed.event.latitude)}, ${coord(seed.event.longitude)}, ${cover ? q(cover.key) : "NULL"}, ${cover ? cover.width : "NULL"}, ${cover ? cover.height : "NULL"}, ${ogKeys.has(slug) ? q(ogKeys.get(slug)!) : "NULL"}, ${q(seed.event.language)}, ${q(seed.event.timeZone)}, ${q(seed.event.dayStart)}, ${NOW}, ${NOW}) ON CONFLICT(slug) DO UPDATE SET time_zone = excluded.time_zone, day_start = excluded.day_start, name = excluded.name, start_date = excluded.start_date, end_date = excluded.end_date, city = excluded.city, country = excluded.country, latitude = excluded.latitude, longitude = excluded.longitude, cover_key = excluded.cover_key, cover_width = excluded.cover_width, cover_height = excluded.cover_height, og_key = excluded.og_key, language = excluded.language, updated_at = ${NOW}`,
       `INSERT INTO event_maps (id, event_id, position, width, height, theme, image_key, image_format, created_at, updated_at) VALUES (${q(mapId)}, ${q(eventId)}, 1, ${seed.map.width}, ${seed.map.height}, ${q(seed.event.mapTheme)}, ${q(imageKey)}, ${q(format)}, ${NOW}, ${NOW}) ON CONFLICT(id) DO UPDATE SET width = excluded.width, height = excluded.height, theme = excluded.theme, image_key = excluded.image_key, image_format = excluded.image_format, updated_at = ${NOW}`,
+      // Sessions first (they reference points); also covers sessions of a previous seed of this event.
+      `DELETE FROM point_sessions WHERE event_id = ${q(eventId)}`,
       `DELETE FROM points WHERE map_id = ${q(mapId)}`,
     );
     for (const p of seed.points) {
       out.push(
         `INSERT INTO points (id, map_id, category, name, description, x, y, created_at, updated_at) VALUES (${q(`${slug}-${p.id}`)}, ${q(mapId)}, ${q(p.category)}, ${q(p.name)}, ${q(p.description)}, ${p.x}, ${p.y}, ${NOW}, ${NOW})`,
+      );
+    }
+    for (const sess of resolveSessions(seed)) {
+      out.push(
+        `INSERT INTO point_sessions (id, event_id, point_id, title, description, start_utc, end_utc, created_at, updated_at) VALUES (${q(sess.id)}, ${q(eventId)}, ${q(sess.pointId)}, ${q(sess.title)}, ${sess.description === undefined ? "NULL" : q(sess.description)}, ${q(sess.start)}, ${q(sess.end)}, ${NOW}, ${NOW})`,
       );
     }
   }

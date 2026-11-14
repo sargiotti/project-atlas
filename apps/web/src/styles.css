@@ -216,6 +216,65 @@ button, input { font: inherit; color: inherit; }
 .sheet-title { font-size: 1.4rem; line-height: 1.2; margin: 10px 0 6px; overflow-wrap: anywhere; }
 .sheet-desc { color: var(--ink-2); font-size: 1rem; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
 
+/* point sessions (slice 09, deliverable 08 proposal A) */
+.sheet-desc.about { margin-top: 16px; }
+.sheet-desc.about b { color: var(--ink); }
+.sessions { margin-top: 10px; }
+.days { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 2px 0; }
+.days button {
+  flex: none; min-height: 44px; padding: 0 14px; border: 1.5px solid var(--line); border-radius: 999px; background: var(--surface);
+  font-weight: 700; font-size: 0.9rem; color: var(--ink-2); cursor: pointer; text-transform: capitalize;
+}
+.days button.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.tz-caption { font-size: 0.78rem; color: var(--ink-2); margin: 6px 2px 0; }
+.minihead { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); font-weight: 700; margin: 14px 2px 6px; }
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+.pill.now { background: var(--accent); color: var(--on-accent); }
+.pill.now::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.pill.next { border: 1.5px solid var(--accent); color: var(--ink); }
+.pill.ended { border: 1px solid var(--line); color: var(--ink-2); }
+.hero { border: 2px solid var(--accent); background: var(--surface); border-radius: 16px; padding: 12px 14px; margin-top: 8px; }
+.hero-head { display: flex; align-items: center; gap: 8px; }
+.hero-head small { color: var(--ink-2); font-weight: 700; }
+.hero-title { font-size: 1.2rem; font-weight: 700; line-height: 1.2; margin: 6px 0 2px; overflow-wrap: anywhere; }
+.hero-meta { font-size: 0.95rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.ses-desc { display: block; color: var(--ink-2); font-size: 0.88rem; font-weight: 400; line-height: 1.4; margin: 6px 0 0; white-space: pre-line; overflow-wrap: anywhere; }
+.prog { height: 8px; border-radius: 4px; background: var(--line); margin: 10px 0 12px; overflow: hidden; }
+.prog i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+.prog-gap { height: 12px; }
+.alist { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 14px; }
+.alist li { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 8px 8px 12px; }
+.alist li + li { border-top: 1px solid var(--line); }
+.alist .tm { width: 66px; flex: none; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.alist .tm small { display: block; font-weight: 400; color: var(--ink-2); font-size: 0.8rem; }
+.alist .nm { flex: 1; min-width: 0; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
+.alist.past { margin-top: 8px; background: var(--surface-2) repeating-linear-gradient(135deg, transparent 0 7px, rgba(94, 90, 114, 0.12) 7px 9px); }
+.alist.past .tm, .alist.past .nm { color: var(--ink-2); }
+.disclose {
+  display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 48px; margin-top: 10px; padding: 0 12px;
+  border: 1.5px dashed var(--line); border-radius: 14px; background: transparent; color: var(--ink-2); font: inherit; font-weight: 700; cursor: pointer;
+}
+svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.menuwrap { position: relative; }
+.menuwrap.primary { width: 100%; }
+.cal-btn { width: 100%; min-height: 48px; border-radius: 14px; gap: 8px; }
+.cal-icon-btn {
+  display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: 12px; border: 1.5px solid var(--line);
+  background: var(--surface); color: var(--ink); cursor: pointer;
+}
+.menu {
+  position: absolute; z-index: 5; min-width: 240px; background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 14px; box-shadow: var(--shadow); padding: 6px;
+}
+.menuwrap.primary .menu { left: 0; right: 0; bottom: calc(100% + 8px); }
+.menuwrap.icon .menu { right: 0; top: calc(100% + 4px); }
+.menu a, .menu button {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 0 12px; border: 0; border-radius: 10px;
+  background: transparent; color: inherit; text-align: left; font: inherit; font-weight: 700; font-size: 0.95rem; text-decoration: none; cursor: pointer;
+}
+.menu a:hover, .menu button:hover, .menu a:focus-visible, .menu button:focus-visible { background: var(--surface-2); }
+.menu small { display: block; font-weight: 400; color: var(--ink-2); font-size: 0.78rem; line-height: 1.2; }
+
 /* bottom dock: phones stack [Map/List switch, sheet] so the switch stays above an open sheet */
 .bottom-dock { display: contents; }
 @media (max-width: 767.98px) {

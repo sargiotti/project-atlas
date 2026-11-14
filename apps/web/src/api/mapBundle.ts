@@ -1,4 +1,4 @@
-import { mapBundleSchema, slugSchema, type MapBundle } from "@atlas/contract";
+import { POINT_CATEGORIES, mapBundleSchema, slugSchema, type MapBundle } from "@atlas/contract";
 
 export type BundleResult =
   | { status: "ok"; bundle: MapBundle; imageUrl: string }
@@ -14,6 +14,20 @@ export function safeImageUrl(url: unknown): string | null {
 /** Client-side validation is for UX only (skip a pointless request); the server is the authority. */
 export function isValidSlug(slug: string) {
   return slugSchema.safeParse(slug).success;
+}
+
+/**
+ * Forward compatibility: a category this build does not know (added later) must not black out the whole map.
+ * It is shown as the generic "info" marker instead. The contract schema itself stays strict.
+ */
+export function withKnownCategories(raw: unknown): unknown {
+  const points = (raw as any)?.points;
+  if (!Array.isArray(points)) return raw;
+  const known = new Set<string>(POINT_CATEGORIES);
+  return {
+    ...(raw as object),
+    points: points.map((p) => (p && typeof p === "object" && typeof p.category === "string" && !known.has(p.category) ? { ...p, category: "info" } : p)),
+  };
 }
 
 export async function fetchMapBundle(slug: string, signal?: AbortSignal): Promise<BundleResult> {
@@ -34,7 +48,7 @@ export async function fetchMapBundle(slug: string, signal?: AbortSignal): Promis
   if (!res.ok) return { status: "unavailable" };
 
   try {
-    const bundle = mapBundleSchema.parse(await res.json());
+    const bundle = mapBundleSchema.parse(withKnownCategories(await res.json()));
     const imageUrl = safeImageUrl(bundle.map.image.variants[0]?.url);
     if (!imageUrl) return { status: "unavailable" };
     return { status: "ok", bundle, imageUrl };

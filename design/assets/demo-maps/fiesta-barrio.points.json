@@ -15,7 +15,9 @@
       "height": 640
     },
     "language": "es",
-    "mapTheme": "light"
+    "mapTheme": "light",
+    "timeZone": "Europe/Madrid",
+    "dayStart": "06:00"
   },
   "map": {
     "file": "fiesta-barrio.svg",

@@ -21,6 +21,8 @@ describe("GET /api/v1/events/:slug/map-bundle", () => {
       startDate: "2026-07-10",
       endDate: "2026-07-12",
       language: "en",
+      timeZone: "Europe/Dublin",
+      dayStart: "06:00",
     });
     expect(bundle.map.theme).toBe("dark");
     expect(bundle.map.image.variants).toEqual([
@@ -34,6 +36,46 @@ describe("GET /api/v1/events/:slug/map-bundle", () => {
     const cached = await get("/api/v1/events/tiny-fest/map-bundle", { "If-None-Match": etag });
     expect(cached.status).toBe(304);
     expect(await cached.text()).toBe("");
+  });
+
+  it("ships sessions in the bundle: UTC, ordered by start, optional description omitted", async () => {
+    const bundle = mapBundleSchema.parse(await (await get("/api/v1/events/tiny-fest/map-bundle")).json());
+    // Dublin is UTC+1 in July: 18:00 local = 17:00Z; 00:30 on Saturday local = 23:30Z on Friday.
+    expect(bundle.sessions).toEqual([
+      { id: "tiny-fest-s-fri-early", pointId: "tiny-fest-stage", title: "Opening Set", start: "2026-07-10T17:00:00Z", end: "2026-07-10T18:00:00Z" },
+      {
+        id: "tiny-fest-s-fri-late",
+        pointId: "tiny-fest-stage",
+        title: "Late Set",
+        start: "2026-07-10T23:30:00Z",
+        end: "2026-07-11T01:00:00Z",
+        description: "After midnight.\nSecond line; with, commas.",
+      },
+      { id: "tiny-fest-s-sat-burgers", pointId: "tiny-fest-burgers", title: "Burger eating contest", start: "2026-07-11T12:00:00Z", end: "2026-07-11T13:00:00Z" },
+    ]);
+  });
+
+  it("serves an empty sessions list for an event without a programme", async () => {
+    await env.DB.batch([
+      env.DB.prepare(
+        "INSERT INTO events (id, slug, name, start_date, end_date, language, created_at, updated_at) VALUES ('evt_bare', 'bare-fest', 'Bare', '2026-08-01', '2026-08-02', 'en', 0, 0)",
+      ),
+      env.DB.prepare(
+        "INSERT INTO event_maps (id, event_id, position, width, height, theme, image_key, image_format, created_at, updated_at) VALUES ('map_bare', 'evt_bare', 1, 10, 10, 'light', 'bare.aaaaaaaa.svg', 'svg', 0, 0)",
+      ),
+    ]);
+    const bundle = mapBundleSchema.parse(await (await get("/api/v1/events/bare-fest/map-bundle")).json());
+    expect(bundle.sessions).toEqual([]);
+    expect(bundle.event.timeZone).toBe("UTC"); // migration default
+    expect(bundle.event.dayStart).toBe("06:00");
+  });
+
+  it("the database refuses a session whose point belongs to another event", async () => {
+    // evt_bare (previous test) has no point of its own; tiny-fest-stage belongs to evt_tiny-fest.
+    const insert = env.DB.prepare(
+      "INSERT INTO point_sessions (id, event_id, point_id, title, start_utc, end_utc, created_at, updated_at) VALUES ('x-1', 'evt_bare', 'tiny-fest-stage', 'Nope', '2026-08-01T10:00:00Z', '2026-08-01T11:00:00Z', 0, 0)",
+    );
+    await expect(insert.run()).rejects.toThrow(/does not belong/);
   });
 
   it("returns 404 event_not_found for a valid but unknown slug", async () => {

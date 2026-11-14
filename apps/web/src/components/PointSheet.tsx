@@ -1,11 +1,27 @@
 import { useEffect, useRef } from "react";
-import type { Point } from "@atlas/contract";
+import type { EventInfo, Point } from "@atlas/contract";
 import { CategoryIcon } from "../markers/Pixel";
 import { CATEGORY_INFO } from "../markers/categories";
 import { useI18n } from "../i18n/I18nProvider";
+import SessionsPanel from "./SessionsPanel";
+import type { TimedSession } from "../lib/schedule";
 
 /** Bottom sheet on phones, side panel from 768px (see styles). All content is rendered as React text. */
-export default function PointSheet({ point, onClose }: { point: Point; onClose: () => void }) {
+export default function PointSheet({
+  point,
+  onClose,
+  event,
+  sessions = [],
+  atMs = null,
+}: {
+  point: Point;
+  onClose: () => void;
+  event?: Pick<EventInfo, "slug" | "name" | "timeZone" | "dayStart">;
+  /** Sessions of this Point (slice 09). Without any, the sheet is the plain description sheet. */
+  sessions?: TimedSession[];
+  /** Simulated "now" (`?at=`), render only. */
+  atMs?: number | null;
+}) {
   const { t } = useI18n();
   const ref = useRef<HTMLElement>(null);
   const opener = useRef<Element | null>(null);
@@ -53,7 +69,18 @@ export default function PointSheet({ point, onClose }: { point: Point; onClose: 
         </button>
       </div>
       <h2 id="sheet-title" className="sheet-title">{point.name}</h2>
-      <p className="sheet-desc">{point.description || t("noDescription")}</p>
+      {event && sessions.length > 0 ? (
+        <>
+          <SessionsPanel key={point.id} point={point} event={event} sessions={sessions} atMs={atMs} />
+          {point.description && (
+            <p className="sheet-desc about">
+              <b>{t("aboutPlace")}.</b> {point.description}
+            </p>
+          )}
+        </>
+      ) : (
+        <p className="sheet-desc">{point.description || t("noDescription")}</p>
+      )}
     </section>
   );
 }
