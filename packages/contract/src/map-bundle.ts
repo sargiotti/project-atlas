@@ -156,6 +156,8 @@ export const mapBundleSchema = z
     const seen = new Set<string>();
     // `start` must fall on startDate..endDate in the Event's zone (`end` may run past it).
     const { timeZone, startDate, endDate } = bundle.event;
+    // Field errors (bad zone or dates) are reported by their own schemas; do not run date maths on them.
+    if (!isValidTimeZone(timeZone) || !isoDate.safeParse(startDate).success || !isoDate.safeParse(endDate).success) return;
     const from = localToUtc(startDate, "00:00", timeZone);
     const until = localToUtc(addDays(endDate, 1), "00:00", timeZone);
     bundle.sessions.forEach((s, i) => {

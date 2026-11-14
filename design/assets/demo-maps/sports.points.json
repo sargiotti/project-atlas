@@ -15,7 +15,9 @@
       "height": 640
     },
     "language": "da",
-    "mapTheme": "light"
+    "mapTheme": "light",
+    "timeZone": "Europe/Copenhagen",
+    "dayStart": "06:00"
   },
   "map": {
     "file": "sports.svg",

@@ -15,7 +15,9 @@
       "height": 640
     },
     "language": "es",
-    "mapTheme": "light"
+    "mapTheme": "light",
+    "timeZone": "Europe/Madrid",
+    "dayStart": "06:00"
   },
   "map": {
     "file": "fiesta-barrio.webp",
@@ -110,6 +112,119 @@
       "description": "Pañuelos, camisetas y abanicos de las fiestas de este año. Lo recaudado ayuda a pagar las fiestas.",
       "x": 0.1857,
       "y": 0.7948
+    },
+    {
+      "id": "parroquia-san-valero",
+      "name": "Parroquia de San Valero",
+      "category": "landmark",
+      "description": "La iglesia del barrio, junto a la plaza. Misas, salida de la procesión y conciertos durante las fiestas.",
+      "x": 0.82,
+      "y": 0.31
+    }
+  ],
+  "sessions": [
+    {
+      "id": "vie-misa",
+      "point": "parroquia-san-valero",
+      "title": "Misa de apertura de las fiestas",
+      "start": "2026-12-04T19:00",
+      "end": "2026-12-04T20:00"
+    },
+    {
+      "id": "vie-pregon",
+      "point": "escenario-plaza",
+      "title": "Pregón y encendido de luces",
+      "start": "2026-12-04T21:00",
+      "end": "2026-12-04T22:00",
+      "description": "Habla la fallera mayor. Después, chocolate caliente para todos."
+    },
+    {
+      "id": "vie-orquesta",
+      "point": "escenario-plaza",
+      "title": "Orquesta Los Nocturnos",
+      "start": "2026-12-04T22:30",
+      "end": "2026-12-05T01:00"
+    },
+    {
+      "id": "vie-dj",
+      "point": "escenario-plaza",
+      "title": "Sesión DJ de madrugada",
+      "start": "2026-12-05T01:30",
+      "end": "2026-12-05T03:00"
+    },
+    {
+      "id": "sab-misa",
+      "point": "parroquia-san-valero",
+      "title": "Misa mayor",
+      "start": "2026-12-05T12:00",
+      "end": "2026-12-05T13:00"
+    },
+    {
+      "id": "sab-mascleta",
+      "point": "escenario-plaza",
+      "title": "Mascletà del barrio",
+      "start": "2026-12-05T14:00",
+      "end": "2026-12-05T14:20",
+      "description": "Ruido y buen humor. Mejor con los oídos tapados."
+    },
+    {
+      "id": "sab-cabalgata",
+      "point": "acceso-calle-mayor",
+      "title": "Cabalgata de gigantes y cabezudos",
+      "start": "2026-12-05T18:00",
+      "end": "2026-12-05T19:30",
+      "description": "Sale de la Calle Mayor y llega hasta la plaza."
+    },
+    {
+      "id": "sab-procesion",
+      "point": "parroquia-san-valero",
+      "title": "Salida de la procesión de San Valero",
+      "start": "2026-12-05T19:45",
+      "end": "2026-12-05T21:30",
+      "description": "Sale de la parroquia y recorre las calles del barrio."
+    },
+    {
+      "id": "sab-verbena",
+      "point": "escenario-plaza",
+      "title": "Gran verbena con Los Faroles",
+      "start": "2026-12-05T22:30",
+      "end": "2026-12-06T01:30"
+    },
+    {
+      "id": "dom-misa",
+      "point": "parroquia-san-valero",
+      "title": "Misa y bendición de los niños",
+      "start": "2026-12-06T11:00",
+      "end": "2026-12-06T12:00"
+    },
+    {
+      "id": "dom-paella",
+      "point": "escenario-plaza",
+      "title": "Concurso de paella popular",
+      "start": "2026-12-06T13:00",
+      "end": "2026-12-06T15:30"
+    },
+    {
+      "id": "dom-concierto",
+      "point": "parroquia-san-valero",
+      "title": "Concierto de órgano y coro parroquial",
+      "start": "2026-12-06T20:00",
+      "end": "2026-12-06T21:00",
+      "description": "Entrada libre hasta completar aforo."
+    },
+    {
+      "id": "lun-desfile",
+      "point": "acceso-calle-mayor",
+      "title": "Desfile infantil de disfraces",
+      "start": "2026-12-07T17:00",
+      "end": "2026-12-07T18:30"
+    },
+    {
+      "id": "lun-despedida",
+      "point": "escenario-plaza",
+      "title": "Despedida de las fiestas y castillo de fuegos",
+      "start": "2026-12-07T21:00",
+      "end": "2026-12-07T22:30"
     }
   ]
 }

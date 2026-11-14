@@ -1,8 +1,8 @@
-import { POINT_CATEGORIES, type MapBundle, type MapTheme, type Point } from "@atlas/contract";
+import { POINT_CATEGORIES, type MapBundle, type MapTheme, type Point, type Session } from "@atlas/contract";
 
 /** Raw facts about an Event Map as stored. Free of framework and I/O types. */
 export interface StoredEventMap {
-  event: { slug: string; name: string; startDate: string; endDate: string; language: string };
+  event: { slug: string; name: string; startDate: string; endDate: string; language: string; timeZone: string; dayStart: string };
   map: {
     id: string;
     theme: MapTheme;
@@ -12,6 +12,7 @@ export interface StoredEventMap {
     imageFormat: "svg" | "webp";
   };
   points: Point[];
+  sessions: Session[];
 }
 
 const CATEGORY_ORDER = new Map<string, number>(POINT_CATEGORIES.map((c, i) => [c, i]));
@@ -27,6 +28,11 @@ export function sortPoints(points: readonly Point[]): Point[] {
       cmp(a.name, b.name) ||
       cmp(a.id, b.id),
   );
+}
+
+/** Business rule: sessions are ordered by start, then end, then id (deterministic body, stable ETag). */
+export function sortSessions(sessions: readonly Session[]): Session[] {
+  return [...sessions].sort((a, b) => cmp(a.start, b.start) || cmp(a.end, b.end) || cmp(a.id, b.id));
 }
 
 /** Image URL builder. Slice 01: static assets under /maps/. Slice 02 swaps this for R2. */
@@ -48,5 +54,6 @@ export function toMapBundle(stored: StoredEventMap): MapBundle {
       },
     },
     points: sortPoints(stored.points),
+    sessions: sortSessions(stored.sessions),
   };
 }

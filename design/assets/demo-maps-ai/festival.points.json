@@ -15,7 +15,9 @@
       "height": 640
     },
     "language": "en",
-    "mapTheme": "dark"
+    "mapTheme": "dark",
+    "timeZone": "Europe/Dublin",
+    "dayStart": "06:00"
   },
   "map": {
     "file": "festival.webp",
@@ -102,6 +104,232 @@
       "description": "Official T-shirts, posters and tote bags, in the sand-colored tent by the lit path. Card payment only.",
       "x": 0.779,
       "y": 0.8458
+    },
+    {
+      "id": "lantern-stage",
+      "name": "Lantern Stage",
+      "category": "stage",
+      "description": "The open-air meadow stage between the circus tent and the lake. Folk, electronic sets and late jams under the lanterns.",
+      "x": 0.34,
+      "y": 0.54
+    }
+  ],
+  "sessions": [
+    {
+      "id": "fri-a1",
+      "point": "aurora-main-stage",
+      "title": "Marigold Static",
+      "start": "2026-07-10T17:00",
+      "end": "2026-07-10T18:15"
+    },
+    {
+      "id": "fri-a2",
+      "point": "aurora-main-stage",
+      "title": "Tidewater Choir",
+      "start": "2026-07-10T18:45",
+      "end": "2026-07-10T20:00",
+      "description": "Forty voices, one tide. A gentle start to the evening."
+    },
+    {
+      "id": "fri-a3",
+      "point": "aurora-main-stage",
+      "title": "Paper Lanterns Collective",
+      "start": "2026-07-10T20:30",
+      "end": "2026-07-10T22:00"
+    },
+    {
+      "id": "fri-a4",
+      "point": "aurora-main-stage",
+      "title": "Velvet Harbour",
+      "start": "2026-07-10T22:30",
+      "end": "2026-07-11T00:00",
+      "description": "Friday headliner.\nBring a jacket: the wind comes off the lake."
+    },
+    {
+      "id": "fri-a5",
+      "point": "aurora-main-stage",
+      "title": "Neon Orchard",
+      "start": "2026-07-11T00:30",
+      "end": "2026-07-11T02:00",
+      "description": "Late-night closing set, after midnight."
+    },
+    {
+      "id": "fri-h1",
+      "point": "hollow-tent",
+      "title": "The Extraordinarily Long-Named Orchestra of Wandering Lighthouse Keepers and Their Seventeen Friends",
+      "start": "2026-07-10T17:30",
+      "end": "2026-07-10T18:30"
+    },
+    {
+      "id": "fri-h2",
+      "point": "hollow-tent",
+      "title": "Salt & Cinder",
+      "start": "2026-07-10T19:00",
+      "end": "2026-07-10T20:15"
+    },
+    {
+      "id": "fri-h3",
+      "point": "hollow-tent",
+      "title": "Moth Parade",
+      "start": "2026-07-10T20:45",
+      "end": "2026-07-10T22:15"
+    },
+    {
+      "id": "fri-h4",
+      "point": "hollow-tent",
+      "title": "Low Tide Disco",
+      "start": "2026-07-10T22:45",
+      "end": "2026-07-11T00:30"
+    },
+    {
+      "id": "fri-l1",
+      "point": "lantern-stage",
+      "title": "Pebble & The Kites",
+      "start": "2026-07-10T18:00",
+      "end": "2026-07-10T19:00"
+    },
+    {
+      "id": "fri-l2",
+      "point": "lantern-stage",
+      "title": "Glasshouse Ensemble",
+      "start": "2026-07-10T19:30",
+      "end": "2026-07-10T20:45"
+    },
+    {
+      "id": "fri-l3",
+      "point": "lantern-stage",
+      "title": "Quiet Fires",
+      "start": "2026-07-10T21:15",
+      "end": "2026-07-10T22:30"
+    },
+    {
+      "id": "sat-a1",
+      "point": "aurora-main-stage",
+      "title": "Juniper Wake",
+      "start": "2026-07-11T16:00",
+      "end": "2026-07-11T17:15"
+    },
+    {
+      "id": "sat-a2",
+      "point": "aurora-main-stage",
+      "title": "The Hollow Cartographers",
+      "start": "2026-07-11T17:45",
+      "end": "2026-07-11T19:00"
+    },
+    {
+      "id": "sat-a3",
+      "point": "aurora-main-stage",
+      "title": "Ember & Oak",
+      "start": "2026-07-11T19:30",
+      "end": "2026-07-11T21:00"
+    },
+    {
+      "id": "sat-a4",
+      "point": "aurora-main-stage",
+      "title": "Aurora Borealis Soundsystem",
+      "start": "2026-07-11T21:30",
+      "end": "2026-07-11T23:30",
+      "description": "Saturday headliner with the full light show."
+    },
+    {
+      "id": "sat-a5",
+      "point": "aurora-main-stage",
+      "title": "Midnight Ferry",
+      "start": "2026-07-12T00:00",
+      "end": "2026-07-12T01:30"
+    },
+    {
+      "id": "sat-h1",
+      "point": "hollow-tent",
+      "title": "Tessellate",
+      "start": "2026-07-11T16:30",
+      "end": "2026-07-11T17:45"
+    },
+    {
+      "id": "sat-h2",
+      "point": "hollow-tent",
+      "title": "Wren Valley Boys",
+      "start": "2026-07-11T18:15",
+      "end": "2026-07-11T19:30"
+    },
+    {
+      "id": "sat-h3",
+      "point": "hollow-tent",
+      "title": "Cobalt Parade",
+      "start": "2026-07-11T20:00",
+      "end": "2026-07-11T21:15"
+    },
+    {
+      "id": "sat-h4",
+      "point": "hollow-tent",
+      "title": "Stoneline",
+      "start": "2026-07-11T21:45",
+      "end": "2026-07-11T23:15"
+    },
+    {
+      "id": "sat-l1",
+      "point": "lantern-stage",
+      "title": "Morning Glory Brass",
+      "start": "2026-07-11T15:00",
+      "end": "2026-07-11T16:00"
+    },
+    {
+      "id": "sat-l2",
+      "point": "lantern-stage",
+      "title": "Seaglass",
+      "start": "2026-07-11T17:00",
+      "end": "2026-07-11T18:15"
+    },
+    {
+      "id": "sat-l3",
+      "point": "lantern-stage",
+      "title": "Hush Theory",
+      "start": "2026-07-11T19:00",
+      "end": "2026-07-11T20:30"
+    },
+    {
+      "id": "sat-l4",
+      "point": "lantern-stage",
+      "title": "The Last Lantern Jam",
+      "start": "2026-07-11T22:00",
+      "end": "2026-07-12T00:30",
+      "description": "Open jam: bring an instrument."
+    },
+    {
+      "id": "sun-a1",
+      "point": "aurora-main-stage",
+      "title": "Daybreak Gospel",
+      "start": "2026-07-12T14:00",
+      "end": "2026-07-12T15:15"
+    },
+    {
+      "id": "sun-a2",
+      "point": "aurora-main-stage",
+      "title": "Kestrel Road",
+      "start": "2026-07-12T15:45",
+      "end": "2026-07-12T17:00"
+    },
+    {
+      "id": "sun-a3",
+      "point": "aurora-main-stage",
+      "title": "Nightfall Meadows All-Stars",
+      "start": "2026-07-12T18:00",
+      "end": "2026-07-12T20:00",
+      "description": "Closing show with guests from all three stages."
+    },
+    {
+      "id": "sun-h1",
+      "point": "hollow-tent",
+      "title": "Little Moon",
+      "start": "2026-07-12T14:30",
+      "end": "2026-07-12T15:30"
+    },
+    {
+      "id": "sun-l1",
+      "point": "lantern-stage",
+      "title": "Slow Dance Society",
+      "start": "2026-07-12T16:00",
+      "end": "2026-07-12T17:30"
     }
   ]
 }

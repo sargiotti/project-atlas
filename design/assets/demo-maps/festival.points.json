@@ -15,7 +15,9 @@
       "height": 640
     },
     "language": "en",
-    "mapTheme": "dark"
+    "mapTheme": "dark",
+    "timeZone": "Europe/Dublin",
+    "dayStart": "06:00"
   },
   "map": {
     "file": "festival.svg",

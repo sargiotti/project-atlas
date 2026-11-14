@@ -10,6 +10,7 @@ const seed = (name: string, city = "Galway") => ({
     country: "IE",
     language: "en",
     mapTheme: "dark",
+    timeZone: "Europe/Dublin",
   },
   map: { file: "m.svg", width: 10, height: 10 },
   points: [{ id: "a", name: "A", category: "stage", description: "", x: 0.5, y: 0.5 }],

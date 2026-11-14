@@ -15,7 +15,9 @@
       "height": 640
     },
     "language": "da",
-    "mapTheme": "light"
+    "mapTheme": "light",
+    "timeZone": "Europe/Copenhagen",
+    "dayStart": "06:00"
   },
   "map": {
     "file": "havnelobet.webp",
@@ -134,6 +136,31 @@
       "description": "Nærmeste metrostation. Der kører ekstra tog efter løbet.",
       "x": 0.865,
       "y": 0.873
+    }
+  ],
+  "sessions": [
+    {
+      "id": "b1",
+      "point": "start",
+      "title": "Bølge 1 – hurtigste løbere",
+      "start": "2026-11-21T10:00",
+      "end": "2026-11-21T12:00",
+      "description": "Start kl. 10.00 for dem, der løber under 50 minutter."
+    },
+    {
+      "id": "b2",
+      "point": "start",
+      "title": "Bølge 2 – motionsløbere",
+      "start": "2026-11-21T10:20",
+      "end": "2026-11-21T12:20"
+    },
+    {
+      "id": "b3",
+      "point": "start",
+      "title": "Bølge 3 – familie og gang",
+      "start": "2026-11-21T10:40",
+      "end": "2026-11-21T12:40",
+      "description": "Kom gerne i kostume."
     }
   ]
 }
