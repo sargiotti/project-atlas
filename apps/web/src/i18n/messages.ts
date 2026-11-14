@@ -6,7 +6,10 @@ export const BRAND_TAGLINE = "Find your way";
 export const DEFAULT_LANG: Lang = "es";
 export const LANG_NAMES: Record<Lang, string> = { es: "Español", en: "English", da: "Dansk" };
 
+import { panelDa, panelEn, panelEs } from "./panelMessages";
+
 const es = {
+  ...panelEs,
   searchLabel: "Buscar eventos",
   searchPlaceholder: "Buscar eventos, ciudades, países",
   searchClear: "Borrar búsqueda",
@@ -71,6 +74,7 @@ const es = {
 type Messages = Record<keyof typeof es, string>;
 
 const en: Messages = {
+  ...panelEn,
   searchLabel: "Search events",
   searchPlaceholder: "Search events, cities, countries",
   searchClear: "Clear search",
@@ -133,6 +137,7 @@ const en: Messages = {
 };
 
 const da: Messages = {
+  ...panelDa,
   searchLabel: "Søg i events",
   searchPlaceholder: "Søg efter events, byer, lande",
   searchClear: "Ryd søgning",
