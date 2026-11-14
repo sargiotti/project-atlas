@@ -91,10 +91,10 @@ describe("point sheet with sessions", () => {
     expect(within(sheet).queryByText("HEADLINER")).not.toBeInTheDocument();
   });
 
-  it("names the event's city and zone only when the device zone differs", async () => {
+  it("names the event's local time (with offset) only when the device zone differs", async () => {
     const other = deviceZone === "Europe/Madrid" ? "Europe/Dublin" : "Europe/Madrid";
     const first = await openStage(AT, "en", sessionsBundle(other));
-    expect(within(first.sheet).getByText(`Times in ${other.split("/")[1]} local time (${other})`)).toBeInTheDocument();
+    expect(within(first.sheet).getByText(/^Times in the event's local time \(UTC[+-]\d/)).toBeInTheDocument();
   });
 
   it("shows no caption when the device is in the event's zone", async () => {

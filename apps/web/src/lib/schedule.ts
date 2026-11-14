@@ -87,10 +87,14 @@ export function dayChipLabel(date: string, lang: string): string {
   return new Intl.DateTimeFormat(lang, { weekday: "short", day: "numeric", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`));
 }
 
-/** "Europe/Dublin" -> "Dublin"; "America/Argentina/Buenos_Aires" -> "Buenos Aires". */
-export function cityOfZone(timeZone: string): string {
-  const last = timeZone.split("/").pop() ?? timeZone;
-  return last.replace(/_/g, " ");
+/** Offset of the zone at an instant, e.g. "UTC+1", "UTC-3:30", "UTC". The Bundle carries no event city, so no city is guessed. */
+export function utcOffsetLabel(ms: number, timeZone: string): string {
+  try {
+    const part = new Intl.DateTimeFormat("en", { timeZone, timeZoneName: "shortOffset" }).formatToParts(new Date(ms)).find((p) => p.type === "timeZoneName");
+    return (part?.value ?? "GMT").replace("GMT", "UTC");
+  } catch {
+    return "UTC";
+  }
 }
 
 export function deviceTimeZone(): string | null {

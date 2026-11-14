@@ -4,11 +4,11 @@ import { useI18n } from "../i18n/I18nProvider";
 import AddToCalendar from "./AddToCalendar";
 import type { CalendarInput } from "../lib/calendar";
 import {
-  cityOfZone,
   dayChipLabel,
   daysOf,
   defaultDay,
   deviceTimeZone,
+  utcOffsetLabel,
   durationLabel,
   spillDate,
   splitDay,
@@ -96,7 +96,7 @@ export default function SessionsPanel({
           </button>
         ))}
       </div>
-      {differentZone && <p className="tz-caption">{t("tzCaption", { city: cityOfZone(timeZone), zone: timeZone })}</p>}
+      {differentZone && <p className="tz-caption">{t("tzCaption", { offset: utcOffsetLabel(now, timeZone) })}</p>}
 
       {hero && (
         <div className="hero" data-state={running ? "now" : "next"}>

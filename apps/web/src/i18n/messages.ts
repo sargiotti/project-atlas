@@ -85,7 +85,7 @@ const es = {
   calGoogleSub: "Se abre en otra pestaña",
   calIcs: "Apple / Outlook",
   calIcsSub: "Descarga un archivo .ics",
-  tzCaption: "Horarios en hora local de {city} ({zone})",
+  tzCaption: "Horarios en la hora local del evento ({offset})",
   aboutPlace: "Sobre este lugar",
   unitH: "h",
 };
@@ -169,7 +169,7 @@ const en: Messages = {
   calGoogleSub: "Opens in a new tab",
   calIcs: "Apple / Outlook",
   calIcsSub: "Downloads an .ics file",
-  tzCaption: "Times in {city} local time ({zone})",
+  tzCaption: "Times in the event's local time ({offset})",
   aboutPlace: "About this place",
   unitH: "h",
 };
@@ -251,7 +251,7 @@ const da: Messages = {
   calGoogleSub: "Åbner i en ny fane",
   calIcs: "Apple / Outlook",
   calIcsSub: "Henter en .ics-fil",
-  tzCaption: "Tider i lokal tid for {city} ({zone})",
+  tzCaption: "Tider i begivenhedens lokale tid ({offset})",
   aboutPlace: "Om stedet",
   unitH: "t",
 };
