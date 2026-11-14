@@ -1,5 +1,5 @@
-import { Hono, type Context } from "hono";
-import { slugSchema, type ErrorCode } from "@atlas/contract";
+import { Hono } from "hono";
+import { slugSchema } from "@atlas/contract";
 import { getMapBundle } from "../application/get-map-bundle";
 import { listEvents } from "../application/list-events";
 import { applyNearOverride, parseVisitorLocation } from "../domain/nearby";
@@ -8,40 +8,11 @@ import { D1EventListRepository } from "../adapters/d1-event-list-repository";
 import { etagMatches, etagOf } from "./etag";
 import { handleEventPage } from "./event-page";
 import { API_CSP, HTML_CSP } from "./security-headers";
+import { errorResponse } from "./errors";
+import { registerAuthRoutes } from "./auth-routes";
+import type { AppContext, AppEnv } from "./types";
 
-export interface Env {
-  DB: D1Database;
-  /** Static assets (the SPA shell). Used by the /e/* HTML route. */
-  ASSETS: Fetcher;
-  /** Fixed public origin (wrangler vars) for absolute og:url / og:image URLs. Never taken from the request. */
-  PUBLIC_ORIGIN: string;
-  /** Optional: remove the [[ratelimits]] block in wrangler.toml to switch limiting off. */
-  RATE_LIMITER?: { limit(options: { key: string }): Promise<{ success: boolean }> };
-}
-
-type AppEnv = { Bindings: Env; Variables: { requestId: string } };
-type AppContext = Context<AppEnv>;
-
-const MESSAGES: Record<ErrorCode, string> = {
-  invalid_slug: "Invalid event slug.",
-  event_not_found: "Event not found.",
-  not_found: "Not found.",
-  rate_limited: "Too many requests. Try again later.",
-  internal_error: "Internal error.",
-};
-
-function errorResponse(
-  c: AppContext,
-  status: 400 | 404 | 429 | 500,
-  code: ErrorCode,
-  cacheControl: string,
-  extraHeaders: Record<string, string> = {},
-): Response {
-  return c.json({ error: { code, message: MESSAGES[code], requestId: c.get("requestId") } }, status, {
-    "Cache-Control": cacheControl,
-    ...extraHeaders,
-  });
-}
+export type { Env } from "./types";
 
 /** 200 JSON with weak ETag and the given Cache-Control, or 304 when If-None-Match matches. */
 async function cachedJson(c: AppContext, body: string, cacheControl = "public, max-age=300"): Promise<Response> {
@@ -84,6 +55,8 @@ export function createApp() {
     }
     await next();
   });
+
+  registerAuthRoutes(app);
 
   app.get("/api/v1/events/:slug/map-bundle", async (c) => {
     const parsed = slugSchema.safeParse(c.req.param("slug"));

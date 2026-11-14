@@ -14,7 +14,17 @@ export default defineConfig(async () => {
           plugins: [
             cloudflareTest({
               wrangler: { configPath: "./wrangler.toml" },
-              miniflare: { bindings: { TEST_MIGRATIONS: migrations, TEST_SEED: seedStatements } },
+              miniflare: {
+                bindings: {
+                  TEST_MIGRATIONS: migrations,
+                  TEST_SEED: seedStatements,
+                  // Slice 06: fake Google config. Real Google is never called (tests stub fetch).
+                  GOOGLE_CLIENT_ID: "test-client-id.apps.googleusercontent.com",
+                  GOOGLE_CLIENT_SECRET: "test-client-secret",
+                  ADMIN_EMAIL: "Admin@Example.com",
+                  OAUTH_REDIRECT_URI: "http://atlas.test/api/v1/auth/google/callback",
+                },
+              },
             }),
           ],
           test: { name: "worker", setupFiles: ["./test/setup.ts"], include: ["test/**/*.test.ts", "src/**/*.test.ts"] },

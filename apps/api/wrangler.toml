@@ -18,6 +18,10 @@ run_worker_first = ["/api/*", "/e/*"]
 # no trailing slash. Changing it later leaves already-shared links on the old address.
 [vars]
 PUBLIC_ORIGIN = "https://atlas.sargiotti67.workers.dev"
+# Slice 06: Google redirect URI, exact (only this one is registered on the OAuth client). Top-level only on purpose:
+# previews and local dev do not set it, so sign-in there reports `not_configured` instead of sending a code to prod.
+# Secrets (wrangler secret put, never in this file): GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, ADMIN_EMAIL.
+OAUTH_REDIRECT_URI = "https://atlas.sargiotti67.workers.dev/api/v1/auth/google/callback"
 
 # Privacy (GDPR): invocation logs (automatic per-request logs that can include IP and request.cf geo)
 # are OFF. Our own console.* logs still go to Workers Logs. Metrics stay on.
@@ -48,6 +52,15 @@ namespace_id = "1001"
   limit = 60
   period = 60
 
+# Stricter limiter for sign-in start/callback and invite inspect/create/revoke (slice 06): ~10 requests / 60 s per IP.
+# Same approximate behavior and same fail-open switch as above (delete the block to turn it off).
+[[ratelimits]]
+name = "AUTH_LIMITER"
+namespace_id = "1002"
+  [ratelimits.simple]
+  limit = 10
+  period = 60
+
 # --- Previews (Workers Builds, non-production branches) ---------------------------------
 # Workers Builds runs `npx wrangler preview` for non-production branches. Preview deployments do NOT
 # inherit bindings or vars from the top level, so everything the Worker needs is repeated here.
@@ -66,4 +79,11 @@ name = "RATE_LIMITER"
 namespace_id = "1001"
   [previews.ratelimits.simple]
   limit = 60
+  period = 60
+
+[[previews.ratelimits]]
+name = "AUTH_LIMITER"
+namespace_id = "1002"
+  [previews.ratelimits.simple]
+  limit = 10
   period = 60
