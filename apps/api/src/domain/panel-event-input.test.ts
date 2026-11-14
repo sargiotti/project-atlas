@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { COUNTRY_CODES, eventInputSchema, toFieldErrors } from "@atlas/contract";
+import { COUNTRY_CODES, EVENT_TIME_ZONES, eventInputSchema, eventTimeZoneSchema, toFieldErrors } from "@atlas/contract";
 
 const valid = {
   name: "Fiesta de mi barrio",
@@ -92,7 +92,7 @@ describe("EventInput", () => {
   it("time zone, country and language are allowlists", () => {
     expect(codes({ timeZone: "UTC" })).toBeNull();
     expect(codes({ timeZone: "America/New_York" })).toBeNull();
-    for (const bad of ["Mars/Olympus", "+05:00", "europe/dublin", "", "EST5EDT x"]) {
+    for (const bad of ["Mars/Olympus", "+05:00", "-03:00", "", "EST5EDT x"]) {
       expect(codes({ timeZone: bad })).toEqual(["timeZone:invalid_time_zone"]);
     }
     expect(codes({ country: "ZZ" })).toEqual(["country:invalid_country"]);
@@ -113,5 +113,24 @@ describe("EventInput", () => {
       }
     }
     expect(toFieldErrors(eventInputSchema.safeParse("nope").error!)).toEqual([{ path: "body", code: "invalid" }]);
+  });
+
+  it("time zones are stored in the Worker canonical form, whichever spelling the browser sends", () => {
+    for (const [sent, stored] of [
+      ["Europe/Kyiv", "Europe/Kiev"],
+      ["Europe/Kiev", "Europe/Kiev"],
+      ["Asia/Kolkata", "Asia/Calcutta"],
+      ["America/Argentina/Buenos_Aires", "America/Buenos_Aires"],
+      ["Asia/Ho_Chi_Minh", "Asia/Saigon"],
+      ["europe/dublin", "Europe/Dublin"],
+    ] as const) {
+      expect(eventTimeZoneSchema.parse(sent)).toBe(stored);
+      expect(eventInputSchema.parse({ ...valid, timeZone: sent }).timeZone).toBe(stored);
+    }
+  });
+
+  it("every exported time zone passes the schema and is already canonical", () => {
+    expect(EVENT_TIME_ZONES).toEqual([...EVENT_TIME_ZONES].sort());
+    for (const zone of EVENT_TIME_ZONES) expect(eventTimeZoneSchema.parse(zone)).toBe(zone);
   });
 });

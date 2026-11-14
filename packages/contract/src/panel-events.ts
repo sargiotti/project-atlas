@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { EVENT_INPUT_FIELDS, FIELD_ERROR_CODES, type EventInputField, type FieldError, type FieldErrorCode } from "./field-errors.ts";
+import { EVENT_TIME_ZONES } from "./time-zones.ts";
 import { eventSchema, pointSchema, sessionSchema, slugSchema } from "./map-bundle.ts";
 
 const FIELD_CODE_SET: ReadonlySet<string> = new Set(FIELD_ERROR_CODES);
@@ -75,12 +76,39 @@ function utcDay(date: string): number {
 }
 
 let zoneSet: ReadonlySet<string> | null = null;
-/** Exact, case-sensitive membership in `Intl.supportedValuesOf("timeZone")` plus "UTC". */
-export function isAllowedTimeZone(zone: string): boolean {
-  zoneSet ??= new Set([...Intl.supportedValuesOf("timeZone"), "UTC"]);
-  return zoneSet.has(zone);
+function allowedZones(): ReadonlySet<string> {
+  if (!zoneSet) {
+    // Environments without supportedValuesOf (Safari < 15.4) fall back to the fixed list.
+    const supported = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : EVENT_TIME_ZONES;
+    zoneSet = new Set([...supported, "UTC"]);
+  }
+  return zoneSet;
 }
-export const eventTimeZoneSchema = z.string(requiredOrInvalid).refine(isAllowedTimeZone, "invalid_time_zone");
+
+/**
+ * Resolves a time zone to the runtime's canonical IANA name (Europe/Kyiv -> Europe/Kiev in V8), or null when
+ * it is not a supported zone. Raw offsets such as "+05:00" are rejected.
+ */
+export function canonicalTimeZone(zone: string): string | null {
+  try {
+    const canon = new Intl.DateTimeFormat("en", { timeZone: zone }).resolvedOptions().timeZone;
+    return allowedZones().has(canon) ? canon : null;
+  } catch {
+    return null;
+  }
+}
+export function isAllowedTimeZone(zone: string): boolean {
+  return canonicalTimeZone(zone) !== null;
+}
+/** Output (the stored value) is the canonical name, so browser-modern and legacy spellings store identically. */
+export const eventTimeZoneSchema = z.string(requiredOrInvalid).transform((zone, ctx) => {
+  const canon = canonicalTimeZone(zone);
+  if (canon === null) {
+    ctx.addIssue({ code: "custom", message: "invalid_time_zone" });
+    return z.NEVER;
+  }
+  return canon;
+});
 
 export const WEBSITE_MAX = 200;
 
