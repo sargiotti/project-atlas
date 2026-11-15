@@ -149,6 +149,8 @@ export class D1EventPointsRepository {
       if (row.updated_at !== base) return { ok: false, reason: "event_changed" };
       throw err;
     }
+    // NOTE: this 500 happens AFTER the batch committed. It is a loud signal of an unexpected row count, not a rollback;
+    // the in-batch ASSERT_SQL is what rolls the whole save back.
     if (writes.some((w, i) => results[i]?.meta.changes !== w.expect)) {
       throw new ChangesMismatchError("event_points write changed an unexpected number of rows");
     }

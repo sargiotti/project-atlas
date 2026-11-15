@@ -514,6 +514,26 @@ describe("publish needs a Point", () => {
   });
 });
 
+describe("Admin approve needs a Point", () => {
+  it("an organizer who deletes every Point while In review makes the approve 409 points_required", async () => {
+    const o = await newUser("organizer");
+    const admin = await newUser("admin");
+    const ev = await readyEvent(o);
+    const start = await getPoints(o, ev.id);
+    expect((await put(o, ev.id, { baseUpdatedAt: start.eventUpdatedAt, points: [item()] })).status).toBe(200);
+    expect((await call(`/api/v1/panel/events/${ev.id}/publish-request`, { method: "POST", cookie: o.session, json: {} })).status).toBe(200);
+
+    const inReview = await getPoints(o, ev.id);
+    expect((await put(o, ev.id, { baseUpdatedAt: inReview.eventUpdatedAt, points: [] })).status).toBe(200);
+
+    const rv = adminReviewResponseSchema.parse(await (await call(`/api/v1/admin/events/${ev.id}/review`, { cookie: admin.session })).json());
+    expect(rv.points).toHaveLength(0);
+    const res = await call(`/api/v1/admin/events/${ev.id}/approve`, { method: "POST", cookie: admin.session, json: { updatedAt: rv.review.updatedAt } });
+    expect(res.status).toBe(409);
+    expect((await errorOf(res)).code).toBe("points_required");
+  });
+});
+
 describe("where Points show up", () => {
   it("the public bundle shows saved Points only while published, with null names, and its ETag changes on a save", async () => {
     const o = await newUser("organizer");

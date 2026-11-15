@@ -18,7 +18,7 @@ export interface TransitionRule {
   readonly to: EventStatus;
   /** A map must exist at the moment of the change (and the stored fields must pass `eventInputSchema`). */
   readonly needsMap: boolean;
-  /** Slice 08c: at least one Point must exist at the moment of the change (new publish requests only). */
+  /** Slice 08c: at least one Point must exist at the moment of the change (publish requests and Admin approvals). */
   readonly needsPoints: boolean;
   /** The caller names the content version it saw (`updated_at`), and the change only applies to that version. */
   readonly versionGuard: boolean;
@@ -29,7 +29,7 @@ export const TRANSITIONS: readonly TransitionRule[] = [
   { action: "request", actor: "organizer", from: ["draft", "rejected", "unpublished_admin"], to: "in_review", needsMap: true, needsPoints: true, versionGuard: false },
   { action: "withdraw", actor: "organizer", from: ["in_review"], to: "draft", needsMap: false, needsPoints: false, versionGuard: false },
   { action: "unpublish", actor: "organizer", from: ["published"], to: "draft", needsMap: false, needsPoints: false, versionGuard: false },
-  { action: "approve", actor: "admin", from: ["in_review"], to: "published", needsMap: true, needsPoints: false, versionGuard: true },
+  { action: "approve", actor: "admin", from: ["in_review"], to: "published", needsMap: true, needsPoints: true, versionGuard: true },
   { action: "reject", actor: "admin", from: ["in_review"], to: "rejected", needsMap: false, needsPoints: false, versionGuard: false },
   { action: "admin_unpublish", actor: "admin", from: ["published"], to: "unpublished_admin", needsMap: false, needsPoints: false, versionGuard: false },
 ];
