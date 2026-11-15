@@ -83,8 +83,7 @@ export default function CoverPicker({
   const hr = hot ? rects.find((x) => x.s === hot)!.r : null;
   const keep = hr ? { x0: hr.sx, y0: hr.sy, x1: hr.sx + hr.sw, y1: hr.sy + hr.sh } : inter;
   const pct = (v: number, of: number) => `${(v / of) * 100}%`;
-  const rowName = (y: number) => t(y === 0.15 ? "cvPosTop" : y === 0.5 ? "cvPosMiddle" : "cvPosBottom");
-  const colName = (x: number) => t(x === 0.15 ? "cvPosLeft" : x === 0.5 ? "cvPosCentre" : "cvPosRight");
+  const posName = (x: number, y: number) => t(`cvPos${y === 0.15 ? "T" : y === 0.5 ? "" : "B"}${x === 0.15 ? "L" : x === 0.5 ? "" : "R"}`.replace(/^cvPos$/, "cvPosM") as any);
 
   return (
     <div className="cv-pick">
@@ -127,7 +126,7 @@ export default function CoverPicker({
                 <button
                   key={`${x},${y}`}
                   type="button"
-                  aria-label={`${rowName(y)} ${colName(x)}`}
+                  aria-label={posName(x, y)}
                   aria-pressed={Math.abs(x - focal.x) < 0.01 && Math.abs(y - focal.y) < 0.01}
                   disabled={locked}
                   onClick={() => set(x, y)}

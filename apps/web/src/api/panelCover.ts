@@ -76,8 +76,9 @@ export type CoverUpload = { full: Blob; small: Blob; og: Blob; fx: number; fy: n
 /** PUT /panel/events/:id/cover: create or replace (idempotent). */
 export function putCover(eventId: string, c: CoverUpload, opts: { onProgress?: (p: number) => void; signal?: AbortSignal } = {}): Promise<CoverResult> {
   const form = new FormData();
-  form.append("full", c.full, "full.webp");
-  form.append("small", c.small, "small.webp");
+  const ext = c.full.type === "image/jpeg" ? "jpg" : "webp"; // JPEG where the browser can't encode WebP (Safari)
+  form.append("full", c.full, `full.${ext}`);
+  form.append("small", c.small, `small.${ext}`);
   form.append("og", c.og, "og.jpg");
   form.append("fx", String(c.fx));
   form.append("fy", String(c.fy));

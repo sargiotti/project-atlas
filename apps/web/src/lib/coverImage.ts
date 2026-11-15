@@ -75,6 +75,13 @@ function resizeRect(src: CanvasImageSource & { width: number; height: number }, 
 
 const toBlob = (c: HTMLCanvasElement, type: string, q: number) => new Promise<Blob | null>((r) => c.toBlob(r, type, q));
 
+let webpSupport: Promise<boolean> | undefined;
+/** Safari can't encode WebP from a canvas (toBlob silently returns PNG): probe once with a tiny canvas. */
+export function canEncodeWebp(): Promise<boolean> {
+  webpSupport ??= toBlob(makeCanvas(2, 2).c, "image/webp", 0.8).then((b) => !!b && b.type === "image/webp", () => false);
+  return webpSupport;
+}
+
 /** Encodes under the byte cap, stepping quality down. null when the browser can't produce `type` or no quality fits. */
 async function encodeUnder(c: HTMLCanvasElement, type: "image/webp" | "image/jpeg", cap: number): Promise<Blob | null> {
   for (const q of qualityLadder(type === "image/webp" ? WEBP_QUALITY : JPEG_QUALITY)) {
@@ -105,14 +112,16 @@ async function renderOg(stored: CanvasImageSource & { width: number; height: num
   return isBaselineJpeg(new Uint8Array(await blob.arrayBuffer())) ? blob : null;
 }
 
-/** Full (<= 1600 wide, trimmed to 4:5..3:1 around the focal point), 800 wide small, and the JPEG. null = this browser can't encode it. */
+/** Full (<= 1600 wide, trimmed to 4:5..3:1 around the focal point), 800 wide small (both WebP, or both JPEG where the
+ *  browser can't encode WebP), and the og JPEG. ok:false = a real failure (no quality fits the caps, not baseline). */
 export async function encodeCover(src: ImageBitmap, f: Focal): Promise<{ ok: true; value: CoverFiles } | { ok: false }> {
   const size = fullSize(src.width, src.height, f);
   const fullCanvas = resizeRect(src, trimRect(src.width, src.height, f), size);
   const sm = smallSize(size);
   const smallCanvas = resizeRect(fullCanvas, { sx: 0, sy: 0, sw: size.width, sh: size.height }, sm);
-  const full = await encodeUnder(fullCanvas, "image/webp", FULL_MAX_BYTES);
-  const small = full ? await encodeUnder(smallCanvas, "image/webp", SMALL_MAX_BYTES) : null;
+  const type = (await canEncodeWebp()) ? "image/webp" : "image/jpeg";
+  const full = await encodeUnder(fullCanvas, type, FULL_MAX_BYTES);
+  const small = full ? await encodeUnder(smallCanvas, type, SMALL_MAX_BYTES) : null;
   const og = full && small ? await renderOg(fullCanvas, f) : null;
   if (!full || !small || !og) return { ok: false };
   return { ok: true, value: { full, small, og, width: size.width, height: size.height } };

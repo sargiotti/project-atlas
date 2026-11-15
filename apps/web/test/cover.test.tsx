@@ -109,7 +109,7 @@ describe("cover in the create form", () => {
     expect(calls(api, "POST /panel/events")).toHaveLength(0);
     stage.focus();
     await user.keyboard("{ArrowRight}");
-    expect(screen.getByRole("button", { name: "Middle centre" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "Middle" })).toHaveAttribute("aria-pressed", "false");
     await user.click(screen.getByRole("button", { name: "Top left" }));
     expect(screen.getByRole("button", { name: "Top left" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText("The cover uploads right after your event is created. Nothing is sent before that.")).toBeInTheDocument();
