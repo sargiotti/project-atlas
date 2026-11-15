@@ -67,3 +67,9 @@ export function matchPanelEvent(path: string): { id: string; view: "hub" | "edit
   if (!m) return null;
   return { id: m[1], view: (m[2] as "edit" | "preview" | undefined) ?? "hub" };
 }
+
+/** `/panel/admin/review/<id>` -> id. Bad ids give null (underscores allowed: seeded demo events). */
+export function matchAdminReview(path: string): string | null {
+  const m = /^\/panel\/admin\/review\/([A-Za-z0-9_-]{1,64})$/.exec(path);
+  return m ? m[1] : null;
+}

@@ -88,6 +88,29 @@ namespace_id = "1004"
   limit = 5
   period = 60
 
+# Slice 08b: per-IP limit on /media/* map images, checked BEFORE the D1 read: ~300 requests / 60 s (a venue behind one NAT).
+# Approximate and fail-open like the others; delete the block to switch it off.
+[[ratelimits]]
+name = "MEDIA_LIMITER"
+namespace_id = "1005"
+  [ratelimits.simple]
+  limit = 300
+  period = 60
+
+# Slice 08b: per-Admin-user limit on /api/v1/admin/events/*, keyed on the user id: ~60 requests / 60 s.
+# /admin/invites* keeps the stricter per-IP AUTH_LIMITER. Fails open; delete the block to switch it off.
+[[ratelimits]]
+name = "ADMIN_LIMITER"
+namespace_id = "1006"
+  [ratelimits.simple]
+  limit = 60
+  period = 60
+
+# Slice 08b: daily prune (moderation audit rows older than 365 days, old transition quota rows). 03:17 UTC.
+# Cron triggers are free. Workers Previews have no cron support, so previews never run the prune.
+[triggers]
+crons = ["17 3 * * *"]
+
 # --- Previews (Workers Builds, non-production branches) ---------------------------------
 # Workers Builds runs `npx wrangler preview` for non-production branches. Preview deployments do NOT
 # inherit bindings or vars from the top level, so everything the Worker needs is repeated here.
@@ -127,6 +150,20 @@ name = "UPLOAD_LIMITER"
 namespace_id = "2004"
   [previews.ratelimits.simple]
   limit = 5
+  period = 60
+
+[[previews.ratelimits]]
+name = "MEDIA_LIMITER"
+namespace_id = "2005"
+  [previews.ratelimits.simple]
+  limit = 300
+  period = 60
+
+[[previews.ratelimits]]
+name = "ADMIN_LIMITER"
+namespace_id = "2006"
+  [previews.ratelimits.simple]
+  limit = 60
   period = 60
 
 [[previews.r2_buckets]]

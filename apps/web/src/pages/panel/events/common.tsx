@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { useI18n } from "../../../i18n/I18nProvider";
 import { Link } from "../../../lib/router";
 import "./events.css";
+import "./publish.css";
 
 // ---- icons (same stroke set as the design deliverable) ----------------------------------------------
 const PATHS = {
@@ -103,7 +104,7 @@ export function useDocTitle(title: string) {
 }
 
 // A one-shot message handed from one screen to the next ("Draft saved", "Event deleted"). Memory only.
-let flash: { kind: "saved" | "changes" | "deleted"; name?: string } | null = null;
+let flash: { kind: "saved" | "changes" | "deleted" | "msg"; name?: string } | null = null;
 export function setFlash(f: NonNullable<typeof flash>) {
   flash = f;
 }
@@ -172,7 +173,7 @@ export function Dialog({
         return;
       }
       if (e.key !== "Tab" || !box.current) return;
-      const f = [...box.current.querySelectorAll<HTMLElement>("button:not(:disabled), input:not(:disabled), a[href]")];
+      const f = [...box.current.querySelectorAll<HTMLElement>("button:not(:disabled), input:not(:disabled), textarea:not(:disabled), a[href]")];
       if (!f.length) return;
       const i = f.indexOf(document.activeElement as HTMLElement);
       if (e.shiftKey && i <= 0) {
@@ -225,8 +226,23 @@ export function useFlashToast() {
     if (!f) return;
     if (f.kind === "saved") setBanner(true);
     else if (f.kind === "changes") setToast(t("peChangesSaved"));
+    else if (f.kind === "msg") setToast(f.name ?? "");
     else if (f.kind === "deleted") setToast(t("peDeleted", { name: f.name ?? "" }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return { toast, clearToast: () => setToast(null), banner };
+}
+
+// ---- publication status badge (slice 08b). The label for `rejected` is the organizer one: "Not approved". ------
+export function StatusBadge({ status }: { status: string }) {
+  const { t } = useI18n();
+  const m: Record<string, [string, string]> = {
+    draft: ["st-draft", t("peDraft")],
+    in_review: ["st-review", t("peStReview")],
+    published: ["st-pub", t("peStPublished")],
+    rejected: ["st-rej", t("peStRejected")],
+    unpublished_admin: ["st-unpub", t("peStUnpublished")],
+  };
+  const [cls, label] = m[status] ?? m.draft;
+  return <span className={`st ${cls}`}>{label}</span>;
 }

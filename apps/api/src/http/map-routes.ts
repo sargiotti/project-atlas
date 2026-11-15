@@ -49,13 +49,15 @@ const uploadLimiter: MiddlewareHandler<AppEnv> = async (c, next) => {
   await next();
 };
 
-/** Owner + draft guard. Missing, someone else's and demo events are all 404; a non-draft event is 409. */
-const ownerDraftGuard: MiddlewareHandler<AppEnv> = async (c, next) => {
+/**
+ * Owner guard. Missing, someone else's and demo events are all 404. Since slice 08b the map and theme can change in
+ * every status (edits on an In review or Published event need no re-review), so there is no status check.
+ */
+const ownerGuard: MiddlewareHandler<AppEnv> = async (c, next) => {
   const id = c.req.param("id") ?? "";
-  if (!EVENT_ID.test(id)) return errorResponse(c, 404, "event_not_found", NO_STORE);
-  const status = await new D1MapImageRepository(c.env.DB).ownedStatus(id, c.get("user").id);
-  if (status === null) return errorResponse(c, 404, "event_not_found", NO_STORE);
-  if (status !== "draft") return errorResponse(c, 409, "event_not_draft", NO_STORE);
+  if (!EVENT_ID.test(id) || !(await new D1MapImageRepository(c.env.DB).isOwner(id, c.get("user").id))) {
+    return errorResponse(c, 404, "event_not_found", NO_STORE);
+  }
   await next();
 };
 
@@ -99,11 +101,11 @@ export async function deleteEventMapObjects(c: AppContext, eventId: string): Pro
 
 export function registerMapRoutes(app: Hono<AppEnv>): void {
   // Upload or replace. Origin check, session and the generic write limiter already ran (panel prefix chain,
-  // see panel-routes). Here: upload limiter -> owner/draft guard -> 2 MiB body limit -> parse -> validate -> quota -> R2 -> D1.
+  // see panel-routes). Here: upload limiter -> owner guard -> 2 MiB body limit -> parse -> validate -> quota -> R2 -> D1.
   app.post(
     "/api/v1/panel/events/:id/map",
     uploadLimiter,
-    ownerDraftGuard,
+    ownerGuard,
     bodyLimit({ maxSize: MAP_UPLOAD_BODY_LIMIT, onError: (c) => errorResponse(c as AppContext, 413, "payload_too_large", NO_STORE) }),
     async (c) => {
       const eventId = c.req.param("id");
@@ -189,11 +191,9 @@ export function registerMapRoutes(app: Hono<AppEnv>): void {
         throw err;
       }
       if (!switched) {
-        // Either the event stopped being an owned draft, or a concurrent upload won the compare-and-swap.
+        // Either the event is gone (deleted meanwhile), or a concurrent upload won the compare-and-swap.
         await deleteKeys(c, [fullKeyFinal, smallKeyFinal], "new_after_switch_refused");
-        const status = await repo.ownedStatus(eventId, ownerId);
-        if (status === null) return errorResponse(c, 404, "event_not_found", NO_STORE);
-        if (status !== "draft") return errorResponse(c, 409, "event_not_draft", NO_STORE);
+        if (!(await repo.isOwner(eventId, ownerId))) return errorResponse(c, 404, "event_not_found", NO_STORE);
         logMap(c, "map_rejected", eventId, "map_changed");
         return errorResponse(c, 409, "map_changed", NO_STORE);
       }
@@ -209,7 +209,7 @@ export function registerMapRoutes(app: Hono<AppEnv>): void {
   );
 
   // Theme override (ADR 0008). D1 only. The generic limiter already ran.
-  app.patch("/api/v1/panel/events/:id/map/theme", ownerDraftGuard, async (c) => {
+  app.patch("/api/v1/panel/events/:id/map/theme", ownerGuard, async (c) => {
     const eventId = c.req.param("id");
     let raw: unknown;
     try {
@@ -238,11 +238,31 @@ function randomHex32(): string {
 }
 
 /**
+ * Per-IP limit on /media/* (slice 08b, 08a review finding 3): each hit costs a Worker request, a D1 read and an R2
+ * Class B read. 300 / 60 s tolerates a venue behind one NAT; it is an approximate backstop. Runs BEFORE the D1 read.
+ * Fails open (absent binding or limiter error). Visitors never get 429 in normal use: images are immutable-cached.
+ */
+const mediaLimiter: MiddlewareHandler<AppEnv> = async (c, next) => {
+  const limiter = c.env.MEDIA_LIMITER;
+  if (limiter) {
+    let allowed = true;
+    try {
+      allowed = (await limiter.limit({ key: c.req.header("cf-connecting-ip") ?? "unknown" })).success;
+    } catch {
+      allowed = true;
+    }
+    if (!allowed) return errorResponse(c, 429, "rate_limited", "no-store", { "Retry-After": "60" });
+  }
+  await next();
+};
+
+/**
  * Serves map images through the Worker (the bucket is never public). One D1 read per request.
- * Drafts are visible to their owner only; everything else that does not resolve is a plain 404 (never 401/403).
+ * A published event's images are public. Otherwise only the owner (any status) and an Admin (only while In review)
+ * may fetch them; everything else that does not resolve is a plain 404 (never 401/403).
  */
 export function registerMediaRoutes(app: Hono<AppEnv>): void {
-  app.get("/media/maps/:eventId/:file", async (c) => {
+  app.get("/media/maps/:eventId/:file", mediaLimiter, async (c) => {
     const eventId = c.req.param("eventId");
     const file = c.req.param("file");
     const notFound = () => errorResponse(c, 404, "not_found", "no-store");
@@ -253,7 +273,8 @@ export function registerMediaRoutes(app: Hono<AppEnv>): void {
     const key = `maps/${eventId}/${file}`;
     const found = await new D1MapImageRepository(c.env.DB).lookupForMedia(eventId, sessionHash, Date.now());
     if (!found || !found.keys.includes(key)) return notFound();
-    if (found.status === "draft" && !found.viewerIsOwner) return notFound();
+    const isPublic = found.status === "published";
+    if (!isPublic && !found.viewerIsOwner && !(found.viewerIsAdmin && found.status === "in_review")) return notFound();
 
     const object = await c.env.MAPS.get(key);
     if (!object) return notFound();
@@ -265,7 +286,8 @@ export function registerMediaRoutes(app: Hono<AppEnv>): void {
         "Content-Type": object.httpMetadata?.contentType ?? (ext === "webp" ? "image/webp" : "image/jpeg"),
         "Content-Length": String(object.size),
         "Content-Disposition": `inline; filename="map.${ext}"`,
-        "Cache-Control": found.status === "draft" ? "private, max-age=31536000, immutable" : "public, max-age=31536000, immutable",
+        // A new key per upload makes immutable safe. Non-public images must never sit in a shared cache.
+        "Cache-Control": isPublic ? "public, max-age=31536000, immutable" : "private, max-age=31536000, immutable",
       },
     });
   });

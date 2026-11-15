@@ -20,6 +20,12 @@ export interface EventPageEnv {
 }
 
 const REVALIDATE = "public, max-age=0, must-revalidate";
+/**
+ * Slice 08b: every slug that is not public (never existed, invalid, draft, in review, rejected, unpublished, deleted)
+ * gets this ONE response: same status, body and headers, so the page cannot tell a visitor which of them it is, and
+ * nothing here depends on a session. Short shared cache (30 s) and `noindex`, in a header and a meta tag.
+ */
+const GONE_CACHE = "public, max-age=30";
 
 /** Placeholder contract with apps/web/index.html. Every selector must match exactly once. */
 const SEL = {
@@ -119,6 +125,21 @@ function htmlHeaders(cacheControl: string, etag?: string): Headers {
 const html = (body: string, status: number, cacheControl: string, etag?: string) =>
   new Response(body, { status, headers: htmlHeaders(cacheControl, etag) });
 
+/** The shell with generic brand meta (no event title or description) and a robots noindex tag. */
+async function goneResponse(shell: string): Promise<Response> {
+  const body = await new HTMLRewriter()
+    .on("head", {
+      element(el) {
+        el.append('<meta name="robots" content="noindex">', { html: true });
+      },
+    })
+    .transform(new Response(shell))
+    .text();
+  const res = html(body, 404, GONE_CACHE);
+  res.headers.set("X-Robots-Tag", "noindex");
+  return res;
+}
+
 const UNAVAILABLE =
   '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Atlas</title></head><body><p>Atlas is temporarily unavailable. Please try again in a moment.</p></body></html>';
 
@@ -138,16 +159,16 @@ export async function handleEventPage(c: Context<{ Bindings: EventPageEnv; Varia
     return html(UNAVAILABLE, 503, "no-store");
   }
 
-  // B6: validate before any D1 access. Exactly one path segment; anything else is a 404 shell.
+  // B6: validate before any D1 access. Exactly one path segment; anything else is the same unavailable response.
   // One trailing slash is tolerated, like the client router does. "/e/" and "/e//" stay invalid.
   const segment = c.req.path.slice("/e/".length).replace(/(?<=.)\/$/, "");
   const slug = slugSchema.safeParse(segment);
-  if (!slug.success) return html(shell, 404, REVALIDATE);
+  if (!slug.success) return goneResponse(shell);
 
   try {
     const origin = parsePublicOrigin(c.env.PUBLIC_ORIGIN);
     const preview = await getEventPreview(new D1EventPreviewRepository(c.env.DB), slug.data);
-    if (!preview) return html(shell, 404, REVALIDATE);
+    if (!preview) return goneResponse(shell);
 
     const meta: MetaValues = {
       title: preview.title,

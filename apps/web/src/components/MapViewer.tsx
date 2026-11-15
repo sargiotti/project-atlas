@@ -26,9 +26,11 @@ type Props = {
   /** Ask the map to centre on a point; a new nonce re-triggers it. */
   focusRequest: { id: string; nonce: number } | null;
   categoryLabel: (category: string) => string;
+  /** The map image could not be loaded (the page may refetch the bundle once: the organizer may have replaced the map). */
+  onImageError?: () => void;
 };
 
-export default function MapViewer({ imageUrl, variants, width: W, height: H, points, theme, selectedId, onSelect, focusRequest, categoryLabel }: Props) {
+export default function MapViewer({ imageUrl, variants, width: W, height: H, points, theme, selectedId, onSelect, focusRequest, categoryLabel, onImageError }: Props) {
   const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<Size>({ w: 0, h: 0 });
@@ -325,7 +327,10 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
           draggable={false}
           decoding="async"
           onLoad={() => setImgState("ok")}
-          onError={() => setImgState("error")}
+          onError={() => {
+            setImgState("error");
+            onImageError?.();
+          }}
         />
         {points.map((p) => (
           <Marker

@@ -5,6 +5,7 @@ import { fetchMe, logout } from "../../api/auth";
 import { useI18n } from "../../i18n/I18nProvider";
 import { Link, navigate } from "../../lib/router";
 import { Brand } from "./parts";
+import { PendingContext, usePending } from "./pending";
 
 export function initials(name: string, email: string) {
   const words = name.trim().split(/\s+/).filter(Boolean);
@@ -18,6 +19,8 @@ function UserMenu({ me }: { me: Organizer }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [failed, setFailed] = useState(false);
+  const { count } = usePending();
+  const isAdmin = me.role === "admin";
   const btn = useRef<HTMLButtonElement>(null);
   const root = useRef<HTMLDivElement>(null);
 
@@ -54,10 +57,13 @@ function UserMenu({ me }: { me: Organizer }) {
         className={`umenu${open ? " open" : ""}`}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={t("accountMenu")}
+        aria-label={isAdmin && count > 0 ? t("adMenuSr", { n: count }) : t("accountMenu")}
         onClick={() => setOpen((o) => !o)}
       >
-        <span className="av" aria-hidden="true">{initials(me.displayName, me.email)}</span>
+        <span className="av" aria-hidden="true">
+          {initials(me.displayName, me.email)}
+          {isAdmin && count > 0 && <span className="pa-dot">{count > 99 ? "99+" : count}</span>}
+        </span>
         <span className="uname">{me.displayName}</span>
         <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" {...stroke}><path d="M6 9l6 6 6-6" /></svg>
       </button>
@@ -68,11 +74,18 @@ function UserMenu({ me }: { me: Organizer }) {
             <span className="muted small">{me.email}</span>
           </div>
           <Link to="/panel" role="menuitem" onClick={() => setOpen(false)}>{t("myEvents")}</Link>
-          {me.role === "admin" && (
-            <Link to="/panel/admin/invites" role="menuitem" onClick={() => setOpen(false)}>
-              {t("invitesNav")}
-              <span className="mini">{t("adminBadge")}</span>
-            </Link>
+          {isAdmin && (
+            <>
+              <Link to="/panel/admin/pending" role="menuitem" onClick={() => setOpen(false)}>
+                {t("adTabPending")}
+                {count > 0 && <span className="pa-cnt" aria-label={t("adWaitingSr", { n: count })}>{count}</span>}
+              </Link>
+              <Link to="/panel/admin/published" role="menuitem" onClick={() => setOpen(false)}>{t("adTabPublished")}</Link>
+              <Link to="/panel/admin/invites" role="menuitem" onClick={() => setOpen(false)}>
+                {t("invitesNav")}
+                <span className="mini">{t("adminBadge")}</span>
+              </Link>
+            </>
           )}
           <hr />
           <button type="button" role="menuitem" className="dd-btn" onClick={signOut}>{t("signOut")}</button>
@@ -116,6 +129,7 @@ export default function PanelGuard({ admin, bare, children }: { admin?: boolean;
   const { t } = useI18n();
   const [state, setState] = useState<{ kind: "loading" | "error" } | { kind: "ok"; me: Organizer }>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -123,7 +137,10 @@ export default function PanelGuard({ admin, bare, children }: { admin?: boolean;
     fetchMe(ctrl.signal)
       .then((r) => {
         if (r.status === "unauthenticated") navigate("/panel/login", true);
-        else setState(r.status === "ok" ? { kind: "ok", me: r.organizer } : { kind: "error" });
+        else {
+          if (r.status === "ok") setCount(r.pendingCount);
+          setState(r.status === "ok" ? { kind: "ok", me: r.organizer } : { kind: "error" });
+        }
       })
       .catch(() => {});
     return () => ctrl.abort();
@@ -147,6 +164,11 @@ export default function PanelGuard({ admin, bare, children }: { admin?: boolean;
       </div>
     );
   }
-  if (bare) return <div className="app pe" data-theme="auto">{children}</div>;
-  return <Frame me={state.me}>{admin && state.me.role !== "admin" ? <NoAccess /> : children}</Frame>;
+  const ctx = { count, setCount };
+  if (bare) return <PendingContext value={ctx}><div className="app pe" data-theme="auto">{admin && state.me.role !== "admin" ? <NoAccess /> : children}</div></PendingContext>;
+  return (
+    <PendingContext value={ctx}>
+      <Frame me={state.me}>{admin && state.me.role !== "admin" ? <NoAccess /> : children}</Frame>
+    </PendingContext>
+  );
 }

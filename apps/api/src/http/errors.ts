@@ -28,11 +28,15 @@ const MESSAGES: Record<ErrorCode, string> = {
   invite_already_pending: "That email already has a pending invite.",
   invite_cap_reached: "Too many pending invites. Revoke one first.",
   event_limit_reached: "You reached the limit of 10 events.",
-  event_not_draft: "Only draft events can change their map.",
+  event_not_draft: "Only draft events can change their map.", // unused since slice 08b
   map_changed: "The map was changed by another request. Reload and try again.",
   map_not_found: "This event has no map.",
   unsupported_image_type: "Unsupported image type.",
   invalid_upload: "The uploaded image was refused.",
+  invalid_transition: "This action is not possible in the event's current state.",
+  event_changed: "The event changed. Reload and try again.",
+  map_required: "Upload a map before publishing.",
+  transition_cap_reached: "Too many publish actions today. Try again tomorrow.",
 };
 
 export function errorResponse(

@@ -10,6 +10,7 @@ import {
   parseUtcInstant,
 } from "./schedule.ts";
 import { fieldErrorSchema } from "./field-errors.ts";
+import { FORBIDDEN_MULTI_LINE, FORBIDDEN_SINGLE_LINE } from "./text-rules.ts";
 
 export const SLUG_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
@@ -100,11 +101,9 @@ export type Point = z.infer<typeof pointSchema>;
 export const MAX_SESSIONS_PER_POINT = 150;
 export const MAX_SESSIONS_PER_EVENT = 1000;
 
-// No C0 controls or DEL (`\n` is allowed only where stated) and no bidi override/isolate characters.
-// eslint-disable-next-line no-control-regex
-const SINGLE_LINE_FORBIDDEN = /[\u0000-\u001f\u007f‪-‮⁦-⁩]/;
-// eslint-disable-next-line no-control-regex
-const MULTI_LINE_FORBIDDEN = /[\u0000-\u0009\u000b-\u001f\u007f‪-‮⁦-⁩]/;
+// No C0 controls or DEL (a newline is allowed only where stated), no bidi or invisible characters: see text-rules.ts.
+const SINGLE_LINE_FORBIDDEN = FORBIDDEN_SINGLE_LINE;
+const MULTI_LINE_FORBIDDEN = FORBIDDEN_MULTI_LINE;
 
 const utcInstantSchema = z
   .string()
@@ -205,12 +204,17 @@ export const ERROR_CODES = [
   "invite_cap_reached",
   // Slice 07 (organizer events).
   "event_limit_reached",
-  // Slice 08a (map upload).
+  // Slice 08a (map upload). `event_not_draft` is no longer returned since 08b (edits are allowed in every status).
   "event_not_draft",
   "map_changed",
   "map_not_found",
   "unsupported_image_type",
   "invalid_upload",
+  // Slice 08b (publish with Admin approval).
+  "invalid_transition",
+  "event_changed",
+  "map_required",
+  "transition_cap_reached",
 ] as const;
 export const errorCodeSchema = z.enum(ERROR_CODES);
 export type ErrorCode = z.infer<typeof errorCodeSchema>;

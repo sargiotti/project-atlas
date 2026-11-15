@@ -58,7 +58,7 @@ describe("GET /api/v1/events/:slug/map-bundle", () => {
   it("serves an empty sessions list for an event without a programme", async () => {
     await env.DB.batch([
       env.DB.prepare(
-        "INSERT INTO events (id, slug, name, start_date, end_date, language, created_at, updated_at) VALUES ('evt_bare', 'bare-fest', 'Bare', '2026-08-01', '2026-08-02', 'en', 0, 0)",
+        "INSERT INTO events (id, slug, name, start_date, end_date, language, publish_state, created_at, updated_at) VALUES ('evt_bare', 'bare-fest', 'Bare', '2026-08-01', '2026-08-02', 'en', 'published', 0, 0)",
       ),
       env.DB.prepare(
         "INSERT INTO event_maps (id, event_id, position, width, height, theme, image_key, image_format, created_at, updated_at) VALUES ('map_bare', 'evt_bare', 1, 10, 10, 'light', 'bare.aaaaaaaa.svg', 'svg', 0, 0)",

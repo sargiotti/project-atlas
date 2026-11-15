@@ -205,6 +205,16 @@ describe("sign-in start", () => {
     });
     expect(broken.status).toBe(302);
   });
+
+  it("the admin invite limiter runs once per request, on the bare path and on a sub-path", async () => {
+    const admin = await adminSession();
+    let calls = 0;
+    const AUTH_LIMITER = { limit: async () => { calls++; return { success: true }; } };
+    await authed("/api/v1/admin/invites", admin, { env: { AUTH_LIMITER } } as RequestInit);
+    expect(calls).toBe(1);
+    await authed("/api/v1/admin/invites/nope", admin, { method: "DELETE", env: { AUTH_LIMITER } } as RequestInit);
+    expect(calls).toBe(2);
+  });
 });
 
 describe("callback: state and ID token checks", () => {

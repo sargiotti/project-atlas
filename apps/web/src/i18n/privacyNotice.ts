@@ -3,7 +3,7 @@
 import type { Lang } from "./messages";
 
 /** Date shown as "Last updated". Change this single value when the text changes (and at merge time). */
-export const PRIVACY_LAST_UPDATED = "2026-11-14";
+export const PRIVACY_LAST_UPDATED = "2026-11-15";
 
 export type PrivacySection = { heading: string; lines: string[] };
 export type PrivacyNotice = { title: string; updatedLabel: string; sections: PrivacySection[] };
@@ -56,6 +56,7 @@ const en: PrivacyNotice = {
         "Technical logs: 3 days, with an internal ID only (no email or name).",
         "Hosting traffic records (IP address, country, page, time): up to about 30 days, kept by Cloudflare.",
         "Database backups: up to 7 days. Data you delete can remain in backups until then.",
+        "Moderation log: when an event is submitted for approval, withdrawn, approved, rejected or unpublished, we record who did it, what happened, when, and the reason if one was given (no IP address). We keep it for 12 months, then delete it.",
         "Your account: until you ask us to delete it.",
       ],
     },
@@ -126,6 +127,7 @@ const es: PrivacyNotice = {
         "Registros técnicos: 3 días, solo con un identificador interno (sin email ni nombre).",
         "Registros de tráfico del hosting (dirección IP, país, página, hora): hasta unos 30 días, conservados por Cloudflare.",
         "Copias de seguridad de la base de datos: hasta 7 días. Lo que borres puede seguir en las copias hasta entonces.",
+        "Registro de moderación: cuando un evento se envía a aprobación, se retira, se aprueba, no se aprueba o se despublica, guardamos quién lo hizo, qué pasó, cuándo y el motivo si se dio uno (sin dirección IP). Lo conservamos 12 meses y después lo borramos.",
         "Tu cuenta: hasta que nos pidas borrarla.",
       ],
     },
@@ -196,6 +198,7 @@ const da: PrivacyNotice = {
         "Tekniske logge: 3 dage, kun med et internt ID (ingen e-mail eller navn).",
         "Hostingens trafikregistreringer (IP-adresse, land, side, tidspunkt): op til cirka 30 dage, opbevaret af Cloudflare.",
         "Sikkerhedskopier af databasen: op til 7 dage. Data, du sletter, kan blive i sikkerhedskopierne indtil da.",
+        "Moderationslog: når en begivenhed sendes til godkendelse, trækkes tilbage, godkendes, afvises eller afpubliceres, gemmer vi hvem der gjorde det, hvad der skete, hvornår og begrundelsen, hvis der er en (ingen IP-adresse). Vi opbevarer den i 12 måneder og sletter den derefter.",
         "Din konto: indtil du beder os om at slette den.",
       ],
     },

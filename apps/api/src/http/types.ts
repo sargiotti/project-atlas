@@ -17,6 +17,10 @@ export interface Env {
   PANEL_WRITE_LIMITER?: Limiter;
   /** Slice 08a: map images (R2, EU jurisdiction). Private bucket: only the Worker reads and writes it. */
   MAPS: R2Bucket;
+  /** Slice 08b: ~300 /media requests / 60 s per IP, checked before the D1 read. Fails open. */
+  MEDIA_LIMITER?: Limiter;
+  /** Slice 08b: ~60 requests / 60 s per Admin user id on /api/v1/admin/events/*. Fails open. */
+  ADMIN_LIMITER?: Limiter;
   /** Slice 08a: ~5 map uploads / 60 s per organizer id. Fails open; the D1 daily counter is the real cap. */
   UPLOAD_LIMITER?: Limiter;
   /** Slice 06 secrets (wrangler secret put). Absent on previews/local: sign-in then reports `not_configured`. */

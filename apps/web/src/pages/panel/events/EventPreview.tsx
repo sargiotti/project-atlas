@@ -43,6 +43,22 @@ export default function EventPreview({ id }: { id: string }) {
 }
 
 function PreviewView({ id, data }: { id: string; data: EventPreviewResponse }) {
+  const { t } = useI18n();
+  return (
+    <div className="pe-pv">
+      <div className="pe-pvbar" role="region" aria-label={t("pePvBanner")}>
+        <Ic n="eye" />
+        <b>{t("pePvBanner")}</b>
+        <Link to={`/panel/events/${id}/edit`} className="btn sm"><Ic n="pencil" size={16} /><span className="lbl-dk">{t("peEdit")}</span></Link>
+        <Link to={`/panel/events/${id}`} className="btn sm ghost"><Ic n="left" size={16} /><span className="lbl-dk">{t("pePvBack")}</span></Link>
+      </div>
+      <PreviewStage data={data} />
+    </div>
+  );
+}
+
+/** The event as visitors see it, read-only. Also used by the Admin review screen (no edit controls here). */
+export function PreviewStage({ data }: { data: EventPreviewResponse }) {
   const { t, lang } = useI18n();
   const e = data.event;
   const uid = useId().replace(/:/g, "");
@@ -67,13 +83,6 @@ function PreviewView({ id, data }: { id: string; data: EventPreviewResponse }) {
   }, [open]);
 
   return (
-    <div className="pe-pv">
-      <div className="pe-pvbar" role="region" aria-label={t("pePvBanner")}>
-        <Ic n="eye" />
-        <b>{t("pePvBanner")}</b>
-        <Link to={`/panel/events/${id}/edit`} className="btn sm"><Ic n="pencil" size={16} /><span className="lbl-dk">{t("peEdit")}</span></Link>
-        <Link to={`/panel/events/${id}`} className="btn sm ghost"><Ic n="left" size={16} /><span className="lbl-dk">{t("pePvBack")}</span></Link>
-      </div>
       <div className="pe-pvstage">
         <div className="pe-topbar">
           <LogoMark size={30} />
@@ -142,6 +151,5 @@ function PreviewView({ id, data }: { id: string; data: EventPreviewResponse }) {
           </section>
         )}
       </div>
-    </div>
   );
 }

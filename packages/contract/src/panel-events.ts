@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { EVENT_INPUT_FIELDS, FIELD_ERROR_CODES, type EventInputField, type FieldError, type FieldErrorCode } from "./field-errors.ts";
 import { EVENT_TIME_ZONES } from "./time-zones.ts";
+import { FORBIDDEN_MULTI_LINE, FORBIDDEN_SINGLE_LINE } from "./text-rules.ts";
+import { eventStatusSchema } from "./event-status.ts";
 import { eventMapSchema, eventSchema, mapThemeSchema, pointSchema, sessionSchema, slugSchema } from "./map-bundle.ts";
 
 const FIELD_CODE_SET: ReadonlySet<string> = new Set(FIELD_ERROR_CODES);
@@ -31,11 +33,11 @@ export const COUNTRY_CODES = [
 ] as const;
 
 // --- Text rules ------------------------------------------------------------------------------
-// Forbidden in every text field: C0/C1 controls, DEL, bidi controls (U+200E/F, U+202A-E, U+2066-9),
-// zero-width (U+200B-D, U+2060, U+FEFF), U+2028/2029. The description additionally allows `\n`.
+// Forbidden in every text field: C0/C1 controls, DEL, U+2028/2029 and the invisible / bidi set in text-rules.ts
+// (zero-width, bidi controls, soft hyphen, fillers, tag characters, BOM...). The description additionally allows a newline.
+const FORBIDDEN_SINGLE = FORBIDDEN_SINGLE_LINE;
+const FORBIDDEN_MULTI = FORBIDDEN_MULTI_LINE;
 /* eslint-disable no-control-regex */
-const FORBIDDEN_SINGLE = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2060\u2066-\u2069\ufeff]/;
-const FORBIDDEN_MULTI = /[\u0000-\u0009\u000b-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2060\u2066-\u2069\ufeff]/;
 const URL_BAD = /[\s\u0000-\u001f\u007f-\u009f]/;
 /* eslint-enable no-control-regex */
 
@@ -183,9 +185,10 @@ export function toFieldErrors(error: z.ZodError): FieldError[] {
   const seen = new Set<string>();
   for (const issue of error.issues) {
     const first = issue.path[0];
-    let path: FieldError["path"] = (EVENT_INPUT_FIELDS as readonly unknown[]).includes(first)
-      ? (first as EventInputField)
-      : "body";
+    let path: FieldError["path"] =
+      (EVENT_INPUT_FIELDS as readonly unknown[]).includes(first) || first === "reason" || first === "updatedAt"
+        ? (first as EventInputField | "reason" | "updatedAt")
+        : "body";
     let code: FieldErrorCode;
     if (issue.code === "unrecognized_keys") {
       path = "body";
@@ -240,7 +243,13 @@ export type PanelMapResponse = z.infer<typeof panelMapResponseSchema>;
 export const panelEventSchema = z.object({
   id: z.string().min(1),
   slug: slugSchema,
-  status: z.enum(["draft", "published"]),
+  status: eventStatusSchema,
+  /** Reason of the last rejection or Admin unpublish (plain text), else null. Owner and Admin only. */
+  statusReason: z.string().nullable(),
+  /** When publish was requested (In review, Published, Rejected, Unpublished by the Admin), else null. */
+  requestedAt: z.iso.datetime().nullable(),
+  /** When the Admin approved it. Only while Published, else null. */
+  approvedAt: z.iso.datetime().nullable(),
   name: z.string(),
   startDate: z.string(),
   endDate: z.string(),

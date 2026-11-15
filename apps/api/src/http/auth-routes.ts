@@ -12,6 +12,7 @@ import {
 } from "@atlas/contract";
 import { buildAuthorizationUrl, exchangeCode, verifyIdToken } from "../adapters/google-oidc";
 import { D1AuthRepository } from "../adapters/d1-auth-repository";
+import { D1PublicationRepository } from "../adapters/d1-publication-repository";
 import { fromBase64Url, randomToken, safeEqual, sha256Hex, toBase64Url } from "../adapters/crypto";
 import { createInvite, inspectInvite } from "../application/invites";
 import { completeSignIn } from "../application/sign-in";
@@ -156,7 +157,12 @@ export function registerAuthRoutes(app: Hono<AppEnv>): void {
   app.use("/api/v1/auth/logout", guardMutations, limitBody);
 
   // Deny by default: every admin route needs a session AND the admin role (401 / 403).
-  app.use("/api/v1/admin/*", guardMutations, authLimiter, limitBody, requireAuth, requireAdmin);
+  // The IP-keyed authLimiter (10 / min) stays on the invite routes only. The event moderation routes
+  // (/admin/events/*) have their own per-user ADMIN_LIMITER, registered in admin-event-routes.
+  app.use("/api/v1/admin/*", guardMutations);
+  // "/*" also matches the bare path in Hono, so one registration covers both (registering twice burned 2 tokens per request).
+  app.use("/api/v1/admin/invites/*", authLimiter);
+  app.use("/api/v1/admin/*", limitBody, requireAuth, requireAdmin);
   app.use("/api/v1/auth/me", requireAuth);
 
   // --- Google sign-in ------------------------------------------------------------------------
@@ -223,9 +229,11 @@ export function registerAuthRoutes(app: Hono<AppEnv>): void {
 
   // --- Session ------------------------------------------------------------------------------
 
-  app.get("/api/v1/auth/me", (c) => {
+  app.get("/api/v1/auth/me", async (c) => {
     const u = c.get("user");
     const body: MeResponse = { organizer: { id: u.id, displayName: u.displayName, email: u.email, role: u.role } };
+    // Admins also get the number of events waiting for review (the badge). One COUNT on the partial index.
+    if (u.role === "admin") body.pendingCount = await new D1PublicationRepository(c.env.DB).pendingCount();
     return c.json(body);
   });
 

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import LangSwitch from "../components/LangSwitch";
 import { LogoMark } from "../markers/Pixel";
 import { Link } from "../lib/router";
@@ -41,14 +41,22 @@ export function StatusMessage({
   );
 }
 
-export function EventNotFound() {
+/** Any event that is not public (never existed, in review, rejected, unpublished, deleted): one identical page. */
+export function EventGone() {
   const { t } = useI18n();
+  useEffect(() => {
+    const prev = document.title;
+    document.title = `${t("eventGoneDocTitle")} · ${t("appName")}`;
+    return () => {
+      document.title = prev;
+    };
+  }, [t]);
   return (
     <Shell>
       <StatusMessage
-        title={t("notFoundTitle")}
-        text={t("notFoundText")}
-        action={<Link to="/" className="btn primary">{t("goHome")}</Link>}
+        title={t("eventGoneTitle")}
+        text={t("eventGoneText")}
+        action={<Link to="/" className="btn primary">{t("eventGoneCta")}</Link>}
       />
     </Shell>
   );

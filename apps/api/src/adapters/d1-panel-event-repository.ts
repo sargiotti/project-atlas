@@ -1,10 +1,13 @@
-import { MAX_EVENTS_PER_ORGANIZER, type EventInput, type PanelEvent } from "@atlas/contract";
+import { MAX_EVENTS_PER_ORGANIZER, type EventInput, type EventStatus, type PanelEvent } from "@atlas/contract";
 import { MAP_JOIN_COLUMNS, storedMapFromJoin, toPanelMap, type MapJoinRow, type StoredMapImage } from "./d1-map-image-repository";
 
 interface Row extends MapJoinRow {
   id: string;
   slug: string;
-  status: "draft" | "published";
+  status: EventStatus;
+  status_reason: string | null;
+  requested_at: number | null;
+  approved_at: number | null;
   name: string;
   start_date: string;
   end_date: string;
@@ -15,28 +18,35 @@ interface Row extends MapJoinRow {
   description: string | null;
   website: string | null;
   day_start: string;
+  owner_id: string | null;
   created_at: number;
   updated_at: number;
 }
 
-const COLUMNS = `e.id AS id, e.slug AS slug, e.status AS status, e.name AS name, e.start_date AS start_date,
+export const COLUMNS = `e.id AS id, e.slug AS slug, e.publish_state AS status, e.status_reason AS status_reason,
+  e.requested_at AS requested_at, e.approved_at AS approved_at, e.owner_id AS owner_id, e.name AS name, e.start_date AS start_date,
   e.end_date AS end_date, e.time_zone AS time_zone, e.city AS city, e.country AS country, e.language AS language,
   e.description AS description, e.website AS website, e.day_start AS day_start, e.created_at AS created_at,
   e.updated_at AS updated_at, ${MAP_JOIN_COLUMNS}`;
-const FROM = `events e LEFT JOIN event_map_images m ON m.event_id = e.id`;
+export const FROM = `events e LEFT JOIN event_map_images m ON m.event_id = e.id`;
 
 export interface OwnedEvent extends PanelEvent {
   dayStart: string;
+  /** Null for seeded demo events. Never part of a response; the Admin routes look the organizer up from it. */
+  ownerId: string | null;
   /** Same map as `map`, as stored (the preview route needs the raw numbers and keys). */
   storedMap: StoredMapImage | null;
 }
 
-const toEvent = (r: Row): OwnedEvent => {
+export const toEvent = (r: Row): OwnedEvent => {
   const storedMap = storedMapFromJoin(r);
   return {
   id: r.id,
   slug: r.slug,
   status: r.status,
+  statusReason: r.status_reason,
+  requestedAt: r.requested_at === null ? null : new Date(r.requested_at).toISOString(),
+  approvedAt: r.approved_at === null ? null : new Date(r.approved_at).toISOString(),
   name: r.name,
   startDate: r.start_date,
   endDate: r.end_date,
@@ -47,6 +57,7 @@ const toEvent = (r: Row): OwnedEvent => {
   description: r.description,
   website: r.website,
   dayStart: r.day_start,
+  ownerId: r.owner_id,
   map: storedMap ? toPanelMap(storedMap) : null,
   storedMap,
   createdAt: new Date(r.created_at).toISOString(),
@@ -81,7 +92,8 @@ export class D1PanelEventRepository {
 
   /**
    * One atomic statement: inserts only while the owner has fewer than 10 events (all statuses).
-   * Always writes status 'draft' (the column default is 'published', so it must never be omitted).
+   * Always writes both `status` (the frozen legacy column: its default is 'published') and `publish_state` as 'draft',
+   * so neither default can ever publish an organizer's event.
    * A slug collision (UNIQUE) is reported as `slug_taken` so the caller can retry with a new suffix.
    */
   async insertDraft(args: {
@@ -96,8 +108,8 @@ export class D1PanelEventRepository {
       const res = await this.db
         .prepare(
           `INSERT INTO events (id, slug, name, start_date, end_date, time_zone, city, country, language,
-                               description, website, status, owner_id, day_start, created_at, updated_at)
-           SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, 'draft', ?12, '06:00', ?13, ?13
+                               description, website, status, publish_state, owner_id, day_start, created_at, updated_at)
+           SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, 'draft', 'draft', ?12, '06:00', ?13, ?13
            WHERE (SELECT COUNT(*) FROM events WHERE owner_id = ?12) < ?14`,
         )
         .bind(
@@ -112,7 +124,7 @@ export class D1PanelEventRepository {
     }
   }
 
-  /** Full replace of the editable fields. Slug, status, owner and day start are never touched. */
+  /** Full replace of the editable fields, in any status. Slug, status, owner and day start are never touched. */
   async update(id: string, ownerId: string, e: EventInput, now: number): Promise<boolean> {
     const res = await this.db
       .prepare(

@@ -33,8 +33,11 @@ export const EVENT_INPUT_FIELDS = [
 export type EventInputField = (typeof EVENT_INPUT_FIELDS)[number];
 
 export const fieldErrorSchema = z.object({
-  /** An input field, or `body` for errors about the object as a whole (unknown keys, not an object). */
-  path: z.enum([...EVENT_INPUT_FIELDS, "body"]),
+  /**
+   * An input field, `reason` / `updatedAt` (slice 08b decision bodies), or `body` for errors about the object as a
+   * whole (unknown keys, not an object).
+   */
+  path: z.enum([...EVENT_INPUT_FIELDS, "reason", "updatedAt", "body"]),
   code: z.enum(FIELD_ERROR_CODES),
 });
 export type FieldError = z.infer<typeof fieldErrorSchema>;

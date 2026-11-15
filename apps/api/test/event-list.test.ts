@@ -17,8 +17,8 @@ const insert = (
   place: { country: string; lat: number | null; lng: number | null } = { country: "IE", lat: null, lng: null },
 ) =>
   env.DB.prepare(
-    `INSERT INTO events (id, slug, name, start_date, end_date, city, country, latitude, longitude, cover_key, cover_width, cover_height, language, created_at, updated_at)
-     VALUES (?1, ?2, ?3, ?4, ?4, 'Galway', ?8, ?9, ?10, ?5, ?6, ?7, 'en', 0, 0)`,
+    `INSERT INTO events (id, slug, name, start_date, end_date, city, country, latitude, longitude, cover_key, cover_width, cover_height, language, publish_state, created_at, updated_at)
+     VALUES (?1, ?2, ?3, ?4, ?4, 'Galway', ?8, ?9, ?10, ?5, ?6, ?7, 'en', 'published', 0, 0)`,
   ).bind(`evt_${slug}`, slug, slug, start, cover, cover ? 960 : null, cover ? 640 : null, place.country, place.lat, place.lng);
 
 beforeEach(async () => {

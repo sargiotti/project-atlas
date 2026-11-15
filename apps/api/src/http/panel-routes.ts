@@ -1,13 +1,17 @@
 import type { Hono, MiddlewareHandler } from "hono";
 import {
   eventInputSchema,
+  publishActionRequestSchema,
   toFieldErrors,
-  type EventPreviewResponse,
   type PanelEventListResponse,
   type PanelEventResponse,
 } from "@atlas/contract";
 import { D1PanelEventRepository, type OwnedEvent } from "../adapters/d1-panel-event-repository";
-import { mediaUrl } from "../adapters/d1-map-image-repository";
+import { D1PublicationRepository } from "../adapters/d1-publication-repository";
+import { runTransition } from "../application/publication";
+import type { PublishAction } from "../domain/publication";
+import { logPublication, refusalResponse } from "./publication-http";
+import { toPreviewBody } from "./preview-body";
 import { generateSlug } from "../domain/slug";
 import { errorResponse } from "./errors";
 import { guardMutations, guardOrigin, limitBody, requireAuth } from "./auth-routes";
@@ -42,7 +46,7 @@ const panelWriteLimiter: MiddlewareHandler<AppEnv> = async (c, next) => {
   await next();
 };
 
-const toPanelEvent = ({ dayStart: _dayStart, storedMap: _storedMap, ...e }: OwnedEvent) => e;
+const toPanelEvent = ({ dayStart: _dayStart, storedMap: _storedMap, ownerId: _ownerId, ...e }: OwnedEvent) => e;
 
 async function readJson(c: AppContext): Promise<unknown> {
   try {
@@ -155,40 +159,34 @@ export function registerPanelRoutes(app: Hono<AppEnv>): void {
     if (!EVENT_ID.test(id)) return notFound(c);
     const e = await new D1PanelEventRepository(c.env.DB).get(id, c.get("user").id);
     if (!e) return notFound(c);
-    const body: EventPreviewResponse = {
-      event: {
-        slug: e.slug,
-        name: e.name,
-        startDate: e.startDate,
-        endDate: e.endDate,
-        language: e.language,
-        timeZone: e.timeZone,
-        dayStart: e.dayStart,
-        city: e.city,
-        country: e.country,
-        ...(e.description ? { description: e.description } : {}),
-        ...(e.website ? { website: e.website } : {}),
-      },
-      map: e.storedMap
-        ? {
-            id: e.id,
-            theme: e.storedMap.theme,
-            width: e.storedMap.fullWidth,
-            height: e.storedMap.fullHeight,
-            image: {
-              format: e.storedMap.format,
-              variants: [
-                { url: mediaUrl(e.storedMap.smallKey), width: e.storedMap.smallWidth },
-                { url: mediaUrl(e.storedMap.fullKey), width: e.storedMap.fullWidth },
-              ].sort((a, b) => a.width - b.width),
-            },
-          }
-        : null,
-      points: [],
-      sessions: [],
-    };
-    return c.json(body);
+    return c.json(toPreviewBody(e));
   });
+
+  // Publish flow (slice 08b). The organizer can only ask (`publish-request`), take the request back (`withdraw`) or
+  // take their own published event down (`unpublish`); no route here can produce `published`. Each call is one
+  // conditional statement (see application/publication). Transitions count against PANEL_WRITE_LIMITER (prefix
+  // chain) and a daily D1 cap.
+  const organizerAction = (path: string, action: PublishAction) =>
+    app.post(`/api/v1/panel/events/:id/${path}`, async (c) => {
+      const id = c.req.param("id");
+      if (!EVENT_ID.test(id)) return notFound(c);
+      const parsed = publishActionRequestSchema.safeParse(await readJson(c));
+      if (!parsed.success) return errorResponse(c, 400, "validation_error", "private, no-store", {}, toFieldErrors(parsed.error));
+      const ownerId = c.get("user").id;
+      const result = await runTransition(new D1PublicationRepository(c.env.DB), { action, eventId: id, actorId: ownerId, now: Date.now() });
+      if (!result.ok) {
+        logPublication(c, action, result.reason, id);
+        return refusalResponse(c, result.reason, "fields" in result ? result.fields : undefined);
+      }
+      const updated = await new D1PanelEventRepository(c.env.DB).get(id, ownerId);
+      if (!updated) return notFound(c);
+      logPublication(c, action, "ok", id);
+      const body: PanelEventResponse = { event: toPanelEvent(updated) };
+      return c.json(body);
+    });
+  organizerAction("publish-request", "request");
+  organizerAction("withdraw", "withdraw");
+  organizerAction("unpublish", "unpublish");
 
   registerMapRoutes(app);
 }

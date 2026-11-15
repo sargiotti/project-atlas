@@ -39,14 +39,15 @@ const rethrowAbort = (e: any) => {
   if (e?.name === "AbortError") throw e;
 };
 
-export type MeResult = { status: "ok"; organizer: Organizer } | { status: "unauthenticated" } | { status: "error" };
+export type MeResult = { status: "ok"; organizer: Organizer; pendingCount: number } | { status: "unauthenticated" } | { status: "error" };
 
 export async function fetchMe(signal?: AbortSignal): Promise<MeResult> {
   try {
     const res = await request("GET", "/auth/me", undefined, signal);
     if (res.status === 401) return { status: "unauthenticated" };
     if (!res.ok) return { status: "error" };
-    return { status: "ok", organizer: meResponseSchema.parse(await res.json()).organizer };
+    const me = meResponseSchema.parse(await res.json());
+    return { status: "ok", organizer: me.organizer, pendingCount: me.pendingCount ?? 0 };
   } catch (e) {
     rethrowAbort(e);
     return { status: "error" };

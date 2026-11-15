@@ -40,7 +40,11 @@ export const organizerSchema = z.object({
   role: roleSchema,
 });
 export type Organizer = z.infer<typeof organizerSchema>;
-export const meResponseSchema = z.object({ organizer: organizerSchema });
+export const meResponseSchema = z.object({
+  organizer: organizerSchema,
+  /** Slice 08b. Admins only: events In review (the badge on the avatar and the Pending menu item). */
+  pendingCount: z.number().int().nonnegative().optional(),
+});
 export type MeResponse = z.infer<typeof meResponseSchema>;
 
 // POST /api/v1/invites/inspect (public; the token is the credential)

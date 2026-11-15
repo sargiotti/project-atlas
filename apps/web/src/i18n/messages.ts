@@ -9,11 +9,13 @@ export const LANG_NAMES: Record<Lang, string> = { es: "Español", en: "English",
 import { panelDa, panelEn, panelEs } from "./panelMessages";
 import { eventDa, eventEn, eventEs } from "./eventMessages";
 import { mapDa, mapEn, mapEs } from "./mapMessages";
+import { pubDa, pubEn, pubEs } from "./publishMessages";
 
 const es = {
   ...panelEs,
   ...eventEs,
   ...mapEs,
+  ...pubEs,
   searchLabel: "Buscar eventos",
   searchPlaceholder: "Buscar eventos, ciudades, países",
   searchClear: "Borrar búsqueda",
@@ -115,6 +117,7 @@ const en: Messages = {
   ...panelEn,
   ...eventEn,
   ...mapEn,
+  ...pubEn,
   searchLabel: "Search events",
   searchPlaceholder: "Search events, cities, countries",
   searchClear: "Clear search",
@@ -214,6 +217,7 @@ const da: Messages = {
   ...panelDa,
   ...eventDa,
   ...mapDa,
+  ...pubDa,
   searchLabel: "Søg i events",
   searchPlaceholder: "Søg efter events, byer, lande",
   searchClear: "Ryd søgning",

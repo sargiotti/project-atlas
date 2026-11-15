@@ -26,8 +26,8 @@ const get = (path: string, init: RequestInit & { cf?: unknown } = {}, over: Reco
 
 const insert = (slug: string, name: string, opts: { ogKey?: string | null } = {}) =>
   env.DB.prepare(
-    `INSERT INTO events (id, slug, name, start_date, end_date, city, country, og_key, language, created_at, updated_at)
-     VALUES (?1, ?2, ?3, '2026-11-10', '2026-11-22', 'København', 'DK', ?4, 'en', 0, 0)`,
+    `INSERT INTO events (id, slug, name, start_date, end_date, city, country, og_key, language, publish_state, created_at, updated_at)
+     VALUES (?1, ?2, ?3, '2026-11-10', '2026-11-22', 'København', 'DK', ?4, 'en', 'published', 0, 0)`,
   ).bind(`evt_${slug}`, slug, name, opts.ogKey ?? null);
 
 const metaContent = (html: string, selector: string) => {
@@ -191,15 +191,17 @@ describe("GET /e/{slug}", () => {
 
 describe("unknown and invalid paths", () => {
   it.each(["/e/does-not-exist", "/e/", "/e//", "/e/a/b", "/e/UPPER", "/e/bad_slug", "/e/%00", "/e/" + "a".repeat(100)])(
-    "%s is a 404 HTML shell with brand meta (T2, B2)",
+    "%s is the noindex 404 shell with brand meta (T2, B2, slice 08b)",
     async (path) => {
       const res = await get(path);
       expect(res.status).toBe(404);
       expect(res.headers.get("content-type")).toMatch(/^text\/html/);
       expect(res.headers.get("content-security-policy")).toBe(HTML_CSP);
-      expect(res.headers.get("cache-control")).toBe("public, max-age=0, must-revalidate");
+      expect(res.headers.get("cache-control")).toBe("public, max-age=30");
+      expect(res.headers.get("x-robots-tag")).toBe("noindex");
+      expect(res.headers.get("etag")).toBeNull();
       const html = await res.text();
-      expect(html).toBe(SHELL);
+      expect(html).toBe(SHELL.replace("</head>", '<meta name="robots" content="noindex"></head>'));
       expect(metaContent(html, 'property="og:title"')).toBe("Atlas — Find YOUR way");
       expect(metaContent(html, 'property="og:image"')).toBe(BRAND_CARD);
     },

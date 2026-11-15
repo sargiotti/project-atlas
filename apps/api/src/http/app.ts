@@ -11,6 +11,7 @@ import { API_CSP, HTML_CSP, MEDIA_CSP } from "./security-headers";
 import { errorResponse } from "./errors";
 import { registerAuthRoutes } from "./auth-routes";
 import { registerPanelRoutes } from "./panel-routes";
+import { registerAdminEventRoutes } from "./admin-event-routes";
 import { registerMediaRoutes } from "./map-routes";
 import type { AppContext, AppEnv } from "./types";
 
@@ -61,6 +62,7 @@ export function createApp() {
   });
 
   registerAuthRoutes(app);
+  registerAdminEventRoutes(app);
   registerPanelRoutes(app);
   registerMediaRoutes(app);
 

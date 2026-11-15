@@ -21,6 +21,24 @@ interface MapRow {
   image_format: "svg" | "webp";
 }
 
+interface UploadedMapRow {
+  slug: string;
+  name: string;
+  start_date: string;
+  end_date: string;
+  language: string;
+  time_zone: string;
+  day_start: string;
+  event_id: string;
+  theme: "light" | "dark";
+  format: "webp" | "jpeg";
+  full_key: string;
+  full_width: number;
+  full_height: number;
+  small_key: string;
+  small_width: number;
+}
+
 interface SessionRow {
   id: string;
   point_id: string;
@@ -45,7 +63,7 @@ export class D1EventMapRepository implements EventMapRepository {
   async findFirstMapBySlug(slug: string): Promise<StoredEventMap | null> {
     // One batch, two prepared statements, all values bound (never concatenated).
     // Lookup by the indexed unique slug; bounded to one event and at most 500 points.
-    const [mapResult, pointsResult, sessionsResult] = await this.db.batch<MapRow | PointRow | SessionRow>([
+    const [mapResult, pointsResult, sessionsResult, uploadedResult] = await this.db.batch<MapRow | PointRow | SessionRow | UploadedMapRow>([
       this.db
         .prepare(
           `SELECT e.slug, e.name, e.start_date, e.end_date, e.language, e.time_zone, e.day_start,
@@ -68,10 +86,47 @@ export class D1EventMapRepository implements EventMapRepository {
            ORDER BY s.start_utc, s.end_utc, s.id LIMIT 1001`,
         )
         .bind(slug),
+      // Slice 08b: an organizer's uploaded map (event_map_images). Used only when the event has no bundled map above.
+      this.db
+        .prepare(
+          `SELECT e.slug, e.name, e.start_date, e.end_date, e.language, e.time_zone, e.day_start, e.id AS event_id,
+                  m.theme, m.format, m.full_key, m.full_width, m.full_height, m.small_key, m.small_width
+           FROM events e JOIN event_map_images m ON m.event_id = e.id
+           WHERE e.slug = ?1 AND ${publishedEvent("e")}`,
+        )
+        .bind(slug),
     ]);
 
     const row = mapResult?.results[0] as MapRow | undefined;
-    if (!row) return null;
+    if (!row) {
+      const up = uploadedResult?.results[0] as UploadedMapRow | undefined;
+      if (!up) return null;
+      return {
+        event: {
+          slug: up.slug,
+          name: up.name,
+          startDate: up.start_date,
+          endDate: up.end_date,
+          language: up.language,
+          timeZone: up.time_zone,
+          dayStart: up.day_start,
+        },
+        map: {
+          id: up.event_id,
+          theme: up.theme,
+          width: up.full_width,
+          height: up.full_height,
+          imageKey: up.full_key,
+          imageFormat: up.format,
+          variants: [
+            { url: `/media/${up.small_key}`, width: up.small_width },
+            { url: `/media/${up.full_key}`, width: up.full_width },
+          ].sort((a, b) => a.width - b.width),
+        },
+        points: [],
+        sessions: [],
+      };
+    }
     const points = (pointsResult?.results ?? []) as PointRow[];
     const sessions = (sessionsResult?.results ?? []) as SessionRow[];
 

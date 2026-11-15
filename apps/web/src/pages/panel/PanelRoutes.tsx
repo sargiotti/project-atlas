@@ -1,9 +1,11 @@
 import { useMemo } from "react";
 import { I18nProvider } from "../../i18n/I18nProvider";
 import { initialPanelLang } from "../../i18n/detect";
-import { matchInviteToken, matchPanelEvent, usePath } from "../../lib/router";
+import { matchAdminReview, matchInviteToken, matchPanelEvent, usePath } from "../../lib/router";
 import { PageNotFound } from "../Pages";
 import AdminInvites from "./AdminInvites";
+import AdminList from "./admin/AdminLists";
+import AdminReview from "./admin/AdminReview";
 import InvitePage from "./InvitePage";
 import PanelGuard from "./PanelGuard";
 import PanelLogin from "./PanelLogin";
@@ -63,6 +65,21 @@ function Screens() {
     return (
       <PanelGuard bare>
         <EventPreview key={ev.id} id={ev.id} />
+      </PanelGuard>
+    );
+  }
+  if (path === "/panel/admin/pending" || path === "/panel/admin/published") {
+    return (
+      <PanelGuard admin>
+        <AdminList key={path} kind={path.endsWith("pending") ? "pending" : "published"} />
+      </PanelGuard>
+    );
+  }
+  const reviewId = matchAdminReview(path);
+  if (reviewId) {
+    return (
+      <PanelGuard admin bare>
+        <AdminReview key={reviewId} id={reviewId} />
       </PanelGuard>
     );
   }

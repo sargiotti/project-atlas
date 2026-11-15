@@ -1,4 +1,4 @@
-import type { MapTheme, PanelMap } from "@atlas/contract";
+import type { EventStatus, MapTheme, PanelMap } from "@atlas/contract";
 
 /** Daily map upload cap per organizer (UTC day). The real limit: the Workers rate limiter is approximate and fails open. */
 export const DAILY_UPLOAD_LIMIT = 30;
@@ -61,9 +61,11 @@ export function toPanelMap(m: StoredMapImage): PanelMap {
 }
 
 export interface MediaLookup {
-  status: "draft" | "published";
+  status: EventStatus;
   /** True when the (optional) session cookie belongs to the event's owner. */
   viewerIsOwner: boolean;
+  /** True when the (optional) session cookie belongs to an Admin. */
+  viewerIsAdmin: boolean;
   /** The one key pair currently referenced by the event. */
   keys: [string, string];
 }
@@ -72,13 +74,10 @@ export interface MediaLookup {
 export class D1MapImageRepository {
   constructor(private readonly db: D1Database) {}
 
-  /** Status of an event the organizer owns, or null (missing, someone else's, or a demo event). */
-  async ownedStatus(eventId: string, ownerId: string): Promise<"draft" | "published" | null> {
-    const row = await this.db
-      .prepare(`SELECT status FROM events WHERE id = ?1 AND owner_id = ?2`)
-      .bind(eventId, ownerId)
-      .first<{ status: "draft" | "published" }>();
-    return row?.status ?? null;
+  /** Whether the organizer owns the event (false: missing, someone else's, or a demo event). */
+  async isOwner(eventId: string, ownerId: string): Promise<boolean> {
+    const row = await this.db.prepare(`SELECT 1 AS ok FROM events WHERE id = ?1 AND owner_id = ?2`).bind(eventId, ownerId).first();
+    return row !== null;
   }
 
   async get(eventId: string): Promise<StoredMapImage | null> {
@@ -111,9 +110,10 @@ export class D1MapImageRepository {
   }
 
   /**
-   * Points the event at the new objects, in one statement guarded by owner + draft and compare-and-swap on the
-   * previous full key (`null` = first upload). Returns false when the guard fails (the event stopped being an owned
-   * draft) or when another request changed the map since `previousFullKey` was read (a row appeared, or its key moved).
+   * Points the event at the new objects, guarded by ownership and compare-and-swap on the previous full key
+   * (`null` = first upload), in any status (slice 08b: edits never need a re-review). The same batch bumps
+   * `events.updated_at`, the content version the Admin approves against. Returns false when the guard fails (not the
+   * owner, or the event is gone) or when another request changed the map since `previousFullKey` was read.
    */
   async switchTo(
     eventId: string,
@@ -122,50 +122,58 @@ export class D1MapImageRepository {
     now: number,
     previousFullKey: string | null,
   ): Promise<boolean> {
-    const res = await this.db
-      .prepare(
-        `INSERT INTO event_map_images (event_id, theme, format, full_key, full_width, full_height,
-                                       small_key, small_width, small_height, created_at, updated_at)
-         SELECT ?1, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?11
-         WHERE EXISTS (SELECT 1 FROM events WHERE id = ?1 AND owner_id = ?2 AND status = 'draft')
-         ON CONFLICT(event_id) DO UPDATE SET theme = excluded.theme, format = excluded.format,
-           full_key = excluded.full_key, full_width = excluded.full_width, full_height = excluded.full_height,
-           small_key = excluded.small_key, small_width = excluded.small_width, small_height = excluded.small_height,
-           updated_at = excluded.updated_at
-         WHERE event_map_images.full_key IS ?12`,
-      )
-      .bind(eventId, ownerId, m.theme, m.format, m.fullKey, m.fullWidth, m.fullHeight, m.smallKey, m.smallWidth, m.smallHeight, now, previousFullKey)
-      .run();
-    return res.meta.changes === 1;
+    const [res] = await this.db.batch([
+      this.db
+        .prepare(
+          `INSERT INTO event_map_images (event_id, theme, format, full_key, full_width, full_height,
+                                         small_key, small_width, small_height, created_at, updated_at)
+           SELECT ?1, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?11
+           WHERE EXISTS (SELECT 1 FROM events WHERE id = ?1 AND owner_id = ?2)
+           ON CONFLICT(event_id) DO UPDATE SET theme = excluded.theme, format = excluded.format,
+             full_key = excluded.full_key, full_width = excluded.full_width, full_height = excluded.full_height,
+             small_key = excluded.small_key, small_width = excluded.small_width, small_height = excluded.small_height,
+             updated_at = excluded.updated_at
+           WHERE event_map_images.full_key IS ?12`,
+        )
+        .bind(eventId, ownerId, m.theme, m.format, m.fullKey, m.fullWidth, m.fullHeight, m.smallKey, m.smallWidth, m.smallHeight, now, previousFullKey),
+      this.db.prepare(`UPDATE events SET updated_at = ?2 WHERE id = ?1 AND changes() = 1`).bind(eventId, now),
+    ]);
+    return res?.meta.changes === 1;
   }
 
-  /** Theme override. False when there is no map or the event is not an owned draft. */
+  /** Theme override, in any status; bumps `events.updated_at` in the same batch. False when there is no map or the event is not owned. */
   async setTheme(eventId: string, ownerId: string, theme: MapTheme, now: number): Promise<boolean> {
-    const res = await this.db
-      .prepare(
-        `UPDATE event_map_images SET theme = ?3, updated_at = ?4
-         WHERE event_id = ?1 AND EXISTS (SELECT 1 FROM events WHERE id = ?1 AND owner_id = ?2 AND status = 'draft')`,
-      )
-      .bind(eventId, ownerId, theme, now)
-      .run();
-    return res.meta.changes === 1;
+    const [res] = await this.db.batch([
+      this.db
+        .prepare(
+          `UPDATE event_map_images SET theme = ?3, updated_at = ?4
+           WHERE event_id = ?1 AND EXISTS (SELECT 1 FROM events WHERE id = ?1 AND owner_id = ?2)`,
+        )
+        .bind(eventId, ownerId, theme, now),
+      this.db.prepare(`UPDATE events SET updated_at = ?2 WHERE id = ?1 AND changes() = 1`).bind(eventId, now),
+    ]);
+    return res?.meta.changes === 1;
   }
 
   /**
-   * Single D1 read for serving: the event status, whether the optional session belongs to its owner, and the
-   * key pair it references. Null when the event has no map. `sessionHash` null means anonymous.
+   * Single D1 read for serving: the publish state, whether the optional session belongs to its owner or to an Admin,
+   * and the key pair it references. Null when the event has no map. `sessionHash` null means anonymous.
    */
   async lookupForMedia(eventId: string, sessionHash: string | null, now: number): Promise<MediaLookup | null> {
     const row = await this.db
       .prepare(
-        `SELECT e.status AS status, m.full_key AS full_key, m.small_key AS small_key,
-                (e.owner_id IS NOT NULL AND e.owner_id = (SELECT organizer_id FROM sessions WHERE token_hash = ?2 AND expires_at > ?3)) AS is_owner
-         FROM events e JOIN event_map_images m ON m.event_id = e.id WHERE e.id = ?1`,
+        `SELECT e.publish_state AS status, m.full_key AS full_key, m.small_key AS small_key,
+                (e.owner_id IS NOT NULL AND e.owner_id = v.organizer_id) AS is_owner,
+                (v.role = 'admin') AS is_admin
+         FROM events e JOIN event_map_images m ON m.event_id = e.id
+         LEFT JOIN (SELECT s.organizer_id AS organizer_id, o.role AS role FROM sessions s JOIN organizers o ON o.id = s.organizer_id
+                    WHERE s.token_hash = ?2 AND s.expires_at > ?3) v ON 1 = 1
+         WHERE e.id = ?1`,
       )
       .bind(eventId, sessionHash, now)
-      .first<{ status: "draft" | "published"; full_key: string; small_key: string; is_owner: number | null }>();
+      .first<{ status: EventStatus; full_key: string; small_key: string; is_owner: number | null; is_admin: number | null }>();
     if (!row) return null;
-    return { status: row.status, viewerIsOwner: row.is_owner === 1, keys: [row.full_key, row.small_key] };
+    return { status: row.status, viewerIsOwner: row.is_owner === 1, viewerIsAdmin: row.is_admin === 1, keys: [row.full_key, row.small_key] };
   }
 }
 

@@ -3,6 +3,8 @@
  * no language). Copy rules: design deliverable 05, section 6.
  */
 
+import { CLEAN_STRIP } from "@atlas/contract";
+
 export interface StoredEventPreview {
   slug: string;
   name: string;
@@ -34,13 +36,10 @@ const EN_DASH = String.fromCharCode(0x2013);
 const MIDDLE_DOT = String.fromCharCode(0xb7);
 
 // Invisible and direction-changing characters never belong in a one-line preview: C0/C1 controls
-// (whitespace is handled separately), zero-width, bidi overrides and isolates, BOM. Also < and >:
-// the rewriter encodes " and & in attribute values but leaves < and > as they are, and no real event
-// name needs them, so they are dropped rather than left for sloppy parsers to trip over.
-const hex = (n: number) => "\\u{" + n.toString(16) + "}";
-const charClass = (ranges: ReadonlyArray<readonly [number, number]>) =>
-  new RegExp("[" + ranges.map(([a, b]) => hex(a) + "-" + hex(b)).join("") + "]", "gu");
-const STRIP = charClass([[0x00, 0x08], [0x0b, 0x0c], [0x0e, 0x1f], [0x7f, 0x9f], [0x200b, 0x200f], [0x202a, 0x202e], [0x2066, 0x2069], [0xfeff, 0xfeff], [0x3c, 0x3c], [0x3e, 0x3e]]);
+// (whitespace is handled separately) and the shared INVISIBLE_RANGES set (zero-width, bidi, soft hyphen, fillers,
+// tag characters, BOM...). Also < and >: the rewriter encodes " and & in attribute values but leaves < and > as they
+// are, and no real event name needs them, so they are dropped rather than left for sloppy parsers to trip over.
+const STRIP = CLEAN_STRIP;
 // JS \s already covers U+2028 and U+2029.
 const WHITESPACE = /\s+/g;
 

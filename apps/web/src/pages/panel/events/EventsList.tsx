@@ -3,7 +3,7 @@ import { MAX_EVENTS_PER_ORGANIZER, type PanelEvent } from "@atlas/contract";
 import { listEvents } from "../../../api/panelEvents";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { Link, navigate } from "../../../lib/router";
-import { DayTile, Ic, LoadError, Loading, Toast, dateRange, pastel, useDocTitle, useFlashToast } from "./common";
+import { DayTile, Ic, LoadError, Loading, StatusBadge, Toast, dateRange, pastel, useDocTitle, useFlashToast } from "./common";
 
 /** Quest-trail art for the empty panel: a tiny pixel map, drawn as SVG rects. */
 function QuestArt() {
@@ -79,6 +79,14 @@ export default function EventsList() {
     );
   }
 
+  const footer = (e: PanelEvent) =>
+    e.status === "draft"
+      ? e.map ? t("peFootReady") : t("peNeedsMap")
+      : e.status === "in_review" ? t("peFootReview")
+      : e.status === "published" ? t("peFootPublished")
+      : e.status === "rejected" ? t("peFootRejected")
+      : t("peFootUnpub");
+
   const full = n >= MAX_EVENTS_PER_ORGANIZER;
   return (
     <div className="pe-page">
@@ -111,10 +119,13 @@ export default function EventsList() {
                 <Link to={`/panel/events/${e.id}/edit`} className="icon-btn" aria-label={t("peEditOf", { n: e.name })} title={t("peEdit")}><Ic n="pencil" /></Link>
               </div>
               <div className="pe-ebody">
-                <span className="pe-pill draft">{t("peDraft")}</span>
+                <StatusBadge status={e.status} />
                 <h2 dir="auto"><Link to={`/panel/events/${e.id}`}>{e.name}</Link></h2>
                 <p className="pe-meta" dir="auto">{dateRange(e.startDate, e.endDate, lang)} · {e.city}</p>
-                <p className="pe-efoot"><Ic n="map" size={16} />{t("peNeedsMap")}</p>
+                <p className={`pe-efoot${e.status === "rejected" || e.status === "unpublished_admin" || (e.status === "draft" && e.map) ? " hot" : ""}`}>
+                  <Ic n={e.status === "draft" && !e.map ? "map" : e.status === "published" ? "globe" : e.status === "in_review" ? "clock" : e.status === "draft" ? "check" : "warn"} size={16} />
+                  {footer(e)}
+                </p>
               </div>
             </article>
           </li>

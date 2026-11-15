@@ -84,13 +84,13 @@ describe("error states", () => {
   it("shows a friendly page for an event that does not exist", async () => {
     mockFetch(() => json(errorBody("event_not_found"), 404));
     open("/e/nope-nope");
-    expect(await screen.findByRole("heading", { name: "We could not find that event" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "This event is no longer available" })).toBeInTheDocument();
   });
 
   it("does not even call the API for a malformed slug", async () => {
     const f = mockFetch(() => json(bundle));
     open("/e/Not_A_Slug!");
-    expect(await screen.findByRole("heading", { name: "We could not find that event" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "This event is no longer available" })).toBeInTheDocument();
     expect(f).not.toHaveBeenCalled();
   });
 

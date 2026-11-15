@@ -120,7 +120,7 @@ describe("create", () => {
     const o = await newOrganizer();
     const other = await newOrganizer();
     const stmt = env.DB.prepare(
-      "INSERT INTO events (id, slug, name, start_date, end_date, city, country, language, status, owner_id, created_at, updated_at) VALUES (?1, ?2, 'Seed', '2026-07-10', '2026-07-10', 'X', 'IE', 'en', ?3, ?4, ?5, ?5)",
+      "INSERT INTO events (id, slug, name, start_date, end_date, city, country, language, status, publish_state, owner_id, created_at, updated_at) VALUES (?1, ?2, 'Seed', '2026-07-10', '2026-07-10', 'X', 'IE', 'en', ?3, ?3, ?4, ?5, ?5)",
     );
     // Nine events of mixed status: the count covers all of them.
     await env.DB.batch(Array.from({ length: 9 }, (_, i) => stmt.bind(`seed-${i}`, `seed-${i}-abcdef`, i % 2 ? "published" : "draft", o.id, i)));
@@ -259,7 +259,7 @@ describe("drafts are never public", () => {
   it("a published event with an owner is public, so the filter is not just hiding everything", async () => {
     const a = await newOrganizer();
     const ev = await create(a, { name: "Going Public" });
-    await env.DB.prepare("UPDATE events SET status = 'published' WHERE id = ?1").bind(ev.id).run();
+    await env.DB.prepare("UPDATE events SET publish_state = 'published' WHERE id = ?1").bind(ev.id).run();
     const list = eventListSchema.parse(await (await call("/api/v1/events")).json());
     expect(list.map((e) => e.slug)).toContain(ev.slug);
     expect((await call(`/e/${ev.slug}`)).status).toBe(200);

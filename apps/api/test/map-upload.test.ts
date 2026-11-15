@@ -135,7 +135,7 @@ describe("upload, replace, delete and draft-gated serving", () => {
     const owner = await newOrganizer();
     const id = await newEvent(owner);
     const map = panelMapResponseSchema.parse(await (await post(id, owner, upload())).json()).map;
-    await env.DB.prepare("UPDATE events SET status = 'published' WHERE id = ?1").bind(id).run();
+    await env.DB.prepare("UPDATE events SET publish_state = 'published' WHERE id = ?1").bind(id).run();
     const res = await send(map.small.url);
     expect(res.status).toBe(200);
     expect(res.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
@@ -160,7 +160,7 @@ describe("concurrent replace", () => {
 });
 
 describe("who may touch the map", () => {
-  it("401 anonymous, 404 another organizer, 409 on a non-draft event, 403 cross-site", async () => {
+  it("401 anonymous, 404 another organizer, 403 cross-site", async () => {
     const owner = await newOrganizer();
     const other = await newOrganizer();
     const id = await newEvent(owner);
@@ -172,9 +172,6 @@ describe("who may touch the map", () => {
     const patchOther = await send(`/api/v1/panel/events/${id}/map/theme`, { method: "PATCH", cookie: other.session, json: { theme: "dark" } });
     expect(patchOther.status).toBe(404);
     expect((await errorOf(await send(`/api/v1/panel/events/${id}/map/theme`, { method: "PATCH", cookie: owner.session, json: { theme: "dark" } }))).code).toBe("map_not_found");
-
-    await env.DB.prepare("UPDATE events SET status = 'published' WHERE id = ?1").bind(id).run();
-    expect((await errorOf(await post(id, owner, upload()))).code).toBe("event_not_draft");
     expect(await r2Keys(id)).toEqual([]);
   });
 });

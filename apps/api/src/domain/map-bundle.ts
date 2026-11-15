@@ -9,7 +9,9 @@ export interface StoredEventMap {
     width: number;
     height: number;
     imageKey: string;
-    imageFormat: "svg" | "webp";
+    imageFormat: "svg" | "webp" | "jpeg";
+    /** Uploaded maps (slice 08a): the served variants, already `/media/...` URLs. Absent for bundled static maps. */
+    variants?: ReadonlyArray<{ url: string; width: number }>;
   };
   points: Point[];
   sessions: Session[];
@@ -50,7 +52,7 @@ export function toMapBundle(stored: StoredEventMap): MapBundle {
       height: stored.map.height,
       image: {
         format: stored.map.imageFormat,
-        variants: [{ url: imageUrl(stored.map.imageKey), width: stored.map.width }],
+        variants: stored.map.variants?.map((v) => ({ ...v })) ?? [{ url: imageUrl(stored.map.imageKey), width: stored.map.width }],
       },
     },
     points: sortPoints(stored.points),

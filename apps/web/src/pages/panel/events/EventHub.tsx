@@ -8,7 +8,8 @@ import { Link, navigate } from "../../../lib/router";
 import { zoneLabel, zoneOffset } from "../../../lib/timeZones";
 import { WebsiteLink } from "./About";
 import MapCard from "./MapCard";
-import { Dialog, DayTile, Ic, LoadError, Loading, PanelNotFound, Toast, dateRange, pastel, setFlash, useDocTitle, useFlashToast } from "./common";
+import PublishStep from "./PublishStep";
+import { Dialog, DayTile, Ic, LoadError, Loading, PanelNotFound, StatusBadge, Toast, dateRange, pastel, setFlash, useDocTitle, useFlashToast } from "./common";
 
 /** /panel/events/:id after a save: what the event looks like, how to publish it, and (quietly) delete. */
 export default function EventHub({ id }: { id: string }) {
@@ -16,7 +17,9 @@ export default function EventHub({ id }: { id: string }) {
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<"loading" | "error" | "missing" | PanelEvent>("loading");
   const [deleting, setDeleting] = useState(false);
-  const { toast, clearToast, banner } = useFlashToast();
+  const { toast: flashToast, clearToast, banner } = useFlashToast();
+  const [notice, setNotice] = useState<string | null>(null);
+  const toast = notice ?? flashToast;
   const bannerRef = useRef<HTMLDivElement>(null);
   const h1 = useRef<HTMLHeadingElement>(null);
   const loaded = typeof state === "object";
@@ -70,7 +73,7 @@ export default function EventHub({ id }: { id: string }) {
         <section className="pe-hcardw pe-hhero" aria-labelledby={`${id}-h1`}>
           <div className="pe-cover" style={pastel(e.id)}>
             <DayTile start={e.startDate} />
-            <span className="pe-pill draft">{t("peDraft")}</span>
+            <StatusBadge status={e.status} />
           </div>
           <div className="pe-info">
             <h1 id={`${id}-h1`} tabIndex={-1} ref={h1} dir="auto">{e.name}</h1>
@@ -102,7 +105,12 @@ export default function EventHub({ id }: { id: string }) {
             ) : (
               <li className="nextstep"><span className="node">2</span><div><b>{t("peStep2")}</b><small>{t("peStep2Now")}</small></div></li>
             )}
-            <li><span className="node"><Ic n="lock" size={18} /></span><div><b>{t("peStep3")}</b><small>{t("peStep3Soon")}</small></div></li>
+            <PublishStep
+              event={e}
+              onEvent={(ev) => setState(ev)}
+              onReload={() => void getEvent(id).then((r) => r.status === "ok" && setState(r.event)).catch(() => {})}
+              onNotice={setNotice}
+            />
           </ol>
         </section>
 
@@ -148,7 +156,7 @@ export default function EventHub({ id }: { id: string }) {
       </div>
 
       {deleting && <DeleteDialog event={e} onClose={() => setDeleting(false)} onGone={() => { setDeleting(false); setState("missing"); }} />}
-      {toast && <Toast text={toast} onDone={clearToast} />}
+      {toast && <Toast text={toast} onDone={() => { setNotice(null); clearToast(); }} />}
     </div>
   );
 }

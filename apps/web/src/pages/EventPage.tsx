@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MapBundle } from "@atlas/contract";
 import { fetchMapBundle, safeVariants, type BundleResult } from "../api/mapBundle";
 import { useI18n } from "../i18n/I18nProvider";
@@ -10,7 +10,7 @@ import ShareDialog from "../components/ShareDialog";
 import { LogoMark } from "../markers/Pixel";
 import { Link } from "../lib/router";
 import { parseAt, withTimes, type TimedSession } from "../lib/schedule";
-import { EventNotFound, Loading, Unavailable } from "./Pages";
+import { EventGone, Loading, Unavailable } from "./Pages";
 import { EventPrivacyLink } from "../components/PrivacyLink";
 
 // The map viewer (gestures + marker art) is the heavy part: load it only on event pages.
@@ -39,8 +39,11 @@ function ScheduleFailed() {
 export default function EventPage({ slug }: { slug: string }) {
   const [attempt, setAttempt] = useState(0);
   const [result, setResult] = useState<BundleResult | null>(null);
+  // The organizer can replace a published map, which deletes the old image: refetch the bundle once.
+  const refetched = useRef(false);
 
   useEffect(() => {
+    refetched.current = false;
     const ctrl = new AbortController();
     setResult(null);
     fetchMapBundle(slug, ctrl.signal)
@@ -50,12 +53,19 @@ export default function EventPage({ slug }: { slug: string }) {
   }, [slug, attempt]);
 
   if (!result) return <Loading />;
-  if (result.status === "not-found") return <EventNotFound />;
+  if (result.status === "not-found") return <EventGone />;
   if (result.status === "unavailable") return <Unavailable onRetry={() => setAttempt((n) => n + 1)} />;
-  return <EventView bundle={result.bundle} imageUrl={result.imageUrl} />;
+  const onImageError = () => {
+    if (refetched.current) return;
+    refetched.current = true;
+    fetchMapBundle(slug)
+      .then((r) => (r.status === "ok" || r.status === "not-found") && setResult(r))
+      .catch(() => {});
+  };
+  return <EventView bundle={result.bundle} imageUrl={result.imageUrl} onImageError={onImageError} />;
 }
 
-function EventView({ bundle, imageUrl }: { bundle: MapBundle; imageUrl: string }) {
+function EventView({ bundle, imageUrl, onImageError }: { bundle: MapBundle; imageUrl: string; onImageError: () => void }) {
   const { t, lang } = useI18n();
   const { event, map, points, sessions } = bundle;
   const variants = useMemo(() => safeVariants(map.image.variants), [map.image.variants]);
@@ -132,6 +142,7 @@ function EventView({ bundle, imageUrl }: { bundle: MapBundle; imageUrl: string }
               onSelect={selectPoint}
               focusRequest={focusRequest}
               categoryLabel={categoryLabel}
+              onImageError={onImageError}
             />
           </Suspense>
         </div>
