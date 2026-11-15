@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { TONE_FILLS, toneOf } from "@atlas/contract";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { Link } from "../../../lib/router";
 import "./events.css";
@@ -41,16 +42,9 @@ export function Ic({ n, size = 20 }: { n: IconName; size?: number }) {
   );
 }
 
-// ---- per-event pastel: palette[hash(id) % 8], so it is stable without a DB field ---------------------
-const PALETTE: [string, string][] = [
-  ["#FBE7A6", "#4a4122"], ["#D7DCFA", "#2f3466"], ["#CDEDC4", "#28432c"], ["#FBD3B0", "#4d3424"],
-  ["#FAD3E7", "#4a2a40"], ["#C6EEF2", "#21434a"], ["#FBD0CF", "#4d2a2e"], ["#EEEBC0", "#3f3f22"],
-];
+// ---- per-event tone: one of the 8 light tones from the contract (`toneOf`), in both themes ------------------
 export function pastel(id: string): CSSProperties {
-  let h = 0;
-  for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  const [pf, pfd] = PALETTE[h % 8];
-  return { "--pf": pf, "--pfd": pfd } as CSSProperties;
+  return { "--pf": TONE_FILLS[toneOf(id)] } as CSSProperties;
 }
 
 // ---- dates ---------------------------------------------------------------------------------------------

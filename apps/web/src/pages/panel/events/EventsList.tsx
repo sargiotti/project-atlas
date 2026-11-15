@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { MAX_EVENTS_PER_ORGANIZER, type PanelEvent } from "@atlas/contract";
+import { MAX_EVENTS_PER_ORGANIZER, TONE_FILLS, toneOf, type PanelEvent } from "@atlas/contract";
 import { listEvents } from "../../../api/panelEvents";
 import { useI18n } from "../../../i18n/I18nProvider";
+import { CoverMedia } from "../../../components/CoverMedia";
 import { Link, navigate } from "../../../lib/router";
 import { DayTile, Ic, LoadError, Loading, StatusBadge, Toast, dateRange, pastel, useDocTitle, useFlashToast } from "./common";
 
@@ -71,7 +72,7 @@ export default function EventsList() {
         </section>
         <ol className="pe-path3" aria-label={t("pePathTitle")}>
           <li className="now"><span className="node">1</span><div><b>{t("peStep1")}</b><small>{t("peStep1Now")}</small></div></li>
-          <li className="tile" style={{ "--pf": "#FBE7A6", "--pfd": "#4a4122" } as any}><span className="node">2</span><div><b>{t("peStep2")}</b><small>{t("peStep2S")}</small></div></li>
+          <li className="tile" style={{ "--pf": TONE_FILLS[0] } as any}><span className="node">2</span><div><b>{t("peStep2")}</b><small>{t("peStep2S")}</small></div></li>
           <li className="later"><span className="node">3</span><div><b>{t("peStep3")}</b><small>{t("peStep3S")}</small></div></li>
         </ol>
         {toast && <Toast text={toast} onDone={clearToast} />}
@@ -113,7 +114,10 @@ export default function EventsList() {
         {sorted.map((e) => (
           <li key={e.id}>
             <article className="pe-ecard">
-              <div className="pe-cover" style={pastel(e.id)}><DayTile start={e.startDate} /></div>
+              <div className={`pe-cover${e.cover ? " img" : ""}`} style={pastel(e.id)}>
+                {e.cover && <CoverMedia cover={e.cover} tone={toneOf(e.id)} size="card" imgClassName="cv-fill" />}
+                <DayTile start={e.startDate} />
+              </div>
               <div className="pe-quick">
                 <Link to={`/panel/events/${e.id}/preview`} className="icon-btn" aria-label={t("pePreviewOf", { n: e.name })} title={t("pePreview")}><Ic n="eye" /></Link>
                 <Link to={`/panel/events/${e.id}/edit`} className="icon-btn" aria-label={t("peEditOf", { n: e.name })} title={t("peEdit")}><Ic n="pencil" /></Link>
