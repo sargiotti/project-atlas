@@ -577,9 +577,10 @@ export default function EditorView({ event, initial, organizerId }: Props) {
       <p className="pe-vh" role="status" aria-live="polite">{announce}</p>
 
       {offer && (
-        <Dialog titleId={`${uid}-dt`} descId={`${uid}-dd`} initialFocus={() => document.getElementById(`${uid}-restore`)} onClose={() => {}}>
+        <Dialog titleId={`${uid}-dt`} descId={`${uid}-dd`} initialFocus={() => document.getElementById(`${uid}-restore`)} onClose={() => {}} hideEscHint>
           <h2 id={`${uid}-dt`}>{t("pedDraftT")}</h2>
           <p className="pe-dlgp" id={`${uid}-dd`}>{t("pedDraftS", { when: when(offer) })}</p>
+          <p className="pe-dlgp" id={`${uid}-dm`}>{t("pedDraftMerge")}</p>
           <div className="pe-acts">
             <button type="button" className="btn" onClick={discard}>{t("pedDiscard")}</button>
             <button type="button" id={`${uid}-restore`} className="btn primary" onClick={restore}>{t("pedRestore")}</button>
@@ -587,7 +588,7 @@ export default function EditorView({ event, initial, organizerId }: Props) {
         </Dialog>
       )}
       {conflictOpen && (
-        <Dialog titleId={`${uid}-ct`} descId={`${uid}-cd`} initialFocus={() => document.getElementById(`${uid}-reload`)} onClose={() => {}}>
+        <Dialog titleId={`${uid}-ct`} descId={`${uid}-cd`} initialFocus={() => document.getElementById(`${uid}-reload`)} onClose={() => {}} hideEscHint>
           <h2 id={`${uid}-ct`}>{t("pedConflictT")}</h2>
           <p className="pe-dlgp" id={`${uid}-cd`}>{t("pedConflictS")}</p>
           {conflict === "failed" && <p className="pe-dlgerr" role="alert">{t("pedErrFail")}</p>}

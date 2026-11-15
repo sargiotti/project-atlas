@@ -68,7 +68,11 @@ export default function Inspector({ point, fresh, showErrors, serverError, nameR
         </span>
         <span className="ped-kind">{nameIt ? t("pedKindName") : t("pedKindDrop")}</span>
       </div>
-      <h2 className="ped-ititle" dir="auto">{displayName(point, t)}</h2>
+      {point.name?.trim() ? (
+        <h2 className="ped-ititle" dir="auto">{displayName(point, t)}</h2>
+      ) : (
+        <h2 className="ped-ititle muted">{t("pedNoCustomName")}</h2>
+      )}
 
       <div className="ped-form">
         <div className={`ped-fld${nameErr ? " bad" : ""}`}>

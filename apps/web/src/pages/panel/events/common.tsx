@@ -149,12 +149,15 @@ export function Dialog({
   descId,
   initialFocus,
   onClose,
+  hideEscHint,
   children,
 }: {
   titleId: string;
   descId: string;
   initialFocus: () => HTMLElement | null;
   onClose: () => void;
+  /** Dialogs that require an explicit choice do not close on Esc, so they do not advertise it. */
+  hideEscHint?: boolean;
   children: ReactNode;
 }) {
   const { t } = useI18n();
@@ -196,7 +199,7 @@ export function Dialog({
     <div className="pe-ovl" onMouseDown={(e) => e.target === e.currentTarget && close.current()}>
       <div ref={box} className="pe-dlg" role="alertdialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descId}>
         {children}
-        <p className="pe-kbhint"><kbd>Esc</kbd> {t("peKbClose")}</p>
+        {!hideEscHint && <p className="pe-kbhint"><kbd>Esc</kbd> {t("peKbClose")}</p>}
       </div>
     </div>
   );

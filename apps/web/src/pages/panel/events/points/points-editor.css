@@ -149,6 +149,7 @@
 .ped-ibody { flex: 1; overflow: auto; padding: 18px; display: flex; flex-direction: column; gap: 4px; }
 .ped-ihead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 .ped-kind { font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); }
+.ped-ititle.muted { color: var(--muted, #6b7280); font-weight: 500; font-style: italic; }
 .ped-ititle { font-size: 1.15rem; line-height: 1.2; margin: 0 0 14px; overflow-wrap: anywhere; }
 .ped-banner-in { background: #fbe7a6; color: #1f1b33; border-radius: 14px; padding: 10px 12px; font-size: 0.9rem; font-weight: 700; margin-bottom: 14px; display: flex; gap: 8px; align-items: flex-start; }
 .ped-form { display: grid; gap: 14px; }
