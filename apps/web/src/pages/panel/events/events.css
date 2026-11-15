@@ -353,8 +353,8 @@ textarea.pe-inp { height: auto; min-height: 112px; padding: 11px 14px; resize: v
   .pe-fgrid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 32px; align-items: start; }
   .pe-fcol { max-width: none; margin: 0; }
   .pe-pvcol { display: block; position: sticky; top: 76px; }
-  .pe-hpath { grid-column: span 4; grid-row: span 2; }
-  .pe-hhero { grid-column: span 8; grid-template-columns: 220px 1fr; }
+  .pe-hpath { grid-column: 1 / span 4; grid-row: 1 / span 2; }
+  .pe-hhero { grid-column: 5 / span 8; grid-row: 1; grid-template-columns: 220px 1fr; }
   .pe-hwhen, .pe-hwhere, .pe-haddr { grid-column: span 4; }
   .pe-habout { grid-column: span 8; }
 }
@@ -482,7 +482,7 @@ textarea.pe-inp { height: auto; min-height: 112px; padding: 11px 14px; resize: v
   .pe-mthumb { max-width: none; }
 }
 @media (min-width: 1024px) {
-  .pe-hmap { grid-column: span 8; }
+  .pe-hmap { grid-column: 5 / span 8; grid-row: 2; }
   .pe-mdone { grid-template-columns: 240px 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { .pe-mdrop { transition: none; } }
