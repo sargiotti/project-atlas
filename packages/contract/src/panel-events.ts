@@ -3,7 +3,7 @@ import { EVENT_INPUT_FIELDS, FIELD_ERROR_CODES, type EventInputField, type Field
 import { EVENT_TIME_ZONES } from "./time-zones.ts";
 import { FORBIDDEN_MULTI_LINE, FORBIDDEN_SINGLE_LINE } from "./text-rules.ts";
 import { eventStatusSchema } from "./event-status.ts";
-import { eventMapSchema, eventSchema, mapThemeSchema, pointSchema, sessionSchema, slugSchema } from "./map-bundle.ts";
+import { MAX_POINTS_PER_MAP, eventMapSchema, eventSchema, mapThemeSchema, pointSchema, sessionSchema, slugSchema } from "./map-bundle.ts";
 
 const FIELD_CODE_SET: ReadonlySet<string> = new Set(FIELD_ERROR_CODES);
 
@@ -48,7 +48,7 @@ export function normalizeText(s: string): string {
 
 const requiredOrInvalid = { error: (iss: { input?: unknown }) => (iss.input === undefined ? "required" : "invalid") };
 
-function text(min: number, max: number, multiline: boolean) {
+export function text(min: number, max: number, multiline: boolean) {
   return z
     .string(requiredOrInvalid)
     .transform(normalizeText)
@@ -282,7 +282,7 @@ export const eventPreviewResponseSchema = z.object({
     }),
   ),
   map: eventMapSchema.nullable(),
-  points: z.array(pointSchema).max(0),
+  points: z.array(pointSchema).max(MAX_POINTS_PER_MAP),
   sessions: z.array(sessionSchema).max(0),
 });
 export type EventPreviewResponse = z.infer<typeof eventPreviewResponseSchema>;

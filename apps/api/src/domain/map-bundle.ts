@@ -27,7 +27,7 @@ export function sortPoints(points: readonly Point[]): Point[] {
     (a, b) =>
       (CATEGORY_ORDER.get(a.category) ?? Number.MAX_SAFE_INTEGER) -
         (CATEGORY_ORDER.get(b.category) ?? Number.MAX_SAFE_INTEGER) ||
-      cmp(a.name, b.name) ||
+      cmp(a.name ?? "", b.name ?? "") ||
       cmp(a.id, b.id),
   );
 }
