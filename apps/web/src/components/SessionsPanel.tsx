@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { sessionDay, type EventInfo, type Point } from "@atlas/contract";
 import { useI18n } from "../i18n/I18nProvider";
+import { displayName } from "../lib/pointLabel";
 import AddToCalendar from "./AddToCalendar";
 import type { CalendarInput } from "../lib/calendar";
 import {
@@ -77,7 +78,7 @@ export default function SessionsPanel({
   };
   const calInput = (s: TimedSession): CalendarInput => ({
     session: s,
-    placeName: point.name,
+    placeName: displayName(point, t),
     eventName: event.name,
     slug: event.slug,
     origin: __PUBLIC_ORIGIN__,

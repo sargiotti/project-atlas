@@ -3,12 +3,13 @@ import { POINT_CATEGORIES } from "../markers/categories";
 import { CATEGORY_INFO } from "../markers/categories";
 import { CategoryIcon } from "../markers/Pixel";
 import { useCount, useI18n } from "../i18n/I18nProvider";
+import { byDisplayName, displayName } from "../lib/pointLabel";
 
 /** Accessible alternative to the map: points grouped by category, in POINT_CATEGORIES order. */
 export default function PointList({ points, onPick }: { points: Point[]; onPick: (id: string) => void }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const count = useCount();
-  const groups = POINT_CATEGORIES.map((c) => ({ category: c, items: points.filter((p) => p.category === c) })).filter(
+  const groups = POINT_CATEGORIES.map((c) => ({ category: c, items: points.filter((p) => p.category === c).sort(byDisplayName(t, lang)) })).filter(
     (g) => g.items.length > 0,
   );
 
@@ -31,7 +32,7 @@ export default function PointList({ points, onPick }: { points: Point[]; onPick:
                 <li key={p.id}>
                   <button type="button" className="list-item" onClick={() => onPick(p.id)} data-point-id={p.id}>
                     <span className="list-text">
-                      <span className="list-name">{p.name}</span>
+                      <span className="list-name">{displayName(p, t)}</span>
                       {p.description && <span className="list-desc">{p.description}</span>}
                     </span>
                     <span className="list-go">

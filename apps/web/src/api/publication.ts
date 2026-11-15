@@ -41,6 +41,7 @@ export type FailCode =
   | "invalid_transition"
   | "event_changed"
   | "map_required"
+  | "points_required"
   | "transition_cap_reached"
   | "rate_limited"
   | "validation"
@@ -61,7 +62,7 @@ async function failure(res: Response): Promise<{ status: "failed"; code: FailCod
     } catch {}
     return { status: "failed", code: "validation" };
   }
-  const known: FailCode[] = ["invalid_transition", "event_changed", "map_required", "transition_cap_reached", "rate_limited"];
+  const known: FailCode[] = ["invalid_transition", "event_changed", "map_required", "points_required", "transition_cap_reached", "rate_limited"];
   return { status: "failed", code: (known as string[]).includes(code) ? (code as FailCode) : res.status === 429 ? "rate_limited" : "error" };
 }
 

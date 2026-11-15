@@ -5,7 +5,8 @@ import { fetchMe, logout } from "../../api/auth";
 import { useI18n } from "../../i18n/I18nProvider";
 import { Link, navigate } from "../../lib/router";
 import { Brand } from "./parts";
-import { PendingContext, usePending } from "./pending";
+import { clearAllDrafts, purgeForeignDrafts } from "../../lib/pointsDraft";
+import { MeContext, PendingContext, usePending } from "./pending";
 
 export function initials(name: string, email: string) {
   const words = name.trim().split(/\s+/).filter(Boolean);
@@ -45,6 +46,8 @@ function UserMenu({ me }: { me: Organizer }) {
 
   const signOut = async () => {
     setFailed(false);
+    // Unsaved Points drafts must not outlive the session on a shared computer: wipe them before the request.
+    clearAllDrafts();
     if (await logout()) navigate("/panel/login", true);
     else setFailed(true);
   };
@@ -138,7 +141,10 @@ export default function PanelGuard({ admin, bare, children }: { admin?: boolean;
       .then((r) => {
         if (r.status === "unauthenticated") navigate("/panel/login", true);
         else {
-          if (r.status === "ok") setCount(r.pendingCount);
+          if (r.status === "ok") {
+            setCount(r.pendingCount);
+            purgeForeignDrafts(r.organizer.id); // another account's leftovers on this browser
+          }
           setState(r.status === "ok" ? { kind: "ok", me: r.organizer } : { kind: "error" });
         }
       })
@@ -165,10 +171,13 @@ export default function PanelGuard({ admin, bare, children }: { admin?: boolean;
     );
   }
   const ctx = { count, setCount };
-  if (bare) return <PendingContext value={ctx}><div className="app pe" data-theme="auto">{admin && state.me.role !== "admin" ? <NoAccess /> : children}</div></PendingContext>;
+  const meCtx = { organizerId: state.me.id };
+  if (bare) return <MeContext value={meCtx}><PendingContext value={ctx}><div className="app pe" data-theme="auto">{admin && state.me.role !== "admin" ? <NoAccess /> : children}</div></PendingContext></MeContext>;
   return (
-    <PendingContext value={ctx}>
-      <Frame me={state.me}>{admin && state.me.role !== "admin" ? <NoAccess /> : children}</Frame>
-    </PendingContext>
+    <MeContext value={meCtx}>
+      <PendingContext value={ctx}>
+        <Frame me={state.me}>{admin && state.me.role !== "admin" ? <NoAccess /> : children}</Frame>
+      </PendingContext>
+    </MeContext>
   );
 }

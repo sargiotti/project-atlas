@@ -96,6 +96,16 @@ export default function EventHub({ id }: { id: string }) {
           onReload={() => void getEvent(id).then((r) => r.status === "ok" && setState(r.event)).catch(() => {})}
         />
 
+        {e.map && (
+          <section className="pe-hcardw pe-hpoints" aria-labelledby={`${id}-pts`}>
+            <h2 className="pe-ctitle" id={`${id}-pts`}><Ic n="pin" size={16} />{t("pedHubTitle")}</h2>
+            <p className="pe-sub">{t("pedHubText")}</p>
+            <div className="pe-brow">
+              <Link to={`/panel/events/${e.id}/points`} className="btn primary"><Ic n="pin" size={18} />{t("pedHubBtn")}</Link>
+            </div>
+          </section>
+        )}
+
         <section className="pe-hcardw pe-hpath">
           <h2 className="pe-ctitle">{t("pePathTitle")}</h2>
           <ol className="pe-trail">

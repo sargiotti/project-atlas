@@ -1,6 +1,7 @@
 import { Component, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { sessionDay, utcToLocal, type EventInfo, type Point } from "@atlas/contract";
 import { useI18n } from "../i18n/I18nProvider";
+import { displayName } from "../lib/pointLabel";
 import { CATEGORY_INFO } from "../markers/categories";
 import { deviceTimeZone, utcOffsetLabel, weekdayShort, type TimedSession } from "../lib/schedule";
 import {
@@ -474,11 +475,11 @@ export default function ScheduleView(props: Props) {
               return (
                 <div key={c.pointId} className="gcol" style={colWidth(c.maxLanes)}>
                   <h3 className="gch" style={{ height: HEAD, "--cat": bar } as React.CSSProperties}>
-                    <span>{p?.name}</span>
+                    <span>{p ? displayName(p, t) : ""}</span>
                   </h3>
                   <ul
                     className={"gcells" + (ppm >= 2.2 ? " halfs" : "")}
-                    aria-label={p?.name}
+                    aria-label={p ? displayName(p, t) : undefined}
                     style={{ height: bodyH, "--hh": `${60 * ppm}px`, "--pt": `${PT}px` } as React.CSSProperties}
                   >
                     {c.blocks.map((b) => {
@@ -501,7 +502,7 @@ export default function ScheduleView(props: Props) {
                             data-session-id={s.id}
                             className={`blk ${st}${compact ? " c" : ""}${selectedSessionId === s.id ? " sel" : ""}`}
                             aria-current={selectedSessionId === s.id ? "true" : undefined}
-                            aria-label={`${s.title}, ${p?.name ?? ""}, ${range}${stateName ? `, ${stateName}` : ""}`}
+                            aria-label={`${s.title}, ${p ? displayName(p, t) : ""}, ${range}${stateName ? `, ${stateName}` : ""}`}
                             onClick={() => onPickSession(s)}
                           >
                             {showPill && <span className="pill now">{t("sNow")}</span>}

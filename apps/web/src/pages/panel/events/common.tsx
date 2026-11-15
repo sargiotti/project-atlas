@@ -28,6 +28,7 @@ const PATHS = {
   tri: (<><path d="M12 4l9 16H3z" /><path d="M12 10v4M12 17v.5" /></>),
   tent: <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" />,
   food: <path d="M5 3v8a3 3 0 0 0 6 0V3M8 3v18M17 3c-2 2-2 6 0 8v10" />,
+  redo: (<><path d="M15 14l5-5-5-5" /><path d="M20 9H10a6 6 0 0 0 0 12h3" /></>),
   undo: (<><path d="M9 14L4 9l5-5" /><path d="M4 9h10a6 6 0 0 1 0 12h-3" /></>),
 };
 export type IconName = keyof typeof PATHS;

@@ -10,12 +10,14 @@ import { panelDa, panelEn, panelEs } from "./panelMessages";
 import { eventDa, eventEn, eventEs } from "./eventMessages";
 import { mapDa, mapEn, mapEs } from "./mapMessages";
 import { pubDa, pubEn, pubEs } from "./publishMessages";
+import { pedDa, pedEn, pedEs } from "./pointsEditorMessages";
 
 const es = {
   ...panelEs,
   ...eventEs,
   ...mapEs,
   ...pubEs,
+  ...pedEs,
   searchLabel: "Buscar eventos",
   searchPlaceholder: "Buscar eventos, ciudades, países",
   searchClear: "Borrar búsqueda",
@@ -118,6 +120,7 @@ const en: Messages = {
   ...eventEn,
   ...mapEn,
   ...pubEn,
+  ...pedEn,
   searchLabel: "Search events",
   searchPlaceholder: "Search events, cities, countries",
   searchClear: "Clear search",
@@ -218,6 +221,7 @@ const da: Messages = {
   ...eventDa,
   ...mapDa,
   ...pubDa,
+  ...pedDa,
   searchLabel: "Søg i events",
   searchPlaceholder: "Søg efter events, byer, lande",
   searchClear: "Ryd søgning",

@@ -10,7 +10,9 @@ import {
 import { z } from "zod";
 
 // Organizer events (slice 07). Everything returned here lives in React state only: never localStorage or
-// sessionStorage (shared devices). The server is the authority; the SPA only maps statuses to screens.
+// sessionStorage (shared devices). The one accepted exception (security P4, slice 08c) is the Points editor's
+// unsaved-changes draft: the organizer's own non-secret Points of one event, scoped by organizer and event, wiped on
+// sign out (lib/pointsDraft.ts). The server is the authority; the SPA only maps statuses to screens.
 const BASE = "/api/v1/panel";
 
 type Fail = { status: "unauthenticated" } | { status: "not_found" } | { status: "error" };

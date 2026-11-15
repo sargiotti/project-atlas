@@ -9,7 +9,9 @@ import {
 } from "@atlas/contract";
 
 // Session lives in an HttpOnly cookie set by the Worker. Nothing from auth is ever kept in
-// localStorage / sessionStorage; every response here is held in React state only.
+// localStorage / sessionStorage; every response here is held in React state only. (Accepted exception, security P4
+// of slice 08c: the Points editor's unsaved draft, keyed by the organizer id from /auth/me and wiped on sign out;
+// it holds no session data. See lib/pointsDraft.ts.)
 const BASE = "/api/v1";
 
 /** Google sign-in is a plain same-origin navigation (302 to Google). No third-party script. */
