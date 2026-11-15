@@ -113,20 +113,21 @@
 .ped-ghost.no .target { border-color: var(--no-drop); background: rgba(179, 38, 30, 0.12); }
 .ped-ghost.no .gl { background: var(--no-drop); color: #fff; }
 
-/* overlays on the canvas */
-.ped-hint, .ped-banner, .ped-toast { position: absolute; z-index: 30; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; border-radius: 16px; box-shadow: var(--shadow); font-weight: 700; font-size: 0.9rem; max-width: calc(100% - 32px); }
-.ped-hint { top: 14px; background: var(--ink); color: var(--bg); padding: 6px 8px 6px 16px; }
+/* overlays on the canvas: one stack at the bottom centre (the quest card owns the top left) */
+.ped-stack { position: absolute; z-index: 30; left: 50%; bottom: 20px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; width: max-content; max-width: calc(100% - 140px); pointer-events: none; }
+.ped-stack > * { pointer-events: auto; }
+.ped-hint, .ped-banner, .ped-toast { display: flex; align-items: center; gap: 10px; border-radius: 16px; box-shadow: var(--shadow); font-weight: 700; font-size: 0.9rem; max-width: 100%; }
+.ped-hint { background: var(--ink); color: var(--bg); padding: 6px 8px 6px 16px; }
 .ped-hint .btn { min-height: 34px; border-color: transparent; }
 .ped-hint .btn.ghost { color: var(--bg); }
 .ped-hint .btn.ghost:hover { background: rgba(255, 255, 255, 0.12); }
-.ped-banner { top: 14px; padding: 10px 16px; }
+.ped-banner { padding: 10px 16px; }
 .ped-banner.err { background: var(--danger-bg); color: var(--danger); border: 1.5px solid var(--danger); }
 .ped-banner.info { background: var(--ink); color: var(--bg); }
-.ped-hint ~ .ped-banner { top: 66px; }
-.ped-toast { bottom: 20px; background: var(--ink); color: var(--bg); padding: 8px 8px 8px 16px; animation: ped-tin 0.2s ease-out; }
+.ped-toast { background: var(--ink); color: var(--bg); padding: 8px 8px 8px 16px; animation: ped-tin 0.2s ease-out; }
 .ped-toast button { background: transparent; border: 0; color: var(--bar-hot); font-weight: 700; padding: 6px 10px; border-radius: 9px; cursor: pointer; }
 .ped-toast button:hover { background: rgba(255, 255, 255, 0.12); }
-@keyframes ped-tin { from { transform: translate(-50%, 10px); opacity: 0; } }
+@keyframes ped-tin { from { transform: translateY(10px); opacity: 0; } }
 
 /* onboarding quests */
 .ped-quest { position: absolute; z-index: 25; left: 16px; top: 16px; width: 290px; background: var(--bar-bg); color: var(--bar-ink); border-radius: 18px; padding: 14px 16px; box-shadow: 0 0 0 3px var(--bar-line), var(--shadow); }

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useReducer, useRef, useState } from "react";
 import type { PanelEvent, Point } from "@atlas/contract";
+import LangSwitch from "../../../../components/LangSwitch";
 import { getEvent } from "../../../../api/panelEvents";
 import { safeVariants } from "../../../../api/mapBundle";
 import { getPoints, savePoints, type ServerPoint } from "../../../../api/panelPoints";
@@ -481,6 +482,7 @@ export default function EditorView({ event, initial, organizerId }: Props) {
         </Link>
         <h1 className="ped-crumb">{t("pedTitle")}</h1>
         <span className="sp" />
+        <LangSwitch />
         <button type="button" className="ibtn" onClick={() => dispatch({ type: "undo" })} disabled={!h.past.length} aria-label={t("pedUndo")} title={t("pedUndoTip")}><Ic n="undo" size={20} /></button>
         <button type="button" className="ibtn" onClick={() => dispatch({ type: "redo" })} disabled={!h.future.length} aria-label={t("pedRedo")} title={t("pedRedoTip")}><Ic n="redo" size={20} /></button>
         <div className={`ped-chip ${chip}`} role="status" aria-live="polite">
@@ -528,21 +530,23 @@ export default function EditorView({ event, initial, organizerId }: Props) {
             edit={edit}
           />
         </Suspense>
-        {banner && <div className={`ped-banner ${banner.kind}`} role="alert"><Ic n="warn" size={18} /><span>{banner.text}</span></div>}
-        {armed && (
-          <div className="ped-hint" role="status">
-            <span>{t("pedArmed", { cat: categoryLabel(armed) })}</span>
-            <button type="button" className="btn sm" onClick={placeInMiddle}>{t("pedArmedMid")}</button>
-            <button type="button" className="btn sm ghost" onClick={() => setArmed(null)}>{t("cancel")}</button>
-          </div>
-        )}
         {questOn && !offer && <Quests step={step} onClose={closeQuests} />}
-        {toast && (
-          <div className="ped-toast" role="status">
-            <span dir="auto">{toast.text}</span>
-            <button type="button" onClick={() => { dispatch({ type: "undo" }); setToast(null); }}>{t("pedUndo")}</button>
-          </div>
-        )}
+        <div className="ped-stack">
+          {toast && (
+            <div className="ped-toast" role="status">
+              <span dir="auto">{toast.text}</span>
+              <button type="button" onClick={() => { dispatch({ type: "undo" }); setToast(null); }}>{t("pedUndo")}</button>
+            </div>
+          )}
+          {banner && <div className={`ped-banner ${banner.kind}`} role="alert"><Ic n="warn" size={18} /><span>{banner.text}</span></div>}
+          {armed && (
+            <div className="ped-hint" role="status">
+              <span>{t("pedArmed", { cat: categoryLabel(armed) })}</span>
+              <button type="button" className="btn sm" onClick={placeInMiddle}>{t("pedArmedMid")}</button>
+              <button type="button" className="btn sm ghost" onClick={() => setArmed(null)}>{t("cancel")}</button>
+            </div>
+          )}
+        </div>
       </main>
 
       <aside className="ped-insp" aria-label={t("pedInspector")}>

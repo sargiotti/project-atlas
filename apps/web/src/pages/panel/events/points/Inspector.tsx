@@ -55,7 +55,7 @@ export default function Inspector({ point, fresh, showErrors, serverError, nameR
 
   return (
     <div className="ped-ibody">
-      {fresh && nameMissing && (
+      {fresh && (
         <div className="ped-banner-in">
           <Ic n="pencil" size={18} />
           <span>{t("pedBanner", { cat: catLabel.toLowerCase() })}</span>
