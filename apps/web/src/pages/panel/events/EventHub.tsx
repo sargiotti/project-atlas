@@ -136,6 +136,7 @@ export default function EventHub({ id }: { id: string }) {
           <h2 className="pe-ctitle"><Ic n="pin" size={16} />{t("peSecWhere")}</h2>
           <p className="pe-big" dir="auto">{e.city}</p>
           <p className="pe-sub">{countryName(e.country, lang)}</p>
+          {e.venueAddress && <p className="pe-sub pe-hvenue" dir="auto" lang={e.language}>{e.venueAddress}</p>}
         </section>
 
         <section className="pe-hcardw pe-habout">

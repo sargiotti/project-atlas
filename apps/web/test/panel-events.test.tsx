@@ -24,6 +24,7 @@ const EV = {
   language: "es",
   description: null,
   website: null,
+  venueAddress: null,
   map: null,
   createdAt: "2026-11-14T10:00:00.000Z",
   updatedAt: "2026-11-14T10:00:00.000Z",
@@ -273,9 +274,96 @@ describe("owner preview", () => {
   it("renders no link for a stored value that is not https", async () => {
     mockApi({ ...base, [`GET /panel/events/${ID}/preview`]: () => preview({ website: "javascript:alert(1)" }) });
     renderAt(`/panel/events/${ID}/preview`);
-    await screen.findByText("Map coming soon");
+    // The contract parse already refuses a non-https website, so the preview fails to load instead of rendering it.
+    await screen.findByRole("button", { name: "Try again" });
     expect(document.querySelector("a[href^='javascript']")).toBeNull();
     expect(screen.queryByText(/alert/)).not.toBeInTheDocument();
+  });
+});
+
+describe("venue address", () => {
+  const putSpy = (puts: any[]) => (_u: string, init?: RequestInit) => {
+    puts.push(JSON.parse(String(init!.body)));
+    return json({ event: EV });
+  };
+  const saveChanges = () => screen.getAllByRole("button", { name: /^Save changes$/ })[0];
+
+  it("saves an edited venue address, counting code points", async () => {
+    const puts: any[] = [];
+    mockApi({ ...base, [`GET /panel/events/${ID}`]: () => json({ event: { ...EV, venueAddress: "Calle Falsa 123" } }), [`PUT /panel/events/${ID}`]: putSpy(puts) });
+    const user = userEvent.setup();
+    renderAt(`/panel/events/${ID}/edit`);
+    const field = await screen.findByLabelText(/Venue address/);
+    expect(field).toHaveValue("Calle Falsa 123");
+    fireEvent.change(field, { target: { value: "Av. Pellegrini 1500 \u{1F389}" } });
+    expect(screen.getByText("21/120")).toBeInTheDocument(); // code points, not UTF-16 units
+    await user.click(saveChanges());
+    await waitFor(() => expect(puts).toHaveLength(1));
+    expect(puts[0].venueAddress).toBe("Av. Pellegrini 1500 \u{1F389}");
+  });
+
+  it("clearing the venue address sends null", async () => {
+    const puts: any[] = [];
+    mockApi({ ...base, [`GET /panel/events/${ID}`]: () => json({ event: { ...EV, venueAddress: "Calle Falsa 123" } }), [`PUT /panel/events/${ID}`]: putSpy(puts) });
+    const user = userEvent.setup();
+    renderAt(`/panel/events/${ID}/edit`);
+    await user.clear(await screen.findByLabelText(/Venue address/));
+    await user.click(saveChanges());
+    await waitFor(() => expect(puts).toHaveLength(1));
+    expect(puts[0].venueAddress).toBeNull();
+  });
+
+  it.each(["www.example.com", "visit https://spam.example"])("refuses %s with a clear message and sends nothing", async (bad) => {
+    const put = vi.fn(() => json({ event: EV }));
+    mockApi({ ...base, [`GET /panel/events/${ID}`]: () => json({ event: EV }), [`PUT /panel/events/${ID}`]: put });
+    const user = userEvent.setup();
+    renderAt(`/panel/events/${ID}/edit`);
+    await user.type(await screen.findByLabelText(/Venue address/), bad);
+    await user.click(saveChanges());
+    expect((await screen.findAllByText(/Remove the link/)).length).toBeGreaterThan(0);
+    expect(put).not.toHaveBeenCalled();
+  });
+
+  it("maps the server's address_has_url error onto the field", async () => {
+    mockApi({
+      ...base,
+      [`GET /panel/events/${ID}`]: () => json({ event: EV }),
+      [`PUT /panel/events/${ID}`]: () =>
+        json({ error: { code: "validation_error", message: "x", requestId: "r", fields: [{ path: "venueAddress", code: "address_has_url" }] } }, 400),
+    });
+    const user = userEvent.setup();
+    renderAt(`/panel/events/${ID}/edit`);
+    await user.type(await screen.findByLabelText(/Venue address/), "Calle 1");
+    await user.click(saveChanges());
+    expect((await screen.findAllByText(/Remove the link/)).length).toBeGreaterThan(0);
+    expect(screen.getByLabelText(/Venue address/)).toHaveValue("Calle 1");
+  });
+
+  it("shows in the owner preview with Maps, and Share only when published", async () => {
+    const pv = {
+      event: { slug: EV.slug, name: "Fiesta", startDate: "2026-12-12", endDate: "2026-12-13", language: "es", timeZone: "UTC", dayStart: "06:00", city: "Rosario", country: "AR", venueAddress: "Calle Falsa 123" },
+      map: null,
+      points: [],
+      sessions: [],
+    };
+    const status = { current: "published" };
+    mockApi({
+      ...base,
+      [`GET /panel/events/${ID}`]: () => json({ event: { ...EV, status: status.current } }),
+      [`GET /panel/events/${ID}/preview`]: () => json(pv),
+    });
+    const first = renderAt(`/panel/events/${ID}/preview`);
+    const sheet = await screen.findByRole("dialog", { name: "About the event" }); // no map: opens by itself
+    expect(within(sheet).getByText("Calle Falsa 123")).toBeInTheDocument();
+    expect(within(sheet).getByRole("link", { name: "Open in Google Maps" })).toBeInTheDocument();
+    expect(await within(sheet).findByRole("button", { name: "Share" })).toBeInTheDocument();
+    first.unmount();
+
+    status.current = "draft";
+    renderAt(`/panel/events/${ID}/preview`);
+    const draft = await screen.findByRole("dialog", { name: "About the event" });
+    await within(draft).findByText("Calle Falsa 123");
+    expect(within(draft).queryByRole("button", { name: "Share" })).not.toBeInTheDocument();
   });
 });
 

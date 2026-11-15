@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 import app from "../src/index";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   eventListSchema,
   eventPreviewResponseSchema,
@@ -303,5 +303,92 @@ describe("CSRF guard on every non-safe method", () => {
     const o = await newOrganizer();
     const res = await call("/api/v1/panel/events", { method: "POST", cookie: o.session, json: { ...valid, description: "x".repeat(9000) } });
     expect(res.status).toBe(413);
+  });
+});
+
+describe("venue address (slice 08d)", () => {
+  const publish = async (id: string) => {
+    await env.DB.batch([
+      env.DB.prepare("UPDATE events SET publish_state = 'published' WHERE id = ?1").bind(id),
+      env.DB.prepare("INSERT INTO event_maps (id, event_id, position, width, height, theme, image_key, image_format, created_at, updated_at) VALUES (?1, ?2, 1, 100, 100, 'light', 'x.svg', 'svg', 0, 0)").bind(`m-${id}`, id),
+    ]);
+  };
+  const bundleOf = async (slug: string) => (await call(`/api/v1/events/${slug}/map-bundle`)).json() as Promise<{ event: Record<string, unknown> }>;
+  const dbAddress = async (id: string) => (await env.DB.prepare("SELECT venue_address AS v FROM events WHERE id = ?1").bind(id).first<{ v: string | null }>())!.v;
+
+  it("create, edit and clear; panel, preview and logs", async () => {
+    const o = await newOrganizer();
+    const logs: string[] = [];
+    const spy = vi.spyOn(console, "log").mockImplementation((...a) => void logs.push(a.join(" ")));
+    const ev = await create(o, { venueAddress: "  Strandvejen 1 " });
+    expect(ev.venueAddress).toBe("Strandvejen 1");
+    const putJson = (venueAddress?: unknown) =>
+      call(`/api/v1/panel/events/${ev.id}`, { method: "PUT", cookie: o.session, json: { ...valid, ...(venueAddress === undefined ? {} : { venueAddress }) } });
+
+    const prev = eventPreviewResponseSchema.parse(await (await call(`/api/v1/panel/events/${ev.id}/preview`, { cookie: o.session })).json());
+    expect(prev.event.venueAddress).toBe("Strandvejen 1");
+    expect(panelEventResponseSchema.parse(await (await putJson("Quay 2")).json()).event.venueAddress).toBe("Quay 2");
+    spy.mockRestore();
+    expect(logs.join("\n")).not.toContain("Strandvejen");
+    expect(logs.join("\n")).not.toContain("Quay 2");
+
+    for (const clear of [null, "", "   ", undefined]) {
+      await putJson("Quay 2");
+      const { event } = panelEventResponseSchema.parse(await (await putJson(clear)).json());
+      expect(event.venueAddress, String(clear)).toBeNull();
+      expect(await dbAddress(ev.id)).toBeNull();
+    }
+    const prev2 = await (await call(`/api/v1/panel/events/${ev.id}/preview`, { cookie: o.session })).text();
+    expect(prev2).not.toContain("venueAddress");
+  });
+
+  it("refuses a URL as address with address_has_url and saves nothing", async () => {
+    const o = await newOrganizer();
+    const ev = await create(o);
+    for (const bad of ["www.example.com", "visit https://spam.example"]) {
+      const res = await call(`/api/v1/panel/events/${ev.id}`, { method: "PUT", cookie: o.session, json: { ...valid, venueAddress: bad } });
+      expect(res.status).toBe(400);
+      const text = await res.text();
+      expect(errorResponseSchema.parse(JSON.parse(text)).error.fields).toEqual([{ path: "venueAddress", code: "address_has_url" }]);
+      expect(text).not.toContain("spam.example");
+    }
+    expect((await call("/api/v1/panel/events", { method: "POST", cookie: o.session, json: { ...valid, venueAddress: "x".repeat(121) } })).status).toBe(400);
+    expect(await dbAddress(ev.id)).toBeNull();
+  });
+
+  it("public bundle: a published event exposes the About fields, a draft is a 404; an edit goes live and bumps updated_at", async () => {
+    const o = await newOrganizer();
+    const ev = await create(o, { venueAddress: "Strandvejen 1" });
+    expect((await call(`/api/v1/events/${ev.slug}/map-bundle`)).status).toBe(404);
+    await publish(ev.id);
+    const { event } = await bundleOf(ev.slug);
+    expect(event).toMatchObject({ city: "Galway", country: "IE", description: valid.description, website: "https://example.com/", venueAddress: "Strandvejen 1" });
+    expect(Object.keys(event).sort()).toEqual(["city", "country", "dayStart", "description", "endDate", "language", "name", "slug", "startDate", "timeZone", "venueAddress", "website"]);
+
+    const before = (await env.DB.prepare("SELECT updated_at AS u FROM events WHERE id = ?1").bind(ev.id).first<{ u: number }>())!.u;
+    await new Promise((r) => setTimeout(r, 5));
+    const put = await call(`/api/v1/panel/events/${ev.id}`, { method: "PUT", cookie: o.session, json: { ...valid, venueAddress: null, website: null } });
+    expect(put.status).toBe(200);
+    expect((await env.DB.prepare("SELECT updated_at AS u FROM events WHERE id = ?1").bind(ev.id).first<{ u: number }>())!.u).toBeGreaterThan(before);
+    const after = (await bundleOf(ev.slug)).event;
+    expect(after).not.toHaveProperty("venueAddress");
+    expect(after).not.toHaveProperty("website");
+  });
+
+  it("a poisoned stored address never reaches visitors (output check)", async () => {
+    const o = await newOrganizer();
+    const ev = await create(o);
+    await publish(ev.id);
+    await env.DB.prepare("UPDATE events SET venue_address = ?2 WHERE id = ?1").bind(ev.id, "a‮b").run();
+    expect((await call(`/api/v1/events/${ev.slug}/map-bundle`)).status).toBe(500);
+  });
+
+  it("the link preview page does not carry the address", async () => {
+    const o = await newOrganizer();
+    const ev = await create(o, { venueAddress: "Secretstreet 99" });
+    await publish(ev.id);
+    clearEventPreviewCache();
+    const html = await (await call(`/e/${ev.slug}`)).text();
+    expect(html).not.toContain("Secretstreet");
   });
 });

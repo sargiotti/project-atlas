@@ -17,6 +17,7 @@ interface Row extends MapJoinRow {
   language: string;
   description: string | null;
   website: string | null;
+  venue_address: string | null;
   day_start: string;
   owner_id: string | null;
   created_at: number;
@@ -26,7 +27,7 @@ interface Row extends MapJoinRow {
 export const COLUMNS = `e.id AS id, e.slug AS slug, e.publish_state AS status, e.status_reason AS status_reason,
   e.requested_at AS requested_at, e.approved_at AS approved_at, e.owner_id AS owner_id, e.name AS name, e.start_date AS start_date,
   e.end_date AS end_date, e.time_zone AS time_zone, e.city AS city, e.country AS country, e.language AS language,
-  e.description AS description, e.website AS website, e.day_start AS day_start, e.created_at AS created_at,
+  e.description AS description, e.website AS website, e.venue_address AS venue_address, e.day_start AS day_start, e.created_at AS created_at,
   e.updated_at AS updated_at, ${MAP_JOIN_COLUMNS}`;
 export const FROM = `events e LEFT JOIN event_map_images m ON m.event_id = e.id`;
 
@@ -56,6 +57,7 @@ export const toEvent = (r: Row): OwnedEvent => {
   language: r.language,
   description: r.description,
   website: r.website,
+  venueAddress: r.venue_address,
   dayStart: r.day_start,
   ownerId: r.owner_id,
   map: storedMap ? toPanelMap(storedMap) : null,
@@ -108,13 +110,13 @@ export class D1PanelEventRepository {
       const res = await this.db
         .prepare(
           `INSERT INTO events (id, slug, name, start_date, end_date, time_zone, city, country, language,
-                               description, website, status, publish_state, owner_id, day_start, created_at, updated_at)
-           SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, 'draft', 'draft', ?12, '06:00', ?13, ?13
-           WHERE (SELECT COUNT(*) FROM events WHERE owner_id = ?12) < ?14`,
+                               description, website, venue_address, status, publish_state, owner_id, day_start, created_at, updated_at)
+           SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, 'draft', 'draft', ?13, '06:00', ?14, ?14
+           WHERE (SELECT COUNT(*) FROM events WHERE owner_id = ?13) < ?15`,
         )
         .bind(
           id, slug, e.name, e.startDate, e.endDate, e.timeZone, e.city, e.country, e.language,
-          e.description, e.website, ownerId, now, MAX_EVENTS_PER_ORGANIZER,
+          e.description, e.website, e.venueAddress, ownerId, now, MAX_EVENTS_PER_ORGANIZER,
         )
         .run();
       return res.meta.changes === 1 ? "inserted" : "limit_reached";
@@ -129,10 +131,10 @@ export class D1PanelEventRepository {
     const res = await this.db
       .prepare(
         `UPDATE events SET name = ?3, start_date = ?4, end_date = ?5, time_zone = ?6, city = ?7, country = ?8,
-                language = ?9, description = ?10, website = ?11, updated_at = ?12
+                language = ?9, description = ?10, website = ?11, venue_address = ?12, updated_at = ?13
          WHERE id = ?1 AND owner_id = ?2`,
       )
-      .bind(id, ownerId, e.name, e.startDate, e.endDate, e.timeZone, e.city, e.country, e.language, e.description, e.website, now)
+      .bind(id, ownerId, e.name, e.startDate, e.endDate, e.timeZone, e.city, e.country, e.language, e.description, e.website, e.venueAddress, now)
       .run();
     return res.meta.changes === 1;
   }

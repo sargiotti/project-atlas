@@ -15,6 +15,8 @@ import { EventPrivacyLink } from "../components/PrivacyLink";
 
 // The map viewer (gestures + marker art) is the heavy part: load it only on event pages.
 const MapViewer = lazy(() => import("../components/MapViewer"));
+// The About sheet shares the organizer-preview rows (and their CSS): only fetched when a visitor taps (i).
+const AboutSheet = lazy(() => import("../components/AboutSheet"));
 
 function formatDates(start: string, end: string, lang: string) {
   try {
@@ -76,6 +78,12 @@ function EventView({ bundle, imageUrl, onImageError }: { bundle: MapBundle; imag
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [focusRequest, setFocusRequest] = useState<{ id: string; nonce: number } | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const infoBtn = useRef<HTMLButtonElement>(null);
+  const closeAbout = () => {
+    setAboutOpen(false);
+    infoBtn.current?.focus();
+  };
   const selected = useMemo(() => points.find((p) => p.id === selectedId) ?? null, [points, selectedId]);
   // Slice 09: sessions grouped by Point. `?at=` only changes what "now" means while rendering.
   const timed = useMemo(() => withTimes(sessions, event.timeZone, event.dayStart), [sessions, event.timeZone, event.dayStart]);
@@ -177,6 +185,20 @@ function EventView({ bundle, imageUrl, onImageError }: { bundle: MapBundle; imag
           <small>{formatDates(event.startDate, event.endDate, lang)}</small>
         </div>
         <LangSwitch />
+        <button
+          ref={infoBtn}
+          type="button"
+          className="icon-btn"
+          onClick={() => setAboutOpen((o) => !o)}
+          aria-label={t("pePvInfo")}
+          aria-haspopup="dialog"
+          aria-expanded={aboutOpen}
+        >
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 11v6M12 7.5v.5" />
+          </svg>
+        </button>
         <button type="button" className="icon-btn" onClick={() => setShareOpen(true)} aria-label={t("share")} aria-haspopup="dialog">
           <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
             <path d="M12 15V4M8 8l4-4 4 4M5 13v6h14v-6" />
@@ -211,6 +233,11 @@ function EventView({ bundle, imageUrl, onImageError }: { bundle: MapBundle; imag
           />
         )}
       </div>
+      {aboutOpen && (
+        <Suspense fallback={null}>
+          <AboutSheet event={event} onClose={closeAbout} />
+        </Suspense>
+      )}
       <EventPrivacyLink />
       {shareOpen && <ShareDialog slug={event.slug} eventName={event.name} onClose={() => setShareOpen(false)} />}
     </div>

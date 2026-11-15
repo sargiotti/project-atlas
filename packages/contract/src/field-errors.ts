@@ -15,6 +15,8 @@ export const FIELD_ERROR_CODES = [
   "website_not_https",
   "invalid_url",
   "control_chars",
+  /** Slice 08d: the venue address contains a URL (`://` or starts with `www.`). */
+  "address_has_url",
   "unknown_field",
 ] as const;
 export type FieldErrorCode = (typeof FIELD_ERROR_CODES)[number];
@@ -29,6 +31,7 @@ export const EVENT_INPUT_FIELDS = [
   "language",
   "description",
   "website",
+  "venueAddress",
 ] as const;
 export type EventInputField = (typeof EVENT_INPUT_FIELDS)[number];
 

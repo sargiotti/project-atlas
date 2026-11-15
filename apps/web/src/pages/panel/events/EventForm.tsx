@@ -56,7 +56,7 @@ export default function EventForm({ id }: { id?: string }) {
   return <FormBody key={state.id} event={state} />;
 }
 
-const TEXT_KEYS = new Set<FieldKey>(["name", "city", "description", "website"]);
+const TEXT_KEYS = new Set<FieldKey>(["name", "city", "venueAddress", "description", "website"]);
 const isMac = () => typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
 
 function FormBody({ event }: { event?: PanelEvent }) {
@@ -133,6 +133,7 @@ function FormBody({ event }: { event?: PanelEvent }) {
       case "too_long":
         if (k === "name") return { text: t("peErrNameLong", { n: textLength(values.name) }) };
         if (k === "city") return { text: t("peErrCityLong", { n: textLength(values.city) }) };
+        if (k === "venueAddress") return { text: t("peErrVenueLong", { n: textLength(values.venueAddress) }) };
         if (k === "description") return { text: t("peErrDescLong", { n: Math.max(1, textLength(values.description) - 500) }) };
         if (k === "website") return { text: t("peErrWebLong") };
         return { text: t("peErrInvalid") };
@@ -151,6 +152,8 @@ function FormBody({ event }: { event?: PanelEvent }) {
         const p = websiteProblem(values.website, code);
         return { text: t(websiteMessageKey(p.kind)), fix: p.fix ?? undefined };
       }
+      case "address_has_url":
+        return { text: t("peErrVenueUrl") };
       case "control_chars":
         return { text: t("peErrControl") };
       default:
@@ -161,7 +164,7 @@ function FormBody({ event }: { event?: PanelEvent }) {
   const shownKeys = FIELD_ORDER.filter((k) => issueFor(k));
   const labelKey: Record<FieldKey, MessageKey> = {
     name: "peName", language: "peLang", startDate: "peStart", endDate: "peEnd", timeZone: "peTz",
-    city: "peCity", country: "peCountry", description: "peDesc", website: "peWeb",
+    city: "peCity", country: "peCountry", venueAddress: "peVenue", description: "peDesc", website: "peWeb",
   };
 
   const submit = async () => {
@@ -423,6 +426,16 @@ function FormBody({ event }: { event?: PanelEvent }) {
                   {msgRow("country")}
                 </div>
               </div>
+              <div className={`pe-field${bad("venueAddress") ? " bad" : ""}`}>
+                <label className="pe-lbl" htmlFor={fid("venueAddress")}>
+                  {t("peVenue")} <span className="o">({t("peOptional")})</span>
+                </label>
+                {textInput("venueAddress", { type: "text", autoComplete: "off" })}
+                {msgRow(
+                  "venueAddress",
+                  <span className={`pe-cnt${textLength(values.venueAddress) > 120 ? " over" : ""}`} aria-hidden="true">{textLength(values.venueAddress)}/120</span>, <span className="pe-hint f">{t("peVenueHint")}</span>,
+                )}
+              </div>
             </section>
 
             <section className="pe-fsec">
@@ -526,6 +539,7 @@ function LivePreview({ values, id }: { values: FormValues; id: string }) {
           timeZone={f.timeZone}
           city={f.city}
           country={f.country}
+          venueAddress={f.venueAddress}
           description={f.description.trim().slice(0, 500)}
           website={f.website.trim()}
           language={f.language}

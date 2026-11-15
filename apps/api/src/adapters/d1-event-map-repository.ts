@@ -13,6 +13,11 @@ interface MapRow {
   language: string;
   time_zone: string;
   day_start: string;
+  city: string;
+  country: string;
+  description: string | null;
+  website: string | null;
+  venue_address: string | null;
   map_id: string;
   theme: "light" | "dark";
   width: number;
@@ -29,6 +34,11 @@ interface UploadedMapRow {
   language: string;
   time_zone: string;
   day_start: string;
+  city: string;
+  country: string;
+  description: string | null;
+  website: string | null;
+  venue_address: string | null;
   event_id: string;
   theme: "light" | "dark";
   format: "webp" | "jpeg";
@@ -57,6 +67,18 @@ interface PointRow {
   y: number;
 }
 
+/** Slice 08d: the About-sheet columns. Empty optionals (NULL or '') are omitted, like the preview does. */
+function aboutOf(r: { city: string; country: string; description: string | null; website: string | null; venue_address: string | null }) {
+  return {
+    // Legacy rows may have empty city/country (column default ''): omit, never fail the whole bundle.
+    ...(r.city ? { city: r.city } : {}),
+    ...(r.country ? { country: r.country } : {}),
+    ...(r.description ? { description: r.description } : {}),
+    ...(r.website ? { website: r.website } : {}),
+    ...(r.venue_address ? { venueAddress: r.venue_address } : {}),
+  };
+}
+
 export class D1EventMapRepository implements EventMapRepository {
   constructor(private readonly db: D1Database) {}
 
@@ -67,6 +89,7 @@ export class D1EventMapRepository implements EventMapRepository {
       this.db
         .prepare(
           `SELECT e.slug, e.name, e.start_date, e.end_date, e.language, e.time_zone, e.day_start,
+                  e.city, e.country, e.description, e.website, e.venue_address,
                   m.id AS map_id, m.theme, m.width, m.height, m.image_key, m.image_format
            FROM event_maps m JOIN events e ON e.id = m.event_id
            WHERE m.id = ${FIRST_MAP_ID} AND ${publishedEvent("e")}`,
@@ -90,6 +113,7 @@ export class D1EventMapRepository implements EventMapRepository {
       this.db
         .prepare(
           `SELECT e.slug, e.name, e.start_date, e.end_date, e.language, e.time_zone, e.day_start, e.id AS event_id,
+                  e.city, e.country, e.description, e.website, e.venue_address,
                   m.theme, m.format, m.full_key, m.full_width, m.full_height, m.small_key, m.small_width
            FROM events e JOIN event_map_images m ON m.event_id = e.id
            WHERE e.slug = ?1 AND ${publishedEvent("e")}`,
@@ -118,6 +142,7 @@ export class D1EventMapRepository implements EventMapRepository {
           language: up.language,
           timeZone: up.time_zone,
           dayStart: up.day_start,
+          ...aboutOf(up),
         },
         map: {
           id: up.event_id,
@@ -147,6 +172,7 @@ export class D1EventMapRepository implements EventMapRepository {
         language: row.language,
         timeZone: row.time_zone,
         dayStart: row.day_start,
+        ...aboutOf(row),
       },
       map: {
         id: row.map_id,

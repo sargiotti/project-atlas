@@ -18,6 +18,7 @@ interface ReadRow {
   language: string;
   description: string | null;
   website: string | null;
+  venue_address: string | null;
 }
 
 /** What each action writes besides `publish_state`. Constants only; every value is bound. */
@@ -45,7 +46,7 @@ export class D1PublicationRepository implements PublicationPort {
     const row = await this.db
       .prepare(
         `SELECT e.publish_state, e.updated_at, ${HAS_MAP} AS has_map, ${HAS_POINTS} AS has_points, e.name, e.start_date, e.end_date, e.time_zone,
-                e.city, e.country, e.language, e.description, e.website
+                e.city, e.country, e.language, e.description, e.website, e.venue_address
          FROM events e WHERE e.id = ?1 AND (?2 IS NULL OR e.owner_id = ?2)`,
       )
       .bind(eventId, ownerScope)
@@ -66,6 +67,7 @@ export class D1PublicationRepository implements PublicationPort {
         language: row.language,
         description: row.description,
         website: row.website,
+        venueAddress: row.venue_address,
       },
     };
   }

@@ -230,6 +230,16 @@ textarea.pe-inp { height: auto; min-height: 112px; padding: 11px 14px; resize: v
 .pe-mini .pe-adesc { display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
 .app.pe .pe-alink { color: var(--accent); font-weight: 700; text-decoration: none; }
 .app.pe a.pe-alink:hover { text-decoration: underline; }
+.pe-about .pe-alink { color: var(--accent); font-weight: 700; text-decoration: none; }
+.pe-about a.pe-alink:hover { text-decoration: underline; }
+.pe-aaddr { display: block; font-weight: 700; }
+.pe-amaps { display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; margin-top: 8px; font-size: 0.92rem; text-align: center; }
+.pe-ashare { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.pe-ashare .btn { gap: 8px; }
+.pe-ashare svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pe-acopied { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--accent); }
+.pe-acopied svg { fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.pe-ashare-url { flex: 1 1 100%; }
 
 /* ---- hub ---- */
 .pe-okbanner { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 12px 16px; border-radius: 28px; background: var(--ok-bg); box-shadow: inset 0 0 0 2px var(--accent); margin: 0 0 14px; font-size: 0.95rem; }
@@ -305,6 +315,8 @@ textarea.pe-inp { height: auto; min-height: 112px; padding: 11px 14px; resize: v
 .pe-soon p { font-size: 0.88rem; color: var(--ink-2); max-width: 28ch; }
 .pe-about { position: absolute; z-index: 10; left: 0; right: 0; bottom: 0; max-height: 58%; overflow: auto; background: var(--surface); border-radius: 24px 24px 0 0; box-shadow: 0 -4px 20px rgba(20, 16, 40, 0.18); padding: 10px 16px 18px; }
 .pe-ahead { display: flex; align-items: center; justify-content: space-between; margin: -4px -8px 0 0; }
+.pe-about:focus { outline: none; }
+.pe-about.vis { z-index: 40; max-height: min(70dvh, 560px); padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
 .pe-about h2 { font-size: 1.25rem; line-height: 1.25; margin: 0 0 8px; overflow-wrap: anywhere; }
 
 /* ---- 720px+: tablet / small laptop ---- */
@@ -342,6 +354,7 @@ textarea.pe-inp { height: auto; min-height: 112px; padding: 11px 14px; resize: v
   .pe-pvbar { padding: 8px 16px; }
   .pe-pvbar .lbl-dk { display: inline; }
   .pe-topbar { left: 20px; right: auto; width: 420px; top: 16px; }
+  .pe-about.vis { max-height: calc(100% - 116px); }
   .pe-about { left: 20px; right: auto; top: 96px; bottom: auto; width: 420px; max-height: calc(100% - 116px); border-radius: 22px; box-shadow: var(--shadow); }
   .pe-soon { left: 440px; top: 0; bottom: 0; align-content: center; }
 }

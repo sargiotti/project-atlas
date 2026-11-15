@@ -2,7 +2,13 @@ import { POINT_CATEGORIES, type MapBundle, type MapTheme, type Point, type Sessi
 
 /** Raw facts about an Event Map as stored. Free of framework and I/O types. */
 export interface StoredEventMap {
-  event: { slug: string; name: string; startDate: string; endDate: string; language: string; timeZone: string; dayStart: string };
+  event: { slug: string; name: string; startDate: string; endDate: string; language: string; timeZone: string; dayStart: string;
+    city?: string;
+    country?: string;
+    description?: string;
+    website?: string;
+    venueAddress?: string;
+  };
   map: {
     id: string;
     theme: MapTheme;
