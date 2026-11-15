@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { COUNTRY_CODES, EVENT_TIME_ZONES, eventInputSchema, eventTimeZoneSchema, toFieldErrors } from "@atlas/contract";
+import { COUNTRY_CODES, EVENT_TIME_ZONES, eventAboutSchema, eventInputSchema, eventTimeZoneSchema, toFieldErrors } from "@atlas/contract";
 
 const valid = {
   name: "Fiesta de mi barrio",
@@ -132,5 +132,45 @@ describe("EventInput", () => {
   it("every exported time zone passes the schema and is already canonical", () => {
     expect(EVENT_TIME_ZONES).toEqual([...EVENT_TIME_ZONES].sort());
     for (const zone of EVENT_TIME_ZONES) expect(eventTimeZoneSchema.parse(zone)).toBe(zone);
+  });
+});
+
+describe("EventInput venueAddress (slice 08d)", () => {
+  it("is optional: missing, null and blank all become null; trimmed and NFC", () => {
+    expect(eventInputSchema.parse(valid).venueAddress).toBeNull();
+    expect(eventInputSchema.parse({ ...valid, venueAddress: null }).venueAddress).toBeNull();
+    expect(eventInputSchema.parse({ ...valid, venueAddress: "  \t " }).venueAddress).toBeNull();
+    expect(eventInputSchema.parse({ ...valid, venueAddress: "  Café Street 1 " }).venueAddress).toBe("Café Street 1");
+  });
+
+  it("counts 120 code points after normalisation", () => {
+    expect(codes({ venueAddress: "a".repeat(120) })).toBeNull();
+    expect(codes({ venueAddress: "a".repeat(121) })).toEqual(["venueAddress:too_long"]);
+    expect(codes({ venueAddress: "\u{1F600}".repeat(120) })).toBeNull();
+    expect(codes({ venueAddress: 5 })).toEqual(["venueAddress:invalid"]);
+  });
+
+  it("rejects newlines, controls, bidi and zero-width characters", () => {
+    for (const bad of ["a\nb", "a\u0007b", "a‮b", "a​b"]) expect(codes({ venueAddress: bad }), JSON.stringify(bad)).toEqual(["venueAddress:control_chars"]);
+  });
+
+  it("rejects a URL: `://` anywhere or a leading `www.`, any case, after normalisation", () => {
+    for (const bad of ["https://spam.example", "Visit HTTP://x.io now", "ftp://x", "  WWW.example.com", "www.example.com/a"]) {
+      expect(codes({ venueAddress: bad }), bad).toEqual(["venueAddress:address_has_url"]);
+    }
+    expect(codes({ venueAddress: "Calle www. 5" })).toBeNull();
+    expect(codes({ venueAddress: "Strandvejen 1, 2nd floor" })).toBeNull();
+  });
+});
+
+describe("eventAboutSchema output checks (slice 08d)", () => {
+  it("rejects a poisoned website and control characters, accepts a clean row", () => {
+    expect(eventAboutSchema.safeParse({ city: "Galway", country: "IE", website: "https://example.com/", venueAddress: "Quay 1", description: "a\nb" }).success).toBe(true);
+    expect(eventAboutSchema.safeParse({}).success).toBe(true); // stale payload
+    for (const website of ["javascript:alert(1)", "http://example.com/", "//example.com"]) expect(eventAboutSchema.safeParse({ website }).success, website).toBe(false);
+    expect(eventAboutSchema.safeParse({ venueAddress: "a\u0007b" }).success).toBe(false);
+    expect(eventAboutSchema.safeParse({ venueAddress: "a\nb" }).success).toBe(false);
+    expect(eventAboutSchema.safeParse({ city: "a‮b" }).success).toBe(false);
+    expect(eventAboutSchema.safeParse({ description: "a‮b" }).success).toBe(false);
   });
 });

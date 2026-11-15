@@ -20,6 +20,7 @@ export function toPreviewBody(e: OwnedEvent, points: Point[]): EventPreviewRespo
       country: e.country,
       ...(e.description ? { description: e.description } : {}),
       ...(e.website ? { website: e.website } : {}),
+      ...(e.venueAddress ? { venueAddress: e.venueAddress } : {}),
     },
     map: e.storedMap
       ? {

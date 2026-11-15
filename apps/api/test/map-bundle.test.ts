@@ -23,6 +23,8 @@ describe("GET /api/v1/events/:slug/map-bundle", () => {
       language: "en",
       timeZone: "Europe/Dublin",
       dayStart: "06:00",
+      city: "Testville",
+      country: "IE",
     });
     expect(bundle.map.theme).toBe("dark");
     expect(bundle.map.image.variants).toEqual([
