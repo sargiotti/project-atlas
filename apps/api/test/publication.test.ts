@@ -8,6 +8,7 @@ import {
   adminReviewResponseSchema,
   errorResponseSchema,
   eventListSchema,
+  eventPreviewResponseSchema,
   mapBundleSchema,
   meResponseSchema,
   panelEventResponseSchema,
@@ -366,6 +367,23 @@ describe("races and the content version", () => {
     // The old image is gone, the new one is public
     expect((await call(map.full.url)).status).toBe(404);
     expect((await call(next.full.url)).status).toBe(200);
+  });
+});
+
+describe("legacy rows with empty city/country", () => {
+  it("owner preview and Admin review still parse with the contract and omit city and country", async () => {
+    const o = await newUser("organizer");
+    const a = await newUser("admin");
+    const { ev } = await readyEvent(o);
+    await org(o, ev.id, "publish-request");
+    await env.DB.prepare("UPDATE events SET city = '', country = '' WHERE id = ?1").bind(ev.id).run();
+
+    const prev = eventPreviewResponseSchema.parse(await (await call(`/api/v1/panel/events/${ev.id}/preview`, { cookie: o.session })).json());
+    const rv = adminReviewResponseSchema.parse(await (await call(`/api/v1/admin/events/${ev.id}/review`, { cookie: a.session })).json());
+    for (const e of [prev.event, rv.event]) {
+      expect(e).not.toHaveProperty("city");
+      expect(e).not.toHaveProperty("country");
+    }
   });
 });
 

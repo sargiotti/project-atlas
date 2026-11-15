@@ -16,8 +16,9 @@ export function toPreviewBody(e: OwnedEvent, points: Point[]): EventPreviewRespo
       language: e.language,
       timeZone: e.timeZone,
       dayStart: e.dayStart,
-      city: e.city,
-      country: e.country,
+      // Legacy rows may have empty city/country (column default ''): omit, like the public bundle does.
+      ...(e.city ? { city: e.city } : {}),
+      ...(e.country ? { country: e.country } : {}),
       ...(e.description ? { description: e.description } : {}),
       ...(e.website ? { website: e.website } : {}),
       ...(e.venueAddress ? { venueAddress: e.venueAddress } : {}),
