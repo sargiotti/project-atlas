@@ -96,3 +96,27 @@ export function sessionDay(startUtcMs: number, timeZone: string, dayStart: strin
   const { date, time } = utcToLocal(startUtcMs, timeZone);
   return time < dayStart ? addDays(date, -1) : date;
 }
+
+export interface SessionWindow {
+  /** Epoch ms, inclusive. */
+  from: number;
+  /** Epoch ms, exclusive. */
+  until: number;
+}
+
+/**
+ * Slice 13: the one rule for where a Session may start. A Session belongs to the festival day `startDate..endDate`
+ * (in the Event's zone, where a day runs from `dayStart` to the next `dayStart`), so it may start from `dayStart` on
+ * `startDate` up to, but not including, `dayStart` on the day after `endDate` (the last night after midnight).
+ * Equivalent to `sessionDay(start, tz, dayStart)` being within `startDate..endDate`. Only `start` is checked; `end` is
+ * bounded by MAX_SESSION_MS. DST is handled by `localToUtc`. Used by the bundle refinement, the seed, the organizer
+ * PUT, the event-edit check and the web client.
+ */
+export function sessionWindow(startDate: string, endDate: string, dayStart: string, timeZone: string): SessionWindow {
+  return {
+    from: localToUtc(startDate, dayStart, timeZone),
+    until: localToUtc(addDays(endDate, 1), dayStart, timeZone),
+  };
+}
+
+export const isInSessionWindow = (startMs: number, w: SessionWindow): boolean => startMs >= w.from && startMs < w.until;

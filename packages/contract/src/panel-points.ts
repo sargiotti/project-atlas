@@ -73,6 +73,11 @@ export const savePointsRequestSchema = z
     baseUpdatedAt: z.iso.datetime(),
     /** 0 allowed (deletes everything). More than 500 -> `too_long` at `points`. */
     points: z.array(pointDraftSchema).max(MAX_POINTS_PER_MAP, "too_long"),
+    /**
+     * Slice 13: acknowledgement that deleting these Points also deletes their Sessions. Must cover every deleted Point
+     * that has Sessions, else 409 `point_has_sessions`. Ids that are not deleted by this save are ignored.
+     */
+    deleteSessionsOf: z.array(pointIdSchema).max(MAX_POINTS_PER_MAP, "too_long").optional(),
   })
   .superRefine((body, ctx) => {
     const seen = new Set<string>();
@@ -87,12 +92,17 @@ export type SavePointsRequest = z.infer<typeof savePointsRequestSchema>;
 /** `points` in `sortPoints` order (category, name, id). */
 export const panelPointsResponseSchema = z.object({
   points: z.array(pointSchema).max(MAX_POINTS_PER_MAP),
+  /** Slice 13: number of Sessions per Point id, only Points that have some. */
+  sessionCounts: z.record(pointIdSchema, z.number().int().min(1)),
   eventUpdatedAt: z.iso.datetime(),
 });
 export type PanelPointsResponse = z.infer<typeof panelPointsResponseSchema>;
 
 export const savePointsResponseSchema = panelPointsResponseSchema.extend({
-  counts: z.object({ created: z.number().int().min(0), updated: z.number().int().min(0), deleted: z.number().int().min(0) }),
+  counts: z.object({ created: z.number().int().min(0), updated: z.number().int().min(0), deleted: z.number().int().min(0),
+    /** Slice 13: Sessions removed with their deleted Points. */
+    sessionsDeleted: z.number().int().min(0),
+  }),
   /** `index` is the position of the new item in the request `points`. */
   created: z.array(z.object({ index: z.number().int().min(0), id: pointIdSchema })),
 });
@@ -112,6 +122,7 @@ export function toPointFieldErrors(error: z.ZodError): FieldError[] {
     let path: FieldError["path"] = "body";
     const [a, b, c] = issue.path;
     if (a === "baseUpdatedAt") path = "baseUpdatedAt";
+    else if (a === "deleteSessionsOf") path = "deleteSessionsOf";
     else if (a === "points") {
       path = "points";
       if (typeof b === "number" && b < MAX_POINTS_PER_MAP && typeof c === "string" && ITEM_PATH_FIELDS.has(c)) {
