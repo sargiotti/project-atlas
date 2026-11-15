@@ -10,7 +10,7 @@ import { usePending } from "../pending";
 import DecisionDialog from "./DecisionDialog";
 import { OrganizerLine, relTime } from "./AdminLists";
 
-type Note = "stale" | "gone" | "map" | "failed" | null;
+type Note = "stale" | "gone" | "map" | "points" | "failed" | null;
 
 /**
  * /panel/admin/review/<id>: a read-only preview of the event plus the decision panel. There is no edit or delete
@@ -59,6 +59,7 @@ export default function AdminReview({ id }: { id: string }) {
     else if (code === "event_changed") setNote("stale");
     else if (code === "invalid_transition" || code === "not_found") setNote("gone");
     else if (code === "map_required") setNote("map");
+    else if (code === "points_required") setNote("points");
     else return false;
     return true;
   };
@@ -159,7 +160,7 @@ function NoteBox({ note, onReload }: { note: Exclude<Note, null>; onReload: () =
       </div>
     );
   }
-  return <div className="ad-note err" role="alert"><b>{note === "map" ? t("adMapMissing") : t("adFailed")}</b></div>;
+  return <div className="ad-note err" role="alert"><b>{note === "map" ? t("adMapMissing") : note === "points" ? t("adPointsMissing") : t("adFailed")}</b></div>;
 }
 
 function Gone() {
