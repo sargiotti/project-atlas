@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   MAX_SESSIONS_PER_POINT,
+  isInSessionWindow,
   localToUtc,
   mapBundleSchema,
   parseUtcInstant,
   sessionDay,
   sessionSchema,
+  sessionWindow,
   utcToLocal,
   type MapBundle,
 } from "@atlas/contract";
@@ -73,15 +75,36 @@ describe("session rules", () => {
 });
 
 describe("bundle-level session rules", () => {
-  it("requires start within startDate..endDate in the Event time zone; end may run into the next day", () => {
-    // 2026-07-10 00:30 Dublin (IST, UTC+1) = 2026-07-09T23:30Z: the first local day, even though UTC says the 9th.
-    expect(mapBundleSchema.safeParse(bundle([session({ start: "2026-07-09T23:30:00Z", end: "2026-07-10T01:00:00Z" })])).success).toBe(true);
+  it("requires start within the session window (dayStart on startDate .. dayStart after endDate) in the Event time zone", () => {
+    // Slice 13 window, Dublin (IST, UTC+1), dayStart 06:00: from 2026-07-10 06:00 (05:00Z) until 2026-07-13 06:00 (05:00Z).
+    // First day 05:59 local: before the first festival day starts.
+    expect(mapBundleSchema.safeParse(bundle([session({ start: "2026-07-10T04:59:00Z", end: "2026-07-10T07:00:00Z" })])).success).toBe(false);
+    // First day 06:00 local: accepted.
+    expect(mapBundleSchema.safeParse(bundle([session({ start: "2026-07-10T05:00:00Z", end: "2026-07-10T07:00:00Z" })])).success).toBe(true);
     // 2026-07-09 23:30 Dublin: the day before the event.
     expect(mapBundleSchema.safeParse(bundle([session({ start: "2026-07-09T22:30:00Z", end: "2026-07-10T01:00:00Z" })])).success).toBe(false);
-    // Last night 23:30 local, ending after midnight on the day after endDate: allowed.
+    // Last night 23:30 local, ending after midnight: allowed.
     expect(mapBundleSchema.safeParse(bundle([session({ start: "2026-07-12T22:30:00Z", end: "2026-07-13T01:00:00Z" })])).success).toBe(true);
-    // 00:30 local on the day after endDate: start outside.
-    expect(mapBundleSchema.safeParse(bundle([session({ start: "2026-07-12T23:30:00Z", end: "2026-07-13T01:00:00Z" })])).success).toBe(false);
+    // Last night after midnight (00:30 and 05:59 local the day after endDate): still that night's programme.
+    expect(mapBundleSchema.safeParse(bundle([session({ start: "2026-07-12T23:30:00Z", end: "2026-07-13T01:00:00Z" })])).success).toBe(true);
+    expect(mapBundleSchema.safeParse(bundle([session({ start: "2026-07-13T04:59:00Z", end: "2026-07-13T06:00:00Z" })])).success).toBe(true);
+    // 06:00 local on the day after endDate: the next festival day, outside.
+    expect(mapBundleSchema.safeParse(bundle([session({ start: "2026-07-13T05:00:00Z", end: "2026-07-13T06:00:00Z" })])).success).toBe(false);
+  });
+
+  it("sessionWindow is dayStart-based, DST-aware and equivalent to sessionDay within startDate..endDate", () => {
+    const w = sessionWindow("2026-03-28", "2026-03-29", "06:00", "Europe/Dublin"); // DST starts 2026-03-29 01:00 UTC
+    expect(w.from).toBe(Date.parse("2026-03-28T06:00:00Z")); // GMT
+    expect(w.until).toBe(Date.parse("2026-03-30T05:00:00Z")); // 06:00 IST = 05:00Z
+    const probe = (iso: string) => isInSessionWindow(Date.parse(iso), w);
+    expect(probe("2026-03-28T05:59:00Z")).toBe(false);
+    expect(probe("2026-03-28T06:00:00Z")).toBe(true);
+    expect(probe("2026-03-30T04:59:00Z")).toBe(true);
+    expect(probe("2026-03-30T05:00:00Z")).toBe(false);
+    for (const iso of ["2026-03-28T05:59:00Z", "2026-03-28T06:00:00Z", "2026-03-29T12:00:00Z", "2026-03-30T04:59:00Z", "2026-03-30T05:00:00Z"]) {
+      const day = sessionDay(Date.parse(iso), "Europe/Dublin", "06:00");
+      expect(probe(iso), iso).toBe(day >= "2026-03-28" && day <= "2026-03-29");
+    }
   });
 
   it("rejects a point that is not in the bundle, duplicate ids and an invalid time zone", () => {

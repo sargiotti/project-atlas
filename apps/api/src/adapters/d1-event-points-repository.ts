@@ -47,6 +47,8 @@ export interface EditorRead {
   updatedAt: number;
   hasMap: boolean;
   points: Point[];
+  /** Slice 13: Sessions per Point id (only Points that have some). */
+  sessionCounts: Record<string, number>;
 }
 
 export type SaveOutcome = { ok: true } | { ok: false; reason: "not_found" | "event_changed" };
@@ -75,7 +77,8 @@ const BUMP_SQL = `UPDATE events SET updated_at = ?2 WHERE id = ?1 AND owner_id =
 // `changes() = 1` is the bump (the last write): it proves THIS batch's bump applied, even when a concurrent save landed the
 // same final count and the same version number.
 const ASSERT_SQL = `SELECT CASE WHEN changes() = 1 AND (SELECT count(*) FROM event_points WHERE event_id = ?1) = ?2
-  AND (SELECT updated_at FROM events WHERE id = ?1 AND owner_id = ?3) = ?4 THEN 1 ELSE json('rolled back') END AS ok`;
+  AND (SELECT updated_at FROM events WHERE id = ?1 AND owner_id = ?3) = ?4
+  AND (SELECT count(*) FROM event_point_sessions WHERE event_id = ?1) = ?5 THEN 1 ELSE json('rolled back') END AS ok`;
 
 /** A write changed a different number of rows than the diff said. Thrown (after logging) so the caller answers 500. */
 export class ChangesMismatchError extends Error {}
@@ -85,7 +88,7 @@ export class D1EventPointsRepository {
 
   /** The owner's event version, whether it has a map, and its Points (at most 500). Null: not the caller's event. */
   async readForEditor(eventId: string, ownerId: string): Promise<EditorRead | null> {
-    const [ev, pts] = await this.db.batch<{ updated_at: number; has_map: number } | PointRow>([
+    const [ev, pts, counts] = await this.db.batch<{ updated_at: number; has_map: number } | PointRow | { point_id: string; n: number }>([
       this.db
         .prepare(
           `SELECT e.updated_at, EXISTS (SELECT 1 FROM event_map_images m WHERE m.event_id = e.id) AS has_map
@@ -98,10 +101,18 @@ export class D1EventPointsRepository {
            WHERE p.event_id = ?1 AND EXISTS (SELECT 1 FROM events e WHERE e.id = ?1 AND e.owner_id = ?2) LIMIT ${MAX_POINTS_PER_MAP}`,
         )
         .bind(eventId, ownerId),
+      this.db
+        .prepare(
+          `SELECT s.point_id, count(*) AS n FROM event_point_sessions s
+           WHERE s.event_id = ?1 AND EXISTS (SELECT 1 FROM events e WHERE e.id = ?1 AND e.owner_id = ?2) GROUP BY s.point_id LIMIT ${MAX_POINTS_PER_MAP}`,
+        )
+        .bind(eventId, ownerId),
     ]);
     const row = ev?.results[0] as { updated_at: number; has_map: number } | undefined;
     if (!row) return null;
-    return { updatedAt: row.updated_at, hasMap: row.has_map === 1, points: sortPoints(((pts?.results ?? []) as PointRow[]).map(toPoint)) };
+    const sessionCounts: Record<string, number> = {};
+    for (const r of (counts?.results ?? []) as Array<{ point_id: string; n: number }>) sessionCounts[r.point_id] = r.n;
+    return { updatedAt: row.updated_at, hasMap: row.has_map === 1, points: sortPoints(((pts?.results ?? []) as PointRow[]).map(toPoint)), sessionCounts };
   }
 
   /** Points of an event for the owner preview and the Admin review (the caller already authorized the event). */
@@ -119,30 +130,46 @@ export class D1EventPointsRepository {
    * failure is classified by a re-read (gone / not yours -> not_found, version moved -> event_changed). `meta.changes`
    * of each write is checked against the diff sizes and a mismatch is thrown.
    */
-  async save(a: { eventId: string; ownerId: string; base: number; now: number; currentCount: number; diff: PointsDiff }): Promise<SaveOutcome> {
+  async save(a: {
+    eventId: string;
+    ownerId: string;
+    base: number;
+    now: number;
+    currentCount: number;
+    diff: PointsDiff;
+    /** Slice 13: Sessions per Point id as read with the version (the cascade of a delete removes them). Default: none. */
+    sessionCounts?: Record<string, number>;
+  }): Promise<SaveOutcome> {
     const { eventId, ownerId, base, now, diff } = a;
+    const sessionCounts = a.sessionCounts ?? {};
+    const sessionsBefore = Object.values(sessionCounts).reduce((x, y) => x + y, 0);
+    const cascade = (ids: readonly string[]) => ids.reduce((x, id) => x + (sessionCounts[id] ?? 0), 0);
+    const sessionsAfter = sessionsBefore - cascade(diff.toDelete);
     const final = diff.finalCount;
     const del = chunkByJsonBytes(diff.toDelete);
     const upd = chunkByJsonBytes(diff.toUpdate);
     const ins = chunkByJsonBytes(diff.toCreate.map((c) => c.point));
 
-    const writes: Array<{ stmt: D1PreparedStatement; expect: number }> = [];
+    // D1 may or may not report rows removed by ON DELETE CASCADE in `meta.changes`: a delete chunk accepts both. The
+    // in-batch ASSERT (Points and Sessions counts) is what proves the whole save landed.
+    const writes: Array<{ stmt: D1PreparedStatement; expect: number; alsoOk?: number }> = [];
     let count = a.currentCount;
-    const add = (sql: string, json: unknown, expect: number, countAfter: number) => {
+    const add = (sql: string, json: unknown, expect: number, countAfter: number, alsoOk?: number) => {
       writes.push({
         stmt: this.db.prepare(sql).bind(eventId, now, json === null ? null : JSON.stringify(json), ownerId, base, count, final),
         expect,
+        ...(alsoOk === undefined ? {} : { alsoOk }),
       });
       count = countAfter;
     };
-    for (const g of del) add(DELETE_SQL, g, g.length, count - g.length);
+    for (const g of del) add(DELETE_SQL, g, g.length, count - g.length, g.length + cascade(g));
     for (const g of upd) add(UPDATE_SQL, g, g.length, count);
     for (const g of ins) add(INSERT_SQL, g, g.length, count + g.length);
     add(BUMP_SQL, null, 1, count);
 
     let results: D1Result[];
     try {
-      results = await this.db.batch([...writes.map((w) => w.stmt), this.db.prepare(ASSERT_SQL).bind(eventId, final, ownerId, now)]);
+      results = await this.db.batch([...writes.map((w) => w.stmt), this.db.prepare(ASSERT_SQL).bind(eventId, final, ownerId, now, sessionsAfter)]);
     } catch (err) {
       const row = await this.db.prepare(`SELECT updated_at FROM events WHERE id = ?1 AND owner_id = ?2`).bind(eventId, ownerId).first<{ updated_at: number }>();
       if (!row) return { ok: false, reason: "not_found" };
@@ -151,7 +178,7 @@ export class D1EventPointsRepository {
     }
     // NOTE: this 500 happens AFTER the batch committed. It is a loud signal of an unexpected row count, not a rollback;
     // the in-batch ASSERT_SQL is what rolls the whole save back.
-    if (writes.some((w, i) => results[i]?.meta.changes !== w.expect)) {
+    if (writes.some((w, i) => results[i]?.meta.changes !== w.expect && results[i]?.meta.changes !== w.alsoOk)) {
       throw new ChangesMismatchError("event_points write changed an unexpected number of rows");
     }
     return { ok: true };
