@@ -1,15 +1,15 @@
-import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { getPreview } from "../../../api/panelEvents";
 import { safeVariants } from "../../../api/mapBundle";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { Link, navigate } from "../../../lib/router";
 import { LogoMark } from "../../../markers/Pixel";
+import PointSheet from "../../../components/PointSheet";
 import { AboutRows } from "./About";
 import { Ic, LoadError, Loading, PanelNotFound, dateRange, useDocTitle } from "./common";
 import type { EventPreviewResponse } from "@atlas/contract";
 
 const MapViewer = lazy(() => import("../../../components/MapViewer"));
-const noop = () => {};
 
 /**
  * /panel/events/:id/preview: the event as visitors will see it: the uploaded map, or "Map coming soon" while there is none. A /panel route, so
@@ -61,6 +61,11 @@ function PreviewView({ id, data }: { id: string; data: EventPreviewResponse }) {
 export function PreviewStage({ data }: { data: EventPreviewResponse }) {
   const { t, lang } = useI18n();
   const e = data.event;
+  const points = data.points;
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = points.find((p) => p.id === selectedId) ?? null;
+  // Same localized category label the visitors get (a Point without a custom name is shown as this label).
+  const categoryLabel = useCallback((c: string) => t(`cat_${c}` as any), [t]);
   const uid = useId().replace(/:/g, "");
   const map = data.map;
   const variants = useMemo(() => (map ? safeVariants(map.image.variants) : []), [map]);
@@ -110,14 +115,15 @@ export function PreviewStage({ data }: { data: EventPreviewResponse }) {
                 variants={variants}
                 width={map.width}
                 height={map.height}
-                points={[]}
+                points={points}
                 theme={map.theme}
-                selectedId={null}
-                onSelect={noop}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
                 focusRequest={null}
-                categoryLabel={String}
+                categoryLabel={categoryLabel}
               />
             </Suspense>
+            {selected && <PointSheet point={selected} onClose={() => setSelectedId(null)} />}
           </div>
         ) : (
           <div className="pe-soon">

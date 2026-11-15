@@ -66,7 +66,7 @@ describe("allowed transitions", () => {
 describe("classifyRefusal", () => {
   const approve = ruleFor("approve");
   const request = ruleFor("request");
-  const facts = { state: "in_review" as const, updatedAt: 100, hasMap: true, usedToday: 0 };
+  const facts = { state: "in_review" as const, updatedAt: 100, hasMap: true, hasPoints: true, usedToday: 0 };
 
   it("explains a refusal in the most useful order", () => {
     expect(classifyRefusal(approve, null, 100)).toBe("not_found");

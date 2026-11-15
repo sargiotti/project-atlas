@@ -37,6 +37,7 @@ const MESSAGES: Record<ErrorCode, string> = {
   event_changed: "The event changed. Reload and try again.",
   map_required: "Upload a map before publishing.",
   transition_cap_reached: "Too many publish actions today. Try again tomorrow.",
+  points_required: "Place at least one Point on the map before publishing.",
 };
 
 export function errorResponse(

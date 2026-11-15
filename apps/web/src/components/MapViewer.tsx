@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 
 import type { Point } from "@atlas/contract";
 import { MarkerToken, QuestArrow, TOKEN_SIZE, type MapTheme } from "../markers/Pixel";
 import { useI18n } from "../i18n/I18nProvider";
+import { pointAriaLabel } from "../lib/pointLabel";
 
 // Space taken by the floating top bar and the Map/List switch (design deliverable 02).
 const SAFE_TOP = 82;
@@ -28,9 +29,35 @@ type Props = {
   categoryLabel: (category: string) => string;
   /** The map image could not be loaded (the page may refetch the bundle once: the organizer may have replaced the map). */
   onImageError?: () => void;
+  /** Space the page keeps free at the top / bottom (the visitor page floats a top bar and a switch over the map). */
+  safe?: { top: number; bottom: number };
+  /** Slice 08c: the organizer's editor. Absent on the visitor page, where nothing below changes. */
+  edit?: MapEdit;
 };
 
-export default function MapViewer({ imageUrl, variants, width: W, height: H, points, theme, selectedId, onSelect, focusRequest, categoryLabel, onImageError }: Props) {
+/** Hooks the Points editor plugs into the shared pan/zoom viewer (coordinates are normalized 0..1, top-left origin). */
+export type MapEdit = {
+  /** Receives the transformed stage element, so drops can be converted to map coordinates. */
+  stageRef?: React.RefObject<HTMLDivElement | null>;
+  /** A click on the map surface (not on a pin or a control), already converted to 0..1. Outside the map: `inside` is false. */
+  onMapClick?: (x: number, y: number, inside: boolean) => void;
+  /** A pin dragged with the pointer. `end` is the release. */
+  onMarkerDrag?: (id: string, x: number, y: number, phase: "move" | "end") => void;
+  /** Pins that wobble with a "?" (a Name-it Point still without a name). */
+  pendingIds?: ReadonlySet<string>;
+  /** Pin shown with a ping ring (hovered in the Placed list). */
+  highlightId?: string | null;
+  /** Pin that just landed (stamp animation). */
+  stampId?: string | null;
+  /** A palette piece is armed: the map shows a crosshair. */
+  armed?: boolean;
+  /** Text of a pin's tooltip. */
+  tipOf?: (p: Point) => string;
+};
+
+export default function MapViewer({ imageUrl, variants, width: W, height: H, points, theme, selectedId, onSelect, focusRequest, categoryLabel, onImageError, safe, edit }: Props) {
+  const safeTop = safe?.top ?? SAFE_TOP;
+  const safeBottom = safe?.bottom ?? SAFE_BOTTOM;
   const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<Size>({ w: 0, h: 0 });
@@ -44,7 +71,7 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
 
   // ---- geometry -------------------------------------------------------------------------
   const availW = Math.max(1, size.w - SIDE_MARGIN * 2);
-  const availH = Math.max(1, size.h - SAFE_TOP - SAFE_BOTTOM);
+  const availH = Math.max(1, size.h - safeTop - safeBottom);
   const fitK = size.w ? Math.min(availW / W, availH / H) : 1;
   const minK = fitK * 0.75;
   const maxK = Math.max(fitK * MAX_ZOOM_OVER_FIT, 1.5);
@@ -58,11 +85,11 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
       let y = v.y;
       if (sw <= availW) x = (size.w - sw) / 2;
       else x = Math.min(SIDE_MARGIN, Math.max(size.w - sw - SIDE_MARGIN, x));
-      if (sh <= availH) y = SAFE_TOP + (availH - sh) / 2;
-      else y = Math.min(SAFE_TOP, Math.max(size.h - SAFE_BOTTOM - sh, y));
+      if (sh <= availH) y = safeTop + (availH - sh) / 2;
+      else y = Math.min(safeTop, Math.max(size.h - safeBottom - sh, y));
       return { x, y, k };
     },
-    [W, H, availW, availH, size.w, size.h, minK, maxK],
+    [W, H, availW, availH, size.w, size.h, minK, maxK, safeTop, safeBottom],
   );
 
   const apply = useCallback(
@@ -141,17 +168,17 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
       const k = zoomIn ? Math.max(viewRef.current.k, fitK * 2.5) : viewRef.current.k;
       // Aim a bit above the middle so the bottom sheet on phones does not cover it.
       const tx = size.w / 2;
-      let ty = SAFE_TOP + availH * (size.w < 768 ? 0.3 : 0.5);
+      let ty = safeTop + availH * (size.w < 768 ? 0.3 : 0.5);
       // A sheet that is already open (e.g. "See on map" from the Schedule): centre in the free area above it.
       const sheet = size.w < 768 ? box.current?.ownerDocument.querySelector(".sheet") : null;
       if (sheet && box.current) {
         const free = sheet.getBoundingClientRect().top - box.current.getBoundingClientRect().top;
-        if (free > SAFE_TOP + 40) ty = SAFE_TOP + (free - SAFE_TOP) / 2;
+        if (free > safeTop + 40) ty = safeTop + (free - safeTop) / 2;
       }
       touched.current = true;
       apply({ x: tx - p.x * W * k, y: ty - p.y * H * k, k }, true);
     },
-    [apply, fitK, size.w, availH, W, H],
+    [apply, fitK, size.w, availH, W, H, safeTop],
   );
 
   const lastNonce = useRef<number | undefined>(undefined);
@@ -168,9 +195,9 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
       const sx = v.x + p.x * W * v.k;
       const sy = v.y + p.y * H * v.k;
       const pad = 30;
-      if (sx < pad || sx > size.w - pad || sy < SAFE_TOP || sy > size.h - SAFE_BOTTOM) centreOn(p, false);
+      if (sx < pad || sx > size.w - pad || sy < safeTop || sy > size.h - safeBottom) centreOn(p, false);
     },
-    [W, H, size.w, size.h, centreOn],
+    [W, H, size.w, size.h, centreOn, safeTop, safeBottom],
   );
 
   // ---- gestures: pointer events (touch pan + pinch, mouse drag), wheel, keyboard --------
@@ -264,7 +291,7 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
     const v = viewRef.current;
     const step = 60;
     const cx = size.w / 2;
-    const cy = SAFE_TOP + availH / 2;
+    const cy = safeTop + availH / 2;
     const pan = (dx: number, dy: number) => {
       touched.current = true;
       apply({ ...v, x: v.x + dx, y: v.y + dy }, true);
@@ -283,7 +310,16 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
     e.preventDefault();
   };
 
-  const zoomBy = (f: number) => zoomAt(size.w / 2, SAFE_TOP + availH / 2, viewRef.current.k * f, true);
+  const zoomBy = (f: number) => zoomAt(size.w / 2, safeTop + availH / 2, viewRef.current.k * f, true);
+
+  const stageEl = useRef<HTMLDivElement | null>(null);
+  const setStage = useCallback(
+    (el: HTMLDivElement | null) => {
+      stageEl.current = el;
+      if (edit?.stageRef) edit.stageRef.current = el;
+    },
+    [edit?.stageRef],
+  );
 
   const inv = 1 / view.k;
   const stageStyle = {
@@ -296,7 +332,7 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
   return (
     <div
       ref={box}
-      className="map-viewer"
+      className={"map-viewer" + (edit?.armed ? " armed" : "")}
       role="group"
       aria-roledescription="map"
       aria-label={t("mapHint")}
@@ -307,6 +343,16 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
       onPointerCancel={endPointer}
       onClickCapture={onClickCapture}
       onClick={(e) => {
+        if (edit?.onMapClick) {
+          // Editor: a click on a pin or a control is theirs; anything else is a click on the map (or beside it).
+          if ((e.target as HTMLElement).closest(".marker, .zoom-controls")) return;
+          const r = stageEl.current?.getBoundingClientRect();
+          if (!r || !r.width) return;
+          const x = (e.clientX - r.left) / r.width;
+          const y = (e.clientY - r.top) / r.height;
+          edit.onMapClick(x, y, x >= 0 && x <= 1 && y >= 0 && y <= 1);
+          return;
+        }
         if (e.target === e.currentTarget || (e.target as HTMLElement).tagName === "IMG") onSelect(null);
       }}
       onKeyDown={onKeyDown}
@@ -316,7 +362,7 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
         e.currentTarget.scrollTop = 0;
       }}
     >
-      <div className={"map-stage" + (animate ? " animating" : "")} style={stageStyle}>
+      <div ref={setStage} className={"map-stage" + (animate ? " animating" : "")} style={stageStyle}>
         {/* Event maps are shown through <img> only, never inlined (SVG could carry scripts). */}
         <img
           className="map-image"
@@ -338,9 +384,15 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
             point={p}
             theme={theme}
             selected={p.id === selectedId}
-            label={`${p.name}, ${categoryLabel(p.category)}`}
+            label={pointAriaLabel(p, categoryLabel)}
             onSelect={onSelect}
             onFocusPoint={ensureVisible}
+            stage={edit ? stageEl : undefined}
+            onDrag={edit?.onMarkerDrag}
+            pending={edit?.pendingIds?.has(p.id)}
+            highlighted={edit?.highlightId === p.id}
+            stamped={edit?.stampId === p.id}
+            tip={edit?.tipOf?.(p)}
           />
         ))}
       </div>
@@ -370,20 +422,80 @@ type MarkerProps = {
   label: string;
   onSelect: (id: string | null) => void;
   onFocusPoint: (p: Point) => void;
+  /** Editor only: the stage (for pointer to 0..1), the drag callback and the pin states. */
+  stage?: React.RefObject<HTMLDivElement | null>;
+  onDrag?: MapEdit["onMarkerDrag"];
+  pending?: boolean;
+  highlighted?: boolean;
+  stamped?: boolean;
+  tip?: string;
 };
 
-const Marker = memo(function Marker({ point, theme, selected, label, onSelect, onFocusPoint }: MarkerProps) {
+const DRAG_SLOP = 5;
+
+const Marker = memo(function Marker({ point, theme, selected, label, onSelect, onFocusPoint, stage, onDrag, pending, highlighted, stamped, tip }: MarkerProps) {
   const sz = selected ? TOKEN_SIZE.selected : TOKEN_SIZE.default;
   const off = 22 - sz.anchor; // centre the token's anchor in the 44x44 hit box
+  // Editor: drag a pin with Pointer Events. Below the slop it stays a click (select).
+  const drag = useRef<{ id: number; sx: number; sy: number; dx: number; dy: number; active: boolean } | null>(null);
+  const swallowClick = useRef(false);
+  const toMap = (e: React.PointerEvent, d: NonNullable<typeof drag.current>) => {
+    const r = stage!.current!.getBoundingClientRect();
+    return { x: Math.min(1, Math.max(0, (e.clientX - d.dx - r.left) / r.width)), y: Math.min(1, Math.max(0, (e.clientY - d.dy - r.top) / r.height)) };
+  };
+  const dragProps = onDrag && stage
+    ? {
+        onPointerDown: (e: React.PointerEvent<HTMLButtonElement>) => {
+          if (e.button !== 0 || !stage.current) return;
+          e.stopPropagation(); // the viewer must not start panning
+          const r = stage.current.getBoundingClientRect();
+          // Keep the grab offset, so the pin does not jump to the pointer.
+          drag.current = { id: e.pointerId, sx: e.clientX, sy: e.clientY, dx: e.clientX - (r.left + point.x * r.width), dy: e.clientY - (r.top + point.y * r.height), active: false };
+        },
+        onPointerMove: (e: React.PointerEvent<HTMLButtonElement>) => {
+          const d = drag.current;
+          if (!d || d.id !== e.pointerId) return;
+          if (!d.active) {
+            if (Math.hypot(e.clientX - d.sx, e.clientY - d.sy) < DRAG_SLOP) return;
+            d.active = true;
+            e.currentTarget.setPointerCapture?.(e.pointerId);
+          }
+          const m = toMap(e, d);
+          onDrag(point.id, m.x, m.y, "move");
+        },
+        onPointerUp: (e: React.PointerEvent<HTMLButtonElement>) => {
+          const d = drag.current;
+          drag.current = null;
+          if (!d || d.id !== e.pointerId || !d.active) return;
+          swallowClick.current = true;
+          const m = toMap(e, d);
+          onDrag(point.id, m.x, m.y, "end");
+        },
+        onPointerCancel: () => {
+          const d = drag.current;
+          drag.current = null;
+          if (d?.active) onDrag(point.id, point.x, point.y, "end");
+        },
+      }
+    : {};
   return (
     <button
       type="button"
-      className={"marker" + (selected ? " selected" : "")}
+      className={"marker" + (selected ? " selected" : "") + (pending ? " pending" : "") + (highlighted ? " hl" : "") + (stamped ? " stamp" : "") + (onDrag ? " draggable" : "")}
+      {...dragProps}
       data-point-id={point.id}
       style={{ left: `${point.x * 100}%`, top: `${point.y * 100}%`, zIndex: selected ? 2000 : Math.round(point.y * 1000) }}
       aria-label={label}
       aria-pressed={selected}
-      onClick={() => onSelect(selected ? null : point.id)}
+      onClick={(e) => {
+        if (swallowClick.current) {
+          swallowClick.current = false;
+          e.stopPropagation();
+          return;
+        }
+        // The editor keeps a clicked pin selected (clicking again does not deselect: there is the Inspector to use).
+        onSelect(selected && !onDrag ? null : point.id);
+      }}
       onFocus={() => onFocusPoint(point)}
     >
       <span className="marker-art" style={{ left: off, top: off }}>
@@ -394,6 +506,7 @@ const Marker = memo(function Marker({ point, theme, selected, label, onSelect, o
           <QuestArrow theme={theme} />
         </span>
       )}
+      {tip && <span className="marker-tip">{tip}</span>}
     </button>
   );
 });

@@ -3,7 +3,7 @@ import type { PanelEvent } from "@atlas/contract";
 import { organizerTransition, type FailCode } from "../../../api/publication";
 import ShareDialog, { buildShareUrl } from "../../../components/ShareDialog";
 import { useI18n } from "../../../i18n/I18nProvider";
-import { navigate } from "../../../lib/router";
+import { Link, navigate } from "../../../lib/router";
 import { Dialog, Ic, StatusBadge } from "./common";
 
 export function shortDate(iso: string | null, lang: string) {
@@ -36,6 +36,7 @@ export default function PublishStep({
   const [confirming, setConfirming] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [needPoints, setNeedPoints] = useState(false);
   const url = buildShareUrl(e.slug);
 
   const explain = (code: FailCode | "error") => {
@@ -46,6 +47,9 @@ export default function PublishStep({
     } else if (code === "map_required") {
       setError(t("pePubNeedMap"));
       onReload();
+    } else if (code === "points_required") {
+      setError(t("pePubNeedPoints"));
+      setNeedPoints(true);
     } else if (code === "transition_cap_reached") setError(t("pePubCap"));
     else if (code === "rate_limited") setError(t("pePubRate"));
     else if (code === "validation") setError(t("pePubInvalid"));
@@ -56,6 +60,7 @@ export default function PublishStep({
     if (busy) return;
     setBusy(true);
     setError(null);
+    setNeedPoints(false);
     const r = await organizerTransition(e.id, action);
     setBusy(false);
     if (r.status === "ok") {
@@ -83,7 +88,14 @@ export default function PublishStep({
       <Ic n="upload" size={18} />{busy ? t("pePubSending") : label}
     </button>
   );
-  const fail = error && <p className="pe-pubnote err" role="alert">{error}</p>;
+  const fail = error && (
+    <>
+      <p className="pe-pubnote err" role="alert">{error}</p>
+      {needPoints && (
+        <p><Link to={`/panel/events/${e.id}/points`} className="btn sm"><Ic n="pin" size={16} />{t("pePubPlacePoints")}</Link></p>
+      )}
+    </>
+  );
   const reason = (label: string) => (
     <p className="pe-reason" dir="auto">
       <span>{label}</span>

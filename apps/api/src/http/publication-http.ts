@@ -20,6 +20,8 @@ export function refusalResponse(c: AppContext, reason: RefusalReason | "validati
       return errorResponse(c, 409, "invalid_transition", NO_STORE);
     case "event_changed":
       return errorResponse(c, 409, "event_changed", NO_STORE);
+    case "points_required":
+      return errorResponse(c, 409, "points_required", NO_STORE);
     case "map_required":
       return errorResponse(c, 409, "map_required", NO_STORE);
     case "cap_reached":

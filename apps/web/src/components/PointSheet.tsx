@@ -3,6 +3,7 @@ import type { EventInfo, Point } from "@atlas/contract";
 import { CategoryIcon } from "../markers/Pixel";
 import { CATEGORY_INFO } from "../markers/categories";
 import { useI18n } from "../i18n/I18nProvider";
+import { displayName } from "../lib/pointLabel";
 import SessionsPanel from "./SessionsPanel";
 import type { TimedSession } from "../lib/schedule";
 
@@ -68,13 +69,14 @@ export default function PointSheet({
       <div className="sheet-row">
         <span className="chip" style={chipVars}>
           <CategoryIcon category={point.category} size={28} />
-          {t(`cat_${point.category}` as any)}
+          {/* Without a custom name the title already is the category label: do not say it twice. */}
+          {point.name ? t(`cat_${point.category}` as any) : null}
         </span>
         <button type="button" className="icon-btn sheet-close" onClick={onClose} aria-label={t("closeSheet")}>
           <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
       </div>
-      <h2 id="sheet-title" className="sheet-title">{point.name}</h2>
+      <h2 id="sheet-title" className="sheet-title">{displayName(point, t)}</h2>
       {onSeeOnMap && (
         <button type="button" className="btn primary see-map" onClick={onSeeOnMap}>
           <svg className="ln" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">

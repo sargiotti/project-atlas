@@ -18,18 +18,20 @@ export interface TransitionRule {
   readonly to: EventStatus;
   /** A map must exist at the moment of the change (and the stored fields must pass `eventInputSchema`). */
   readonly needsMap: boolean;
+  /** Slice 08c: at least one Point must exist at the moment of the change (publish requests and Admin approvals). */
+  readonly needsPoints: boolean;
   /** The caller names the content version it saw (`updated_at`), and the change only applies to that version. */
   readonly versionGuard: boolean;
 }
 
 /** The allowed transitions. Anything not listed here is refused with `invalid_transition`. */
 export const TRANSITIONS: readonly TransitionRule[] = [
-  { action: "request", actor: "organizer", from: ["draft", "rejected", "unpublished_admin"], to: "in_review", needsMap: true, versionGuard: false },
-  { action: "withdraw", actor: "organizer", from: ["in_review"], to: "draft", needsMap: false, versionGuard: false },
-  { action: "unpublish", actor: "organizer", from: ["published"], to: "draft", needsMap: false, versionGuard: false },
-  { action: "approve", actor: "admin", from: ["in_review"], to: "published", needsMap: true, versionGuard: true },
-  { action: "reject", actor: "admin", from: ["in_review"], to: "rejected", needsMap: false, versionGuard: false },
-  { action: "admin_unpublish", actor: "admin", from: ["published"], to: "unpublished_admin", needsMap: false, versionGuard: false },
+  { action: "request", actor: "organizer", from: ["draft", "rejected", "unpublished_admin"], to: "in_review", needsMap: true, needsPoints: true, versionGuard: false },
+  { action: "withdraw", actor: "organizer", from: ["in_review"], to: "draft", needsMap: false, needsPoints: false, versionGuard: false },
+  { action: "unpublish", actor: "organizer", from: ["published"], to: "draft", needsMap: false, needsPoints: false, versionGuard: false },
+  { action: "approve", actor: "admin", from: ["in_review"], to: "published", needsMap: true, needsPoints: true, versionGuard: true },
+  { action: "reject", actor: "admin", from: ["in_review"], to: "rejected", needsMap: false, needsPoints: false, versionGuard: false },
+  { action: "admin_unpublish", actor: "admin", from: ["published"], to: "unpublished_admin", needsMap: false, needsPoints: false, versionGuard: false },
 ];
 
 const BY_ACTION = new Map(TRANSITIONS.map((r) => [r.action, r] as const));
@@ -55,13 +57,14 @@ export const isPublic = (state: EventStatus): boolean => state === "published";
 
 export { DAILY_TRANSITION_CAP };
 
-export type RefusalReason = "not_found" | "invalid_transition" | "event_changed" | "map_required" | "cap_reached";
+export type RefusalReason = "not_found" | "invalid_transition" | "event_changed" | "map_required" | "points_required" | "cap_reached";
 
 /** What a re-read found after a conditional statement changed nothing. `null` = the event does not exist for this caller. */
 export interface RefusalFacts {
   state: EventStatus;
   updatedAt: number;
   hasMap: boolean;
+  hasPoints: boolean;
   /** Organizer transitions already used today (UTC). */
   usedToday: number;
 }
@@ -75,6 +78,7 @@ export function classifyRefusal(rule: TransitionRule, facts: RefusalFacts | null
   if (!rule.from.includes(facts.state)) return "invalid_transition";
   if (rule.versionGuard && expectedUpdatedAt !== null && facts.updatedAt !== expectedUpdatedAt) return "event_changed";
   if (rule.needsMap && !facts.hasMap) return "map_required";
+  if (rule.needsPoints && !facts.hasPoints) return "points_required";
   if (rule.actor === "organizer" && facts.usedToday >= DAILY_TRANSITION_CAP) return "cap_reached";
   // The guard failed although every fact looks fine: the event changed between the read and the write.
   return "event_changed";

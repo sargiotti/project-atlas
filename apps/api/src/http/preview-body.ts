@@ -1,4 +1,4 @@
-import type { EventPreviewResponse } from "@atlas/contract";
+import type { EventPreviewResponse, Point } from "@atlas/contract";
 import { mediaUrl } from "../adapters/d1-map-image-repository";
 import type { OwnedEvent } from "../adapters/d1-panel-event-repository";
 
@@ -6,7 +6,7 @@ import type { OwnedEvent } from "../adapters/d1-panel-event-repository";
  * The event as visitors will see it: public-shaped fields, with the uploaded map when there is one. Shared by the
  * owner preview and the Admin review, so both show exactly what publishing would show.
  */
-export function toPreviewBody(e: OwnedEvent): EventPreviewResponse {
+export function toPreviewBody(e: OwnedEvent, points: Point[]): EventPreviewResponse {
   return {
     event: {
       slug: e.slug,
@@ -36,7 +36,7 @@ export function toPreviewBody(e: OwnedEvent): EventPreviewResponse {
           },
         }
       : null,
-    points: [],
+    points,
     sessions: [],
   };
 }

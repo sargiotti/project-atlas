@@ -39,6 +39,11 @@ export type PointCategory = z.infer<typeof pointCategorySchema>;
 
 export const MAX_POINTS_PER_MAP = 500;
 
+/** Slice 08c. Name-it categories need a custom name (1-80). Just-drop categories may have `name: null` (no custom name). */
+export const NAME_IT_CATEGORIES = ["stage", "food", "drinks", "merch", "landmark"] as const;
+export const JUST_DROP_CATEGORIES = ["toilets", "first-aid", "info", "entrance-exit"] as const;
+export const isJustDropCategory = (c: string): boolean => (JUST_DROP_CATEGORIES as readonly string[]).includes(c);
+
 export const mapThemeSchema = z.enum(["light", "dark"]);
 export type MapTheme = z.infer<typeof mapThemeSchema>;
 
@@ -87,15 +92,33 @@ export const eventMapSchema = z.object({
 
 export const pointIdSchema = z.string().regex(/^[a-z0-9_-]{1,64}$/);
 
-export const pointSchema = z.object({
-  id: pointIdSchema,
-  name: z.string().min(1).max(80),
-  category: pointCategorySchema,
-  /** Plain text. Render as text, never as HTML. */
-  description: z.string().max(500),
-  x: z.number().min(0).max(1),
-  y: z.number().min(0).max(1),
-});
+export const POINT_NAME_MAX = 80;
+export const POINT_DESCRIPTION_MAX = 500;
+
+/**
+ * `name` is null for a Just-drop Point without a custom name (slice 08c): clients show the category label in the
+ * viewer's language. As an output check the text blocklists apply too, so a poisoned row can never reach visitors.
+ */
+export const pointSchema = z
+  .object({
+    id: pointIdSchema,
+    name: z.string().min(1).max(POINT_NAME_MAX).nullable(),
+    category: pointCategorySchema,
+    /** Plain text. Render as text, never as HTML. */
+    description: z.string().max(POINT_DESCRIPTION_MAX),
+    x: z.number().min(0).max(1),
+    y: z.number().min(0).max(1),
+  })
+  .superRefine((p, ctx) => {
+    if (p.name === null) {
+      if (!isJustDropCategory(p.category)) ctx.addIssue({ code: "custom", message: "name required for this category", path: ["name"] });
+    } else if (FORBIDDEN_SINGLE_LINE.test(p.name)) {
+      ctx.addIssue({ code: "custom", message: "control or bidi characters not allowed", path: ["name"] });
+    }
+    if (FORBIDDEN_MULTI_LINE.test(p.description)) {
+      ctx.addIssue({ code: "custom", message: "control or bidi characters not allowed", path: ["description"] });
+    }
+  });
 export type Point = z.infer<typeof pointSchema>;
 
 export const MAX_SESSIONS_PER_POINT = 150;
@@ -215,6 +238,8 @@ export const ERROR_CODES = [
   "event_changed",
   "map_required",
   "transition_cap_reached",
+  // Slice 08c (points editor): publish-request with 0 Points.
+  "points_required",
 ] as const;
 export const errorCodeSchema = z.enum(ERROR_CODES);
 export type ErrorCode = z.infer<typeof errorCodeSchema>;

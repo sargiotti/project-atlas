@@ -14,6 +14,7 @@ export interface StoredForTransition {
   state: EventStatus;
   updatedAt: number;
   hasMap: boolean;
+  hasPoints: boolean;
   fields: Record<string, unknown>;
 }
 
@@ -74,6 +75,7 @@ export async function runTransition(repo: PublicationPort, input: TransitionInpu
     if (!isAllowedFrom(rule.action, stored.state)) return { ok: false, reason: "invalid_transition" };
     if (rule.versionGuard && expected !== null && stored.updatedAt !== expected) return { ok: false, reason: "event_changed" };
     if (!stored.hasMap) return { ok: false, reason: "map_required" };
+    if (rule.needsPoints && !stored.hasPoints) return { ok: false, reason: "points_required" };
     const valid = eventInputSchema.safeParse(stored.fields);
     if (!valid.success) return { ok: false, reason: "validation_error", fields: toFieldErrors(valid.error) };
     from = stored.state;

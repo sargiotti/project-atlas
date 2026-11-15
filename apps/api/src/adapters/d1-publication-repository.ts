@@ -8,6 +8,7 @@ interface ReadRow {
   publish_state: EventStatus;
   updated_at: number;
   has_map: number;
+  has_points: number;
   name: string;
   start_date: string;
   end_date: string;
@@ -30,6 +31,7 @@ const SETS: Record<PublishAction, { sql: string; binds: (c: TransitionCommand) =
 };
 
 const HAS_MAP = "EXISTS (SELECT 1 FROM event_map_images m WHERE m.event_id = e.id)";
+const HAS_POINTS = "EXISTS (SELECT 1 FROM event_points p WHERE p.event_id = e.id)";
 
 /**
  * Publish-flow storage. Each transition is a `db.batch` of ONE conditional UPDATE plus the audit row (and the
@@ -42,7 +44,7 @@ export class D1PublicationRepository implements PublicationPort {
   async readForTransition(eventId: string, ownerScope: string | null): Promise<StoredForTransition | null> {
     const row = await this.db
       .prepare(
-        `SELECT e.publish_state, e.updated_at, ${HAS_MAP} AS has_map, e.name, e.start_date, e.end_date, e.time_zone,
+        `SELECT e.publish_state, e.updated_at, ${HAS_MAP} AS has_map, ${HAS_POINTS} AS has_points, e.name, e.start_date, e.end_date, e.time_zone,
                 e.city, e.country, e.language, e.description, e.website
          FROM events e WHERE e.id = ?1 AND (?2 IS NULL OR e.owner_id = ?2)`,
       )
@@ -53,6 +55,7 @@ export class D1PublicationRepository implements PublicationPort {
       state: row.publish_state,
       updatedAt: row.updated_at,
       hasMap: row.has_map === 1,
+      hasPoints: row.has_points === 1,
       fields: {
         name: row.name,
         startDate: row.start_date,
@@ -84,6 +87,7 @@ export class D1PublicationRepository implements PublicationPort {
       whereBinds.push(guardUpdatedAt);
     }
     if (rule.needsMap) where.push(HAS_MAP);
+    if (rule.needsPoints) where.push(HAS_POINTS);
     if (organizer) {
       where.push("COALESCE((SELECT q.count FROM transition_quota q WHERE q.organizer_id = ? AND q.day = ?), 0) < ?");
       whereBinds.push(c.actorId, day, DAILY_TRANSITION_CAP);
@@ -119,14 +123,14 @@ export class D1PublicationRepository implements PublicationPort {
   async refusalFacts(eventId: string, ownerScope: string | null, organizerId: string, now: number): Promise<RefusalFacts | null> {
     const row = await this.db
       .prepare(
-        `SELECT e.publish_state, e.updated_at, ${HAS_MAP} AS has_map,
+        `SELECT e.publish_state, e.updated_at, ${HAS_MAP} AS has_map, ${HAS_POINTS} AS has_points,
                 COALESCE((SELECT q.count FROM transition_quota q WHERE q.organizer_id = ?3 AND q.day = ?4), 0) AS used
          FROM events e WHERE e.id = ?1 AND (?2 IS NULL OR e.owner_id = ?2)`,
       )
       .bind(eventId, ownerScope, organizerId, utcDay(now))
-      .first<{ publish_state: EventStatus; updated_at: number; has_map: number; used: number }>();
+      .first<{ publish_state: EventStatus; updated_at: number; has_map: number; has_points: number; used: number }>();
     if (!row) return null;
-    return { state: row.publish_state, updatedAt: row.updated_at, hasMap: row.has_map === 1, usedToday: row.used };
+    return { state: row.publish_state, updatedAt: row.updated_at, hasMap: row.has_map === 1, hasPoints: row.has_points === 1, usedToday: row.used };
   }
 
   /** Events waiting for the Admin. Literal predicate so the partial index idx_events_pending applies. */

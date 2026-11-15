@@ -51,7 +51,7 @@ interface SessionRow {
 interface PointRow {
   id: string;
   category: StoredEventMap["points"][number]["category"];
-  name: string;
+  name: string | null;
   description: string;
   x: number;
   y: number;
@@ -63,7 +63,7 @@ export class D1EventMapRepository implements EventMapRepository {
   async findFirstMapBySlug(slug: string): Promise<StoredEventMap | null> {
     // One batch, two prepared statements, all values bound (never concatenated).
     // Lookup by the indexed unique slug; bounded to one event and at most 500 points.
-    const [mapResult, pointsResult, sessionsResult, uploadedResult] = await this.db.batch<MapRow | PointRow | SessionRow | UploadedMapRow>([
+    const [mapResult, pointsResult, sessionsResult, uploadedResult, uploadedPointsResult] = await this.db.batch<MapRow | PointRow | SessionRow | UploadedMapRow>([
       this.db
         .prepare(
           `SELECT e.slug, e.name, e.start_date, e.end_date, e.language, e.time_zone, e.day_start,
@@ -95,6 +95,14 @@ export class D1EventMapRepository implements EventMapRepository {
            WHERE e.slug = ?1 AND ${publishedEvent("e")}`,
         )
         .bind(slug),
+      // Slice 08c: the Points of an uploaded map, only through the published filter, at most 500.
+      this.db
+        .prepare(
+          `SELECT p.id, p.category, p.name, p.description, p.x, p.y
+           FROM event_points p JOIN events e ON e.id = p.event_id
+           WHERE e.slug = ?1 AND ${publishedEvent("e")} LIMIT 500`,
+        )
+        .bind(slug),
     ]);
 
     const row = mapResult?.results[0] as MapRow | undefined;
@@ -123,7 +131,7 @@ export class D1EventMapRepository implements EventMapRepository {
             { url: `/media/${up.full_key}`, width: up.full_width },
           ].sort((a, b) => a.width - b.width),
         },
-        points: [],
+        points: ((uploadedPointsResult?.results ?? []) as PointRow[]).map((p) => ({ id: p.id, name: p.name, category: p.category, description: p.description, x: p.x, y: p.y })),
         sessions: [],
       };
     }
