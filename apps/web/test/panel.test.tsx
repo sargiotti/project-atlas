@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { I18nProvider } from "../src/i18n/I18nProvider";
 import { Routes } from "../src/App";
 import { errorBody, goTo, json } from "./fixtures";
+import { peekCoverHandoff, setCoverHandoff } from "../src/lib/coverHandoff";
 
 const TOKEN = "A".repeat(43);
 const me = (role: "admin" | "organizer") => ({
@@ -100,6 +101,21 @@ describe("logout", () => {
     expect(call[1]!.method).toBe("POST");
     expect((call[1]!.headers as any)["Content-Type"]).toBe("application/json");
     expect(call[1]!.body).toBe("{}");
+  });
+
+  it("drops a pending cover handoff on sign-out", async () => {
+    mockApi({
+      "GET /auth/me": () => json(me("organizer")),
+      "POST /auth/logout": () => new Response(null, { status: 204 }),
+    });
+    setCoverHandoff({ eventId: "ev1", files: { full: new Blob(), small: new Blob(), og: new Blob(), fx: 0.5, fy: 0.5 }, error: "err_generic" as any });
+    expect(peekCoverHandoff("ev1")).not.toBeNull();
+    const user = userEvent.setup();
+    renderAt("/panel");
+    await user.click(await screen.findByRole("button", { name: "Account menu" }));
+    await user.click(screen.getByRole("menuitem", { name: "Sign out" }));
+    await screen.findByRole("heading", { name: "Sign in" });
+    expect(peekCoverHandoff("ev1")).toBeNull();
   });
 
   it("stays signed in and says so when sign-out fails", async () => {

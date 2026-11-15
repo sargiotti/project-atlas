@@ -6,6 +6,7 @@ import { useI18n } from "../../i18n/I18nProvider";
 import { Link, navigate } from "../../lib/router";
 import { Brand } from "./parts";
 import { clearAllDrafts, purgeForeignDrafts } from "../../lib/draftStorage";
+import { clearCoverHandoff } from "../../lib/coverHandoff";
 import { MeContext, PendingContext, usePending } from "./pending";
 
 export function initials(name: string, email: string) {
@@ -48,6 +49,7 @@ function UserMenu({ me }: { me: Organizer }) {
     setFailed(false);
     // Unsaved drafts (Points and Schedule editors) must not outlive the session on a shared computer: wipe them before the request.
     clearAllDrafts();
+    clearCoverHandoff(); // a pending cover (encoded image files held in memory after a failed upload) must not outlive the session either
     if (await logout()) navigate("/panel/login", true);
     else setFailed(true);
   };
