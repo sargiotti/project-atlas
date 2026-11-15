@@ -87,7 +87,7 @@ export class D1EventMapRepository implements EventMapRepository {
    * Defence in depth (slice 13): the event edit refuses dates that would strand Sessions, but a Session outside the window
    * must never take the public map down, so such rows are dropped BEFORE the bundle schema sees them, and logged.
    */
-  private inWindow(up: UploadedMapRow, rows: SessionRow[]) {
+  private inWindow(up: { slug: string; start_date: string; end_date: string; day_start: string; time_zone: string }, rows: SessionRow[]) {
     const w = sessionWindow(up.start_date, up.end_date, up.day_start, up.time_zone);
     const kept = rows.filter((r) => {
       const start = parseUtcInstant(r.start_utc);
@@ -221,15 +221,7 @@ export class D1EventMapRepository implements EventMapRepository {
         x: p.x,
         y: p.y,
       })),
-      sessions: sessions.map((r) => ({
-        id: r.id,
-        pointId: r.point_id,
-        title: r.title,
-        start: r.start_utc,
-        end: r.end_utc,
-        // Optional in the contract: omitted when there is no text.
-        ...(r.description ? { description: r.description } : {}),
-      })),
+      sessions: this.inWindow(row, sessions),
     };
   }
 }

@@ -72,6 +72,27 @@ describe("GET /api/v1/events/:slug/map-bundle", () => {
     expect(bundle.event.dayStart).toBe("06:00");
   });
 
+  it("a seeded event's session before the first day's start is dropped (and logged), not a 500", async () => {
+    // tiny-fest: Europe/Dublin, dayStart 06:00, first day 2026-07-10. 00:30 local on the 10th is 23:30Z on the 9th: outside the window.
+    await env.DB.prepare(
+      "INSERT INTO point_sessions (id, event_id, point_id, title, start_utc, end_utc, created_at, updated_at) VALUES ('early-1', 'evt_tiny-fest', 'tiny-fest-stage', 'Too early', '2026-07-09T23:30:00Z', '2026-07-10T00:30:00Z', 0, 0)",
+    ).run();
+    const errors: string[] = [];
+    const orig = console.error;
+    console.error = (...a: unknown[]) => void errors.push(a.join(" "));
+    try {
+      const res = await get("/api/v1/events/tiny-fest/map-bundle");
+      expect(res.status).toBe(200);
+      const bundle = mapBundleSchema.parse(await res.json());
+      expect(bundle.sessions.map((x) => x.title)).not.toContain("Too early");
+      expect(bundle.sessions.length).toBeGreaterThan(0);
+    } finally {
+      console.error = orig;
+      await env.DB.prepare("DELETE FROM point_sessions WHERE id = 'early-1'").run();
+    }
+    expect(errors.join("\n")).toMatch(/\[bundle\] dropped 1 session\(s\) outside the event window slug=tiny-fest/);
+  });
+
   it("the database refuses a session whose point belongs to another event", async () => {
     // evt_bare (previous test) has no point of its own; tiny-fest-stage belongs to evt_tiny-fest.
     const insert = env.DB.prepare(
