@@ -21,17 +21,17 @@ const bad = (reason: InvalidUploadReason): MapImageFailure & { ok: false } => ({
 const UNSUPPORTED = { ok: false, code: "unsupported_image_type" } as const;
 
 export type CoverSetResult =
-  | { ok: true; full: MapImageInfo; small: MapImageInfo; og: MapImageInfo }
+  | { ok: true; format: "webp" | "jpeg"; full: MapImageInfo; small: MapImageInfo; og: MapImageInfo }
   | ({ ok: false } & MapImageFailure);
 
-const WEBP_OPTS = { animatedReason: "animated_image" } as const;
+const COVER_OPTS = { animatedReason: "animated_image" } as const;
 const OG_OPTS = { baselineOnly: true } as const;
 
-/** `full` and `small` must be WebP, `og` a baseline JPEG; anything else is 415 by magic bytes. */
-function inspectAs(bytes: Uint8Array, format: "webp" | "jpeg") {
-  const r = inspectMapImage(bytes, format === "webp" ? WEBP_OPTS : OG_OPTS);
+/** `og` must be a baseline JPEG; anything else is 415 by magic bytes. */
+function inspectOg(bytes: Uint8Array) {
+  const r = inspectMapImage(bytes, OG_OPTS);
   if (!r.ok) return r;
-  return r.info.format === format ? r : UNSUPPORTED;
+  return r.info.format === "jpeg" ? r : UNSUPPORTED;
 }
 
 /** Aspect window 4:5 ... 3:1 with 1 px of slack on the height (rounding in the browser). */
@@ -40,11 +40,15 @@ export function aspectInRange(width: number, height: number): boolean {
 }
 
 export function validateCoverSet(fullBytes: Uint8Array, smallBytes: Uint8Array, ogBytes: Uint8Array): CoverSetResult {
-  const full = inspectAs(fullBytes, "webp");
+  // `full` and `small` are WebP or JPEG (Safari cannot encode WebP). JPEG follows the 08a map rules: no metadata
+  // markers, no trailing bytes, any SOF; no baseline-only rule. Both must be the same type: the <img> pair is one
+  // picture and mixing gains nothing, so a mismatch is 415 like any unexpected type.
+  const full = inspectMapImage(fullBytes, COVER_OPTS);
   if (!full.ok) return full;
-  const small = inspectAs(smallBytes, "webp");
+  const small = inspectMapImage(smallBytes, COVER_OPTS);
   if (!small.ok) return small;
-  const og = inspectAs(ogBytes, "jpeg");
+  if (full.info.format !== small.info.format) return UNSUPPORTED;
+  const og = inspectOg(ogBytes);
   if (!og.ok) return og;
   const f = full.info;
   const s = small.info;
@@ -53,12 +57,12 @@ export function validateCoverSet(fullBytes: Uint8Array, smallBytes: Uint8Array, 
   if (s.width !== COVER_SMALL_WIDTH) return bad("small_size_out_of_range");
   if (Math.abs(s.height - Math.round((COVER_SMALL_WIDTH * f.height) / f.width)) > 1) return bad("aspect_mismatch");
   if (og.info.width !== COVER_OG_WIDTH || og.info.height !== COVER_OG_HEIGHT) return bad("og_size_invalid");
-  return { ok: true, full: f, small: s, og: og.info };
+  return { ok: true, format: f.format, full: f, small: s, og: og.info };
 }
 
 /** The focal-only route sends just the JPEG. */
 export function validateOgOnly(ogBytes: Uint8Array): { ok: true; og: MapImageInfo } | ({ ok: false } & MapImageFailure) {
-  const og = inspectAs(ogBytes, "jpeg");
+  const og = inspectOg(ogBytes);
   if (!og.ok) return og;
   if (og.info.width !== COVER_OG_WIDTH || og.info.height !== COVER_OG_HEIGHT) return bad("og_size_invalid");
   return { ok: true, og: og.info };

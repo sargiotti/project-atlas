@@ -17,20 +17,20 @@ export const COVER_MIN_ASPECT = 0.8;
 export const COVER_MAX_ASPECT = 3;
 
 /**
- * Same-origin cover files served by the Worker: `/media/covers/{eventId}/{hex32}-full.webp` and `-800.webp`.
+ * Same-origin cover files served by the Worker: `/media/covers/{eventId}/{hex32}-full.{webp|jpg}` and `-800.{webp|jpg}` (JPEG when the browser cannot encode WebP; both files share one type).
  * The event id charset includes `_` because seeded demo events are `evt_{slug}`; organizer events are UUIDs.
  */
-export const COVER_URL_REGEX = /^\/media\/covers\/[a-z0-9_-]{1,64}\/[0-9a-f]{32}-full\.webp$/;
-export const COVER_URL800_REGEX = /^\/media\/covers\/[a-z0-9_-]{1,64}\/[0-9a-f]{32}-800\.webp$/;
+export const COVER_URL_REGEX = /^\/media\/covers\/[a-z0-9_-]{1,64}\/[0-9a-f]{32}-full\.(?:webp|jpg)$/;
+export const COVER_URL800_REGEX = /^\/media\/covers\/[a-z0-9_-]{1,64}\/[0-9a-f]{32}-800\.(?:webp|jpg)$/;
 
 export const focalSchema = z.object({ x: z.number().min(0).max(1), y: z.number().min(0).max(1) });
 
 export const coverImageSchema = z.object({
-  /** The full WebP (<= 1600 px wide). About sheet and hub. */
+  /** The full WebP or JPEG (<= 1600 px wide). About sheet and hub. */
   url: z.string().regex(COVER_URL_REGEX, "Invalid cover URL"),
-  /** The 800 px wide WebP. Home cards use only this one. */
+  /** The 800 px wide WebP or JPEG. Home cards use only this one. */
   url800: z.string().regex(COVER_URL800_REGEX, "Invalid cover URL"),
-  /** Width and height of the full WebP. */
+  /** Width and height of the full file. */
   width: z.number().int().positive(),
   height: z.number().int().positive(),
   /** Point of interest, 0..1. Render as `object-position: x% y%`. */

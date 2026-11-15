@@ -22,7 +22,7 @@ const PUT_PARTS = new Set(["full", "small", "og", "fx", "fy"]);
 const PATCH_PARTS = new Set(["og", "fx", "fy", "baseVersion"]);
 /** Event ids of organizer events are UUIDs; seeded demo events are `evt_{slug}` (underscore). */
 const MEDIA_EVENT_ID = /^[a-z0-9_-]{1,64}$/;
-const MEDIA_FILE = /^[0-9a-f]{32}-(full\.webp|800\.webp|og\.jpg)$/;
+const MEDIA_FILE = /^[0-9a-f]{32}-(full\.(?:webp|jpg)|800\.(?:webp|jpg)|og\.jpg)$/;
 
 /** One privacy-safe line per cover action: request id, action, organizer, event, reason code. Never file names, bytes or focal values. */
 function logCover(c: AppContext, action: string, eventId: string, reason?: string): void {
@@ -129,12 +129,14 @@ export function registerCoverRoutes(app: Hono<AppEnv>): void {
     // Server-generated keys only, one fresh random token per file. A new key per upload makes the immutable cache safe,
     // and identical bytes uploaded twice can never produce the key of the live file.
     const prefix = `covers/${eventId}/`;
-    const fullKey = `${prefix}${randomHex32()}-full.webp`;
-    const smallKey = `${prefix}${randomHex32()}-800.webp`;
+    const ext = set.format === "webp" ? "webp" : "jpg";
+    const coverType = set.format === "webp" ? "image/webp" : "image/jpeg";
+    const fullKey = `${prefix}${randomHex32()}-full.${ext}`;
+    const smallKey = `${prefix}${randomHex32()}-800.${ext}`;
     const ogKey = `${prefix}${randomHex32()}-og.jpg`;
     try {
-      await c.env.MAPS.put(fullKey, fullBytes, { httpMetadata: { contentType: "image/webp" } });
-      await c.env.MAPS.put(smallKey, smallBytes, { httpMetadata: { contentType: "image/webp" } });
+      await c.env.MAPS.put(fullKey, fullBytes, { httpMetadata: { contentType: coverType } });
+      await c.env.MAPS.put(smallKey, smallBytes, { httpMetadata: { contentType: coverType } });
       await c.env.MAPS.put(ogKey, ogBytes, { httpMetadata: { contentType: "image/jpeg" } });
     } catch (err) {
       await deleteKeys(c, [fullKey, smallKey, ogKey], "new_after_put_failure", "cover");
@@ -291,7 +293,7 @@ export function registerCoverMediaRoutes(app: Hono<AppEnv>): void {
     if (!object) return notFound();
 
     const og = file.endsWith("-og.jpg");
-    const suffixType = og ? "image/jpeg" : "image/webp";
+    const suffixType = og || file.endsWith(".jpg") ? "image/jpeg" : "image/webp";
     // The type stored at upload (set from the sniffed bytes). A missing or unexpected value falls back to the suffix.
     const stored = object.httpMetadata?.contentType;
     const contentType = stored === "image/webp" || stored === "image/jpeg" ? stored : suffixType;
@@ -300,7 +302,7 @@ export function registerCoverMediaRoutes(app: Hono<AppEnv>): void {
       headers: {
         "Content-Type": contentType,
         "Content-Length": String(object.size),
-        "Content-Disposition": `inline; filename="${og ? "cover-og.jpg" : "cover.webp"}"`,
+        "Content-Disposition": `inline; filename="${og ? "cover-og.jpg" : file.endsWith(".jpg") ? "cover.jpg" : "cover.webp"}"`,
         // A new key per upload makes immutable safe. Non-public images must never sit in a shared cache.
         "Cache-Control": isPublic ? "public, max-age=31536000, immutable" : "private, max-age=31536000, immutable",
       },

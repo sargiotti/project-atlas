@@ -193,6 +193,25 @@ describe("upload, serve, replace, change focal, remove", () => {
     }
   });
 
+  it("accepts a JPEG pair: .jpg keys, image/jpeg stored and served, URLs pass the contract", async () => {
+    const owner = await newUser();
+    const { id } = await newEvent(owner);
+    const jpegs = { full: fakeJpeg(1200, 800), small: fakeJpeg(800, 533) };
+
+    const res = await put(id, owner, coverForm(jpegs));
+    expect(res.status).toBe(200);
+    const cover = panelCoverResponseSchema.parse(await res.json()).cover;
+    expect(cover.url).toMatch(new RegExp(`^/media/covers/${id}/[0-9a-f]{32}-full\.jpg$`));
+    expect(cover.url800).toMatch(new RegExp(`^/media/covers/${id}/[0-9a-f]{32}-800\.jpg$`));
+    for (const k of await r2Keys(id)) expect((await env.MAPS.head(k))?.httpMetadata?.contentType).toBe(k.endsWith(".webp") ? "image/webp" : "image/jpeg");
+    for (const url of [cover.url, cover.url800]) {
+      const served = await send(url, { cookie: owner.session });
+      expect(served.status).toBe(200);
+      expect(served.headers.get("content-type")).toBe("image/jpeg");
+    }
+
+  });
+
   it("replaces the cover: the old objects are deleted only after the new row is live; identical bytes still get a new key", async () => {
     const owner = await newUser();
     const { id } = await newEvent(owner);
@@ -374,6 +393,14 @@ describe("refusals store nothing and cost no quota", () => {
     await refuse(coverForm({ og: new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]) }), 415, "unsupported_image_type");
     await refuse(coverForm({ full: fakeJpeg(1200, 800) }), 415, "unsupported_image_type");
     await refuse(coverForm({ og: fakeWebp(1200, 630) }), 415, "unsupported_image_type");
+  });
+
+  it("JPEG full and small: EXIF is refused and a mixed pair is 415", async () => {
+    const exif = { segments: [{ marker: 0xe1, payload: EXIF_GPS_PAYLOAD }] };
+    await refuse(coverForm({ full: fakeJpeg(1200, 800, exif), small: fakeJpeg(800, 533) }), 400, "invalid_upload", "metadata_present");
+    await refuse(coverForm({ full: fakeJpeg(1200, 800), small: fakeJpeg(800, 533, exif) }), 400, "invalid_upload", "metadata_present");
+    await refuse(coverForm({ full: fakeJpeg(1200, 800) }), 415, "unsupported_image_type");
+    await refuse(coverForm({ small: fakeJpeg(800, 533) }), 415, "unsupported_image_type");
   });
 
   it("each file rule: animated WebP, progressive JPEG, metadata, trailing bytes, truncation", async () => {

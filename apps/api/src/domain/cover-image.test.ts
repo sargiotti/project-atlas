@@ -24,11 +24,34 @@ describe("validateCoverSet", () => {
       ["HTML as small", "small", new TextEncoder().encode("<!doctype html><script>1</script>")],
       ["PNG as og", "og", new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0])],
       ["GIF as full", "full", new TextEncoder().encode("GIF89a\u0001\u0000\u0001\u0000")],
-      ["a JPEG in the full slot", "full", fakeJpeg(1200, 800)],
+      ["a JPEG full with a WebP small (mixed)", "full", fakeJpeg(1200, 800)],
       ["a WebP in the og slot", "og", fakeWebp(1200, 630)],
     ] as const)("%s is unsupported_image_type", (_name, slot, bytes) => {
       const set = { full: full(), small: small(), og: og(), [slot]: bytes };
       expect(refused(validateCoverSet(set.full, set.small, set.og))).toBe("unsupported_image_type");
+    });
+  });
+
+  describe("JPEG full and small (browsers that cannot encode WebP)", () => {
+    const jfull = () => fakeJpeg(1200, 800);
+    const jsmall = () => fakeJpeg(800, 533);
+    it("accepts a JPEG pair (progressive too) and reports the format", () => {
+      expect(validateCoverSet(jfull(), jsmall(), og())).toMatchObject({ ok: true, format: "jpeg", full: { width: 1200, height: 800 } });
+      expect(validateCoverSet(fakeJpeg(1200, 800, { progressive: true }), jsmall(), og()).ok).toBe(true);
+      expect(validateCoverSet(full(), small(), og())).toMatchObject({ ok: true, format: "webp" });
+    });
+    it("refuses EXIF/GPS, trailing bytes and truncation", () => {
+      const exif = { segments: [{ marker: 0xe1, payload: EXIF_GPS_PAYLOAD }] };
+      expect(refused(validateCoverSet(fakeJpeg(1200, 800, exif), jsmall(), og()))).toBe("metadata_present");
+      expect(refused(validateCoverSet(jfull(), fakeJpeg(800, 533, exif), og()))).toBe("metadata_present");
+      expect(refused(validateCoverSet(fakeJpeg(1200, 800, { trailing: [0] }), jsmall(), og()))).toBe("corrupt_image");
+    });
+    it("keeps the same width, aspect and format rules; a mixed pair is unsupported_image_type", () => {
+      expect(refused(validateCoverSet(fakeJpeg(959, 640), fakeJpeg(800, 533), og()))).toBe("full_size_out_of_range");
+      expect(refused(validateCoverSet(jfull(), fakeJpeg(799, 533), og()))).toBe("small_size_out_of_range");
+      expect(refused(validateCoverSet(jfull(), fakeJpeg(800, 600), og()))).toBe("aspect_mismatch");
+      expect(refused(validateCoverSet(jfull(), small(), og()))).toBe("unsupported_image_type");
+      expect(refused(validateCoverSet(full(), jsmall(), og()))).toBe("unsupported_image_type");
     });
   });
 
