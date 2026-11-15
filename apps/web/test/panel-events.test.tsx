@@ -69,7 +69,7 @@ async function fillValid(user: ReturnType<typeof userEvent.setup>, name = "Noche
   await user.type(screen.getByRole("combobox", { name: "Search country" }), "Urug");
   await user.keyboard("{Enter}");
 }
-const saveButton = () => screen.getAllByRole("button", { name: /Save draft/ })[0];
+const saveButton = () => screen.getAllByRole("button", { name: /^Save$/ })[0];
 
 describe("create flow", () => {
   it("shows client errors next to the fields, offers a one-tap https fix, then saves and lands on the hub", async () => {
