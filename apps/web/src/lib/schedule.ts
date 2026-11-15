@@ -83,6 +83,10 @@ export function spillDate(ms: number, timeZone: string, day: string): string | n
 export function weekdayShort(date: string, lang: string): string {
   return new Intl.DateTimeFormat(lang, { weekday: "short", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`));
 }
+/** "Sat 12": weekday and day of month, the same word order in every language (the organizer UI, slice 13). */
+export function dayLabel(date: string, lang: string): string {
+  return `${weekdayShort(date, lang)} ${Number(date.slice(8, 10))}`;
+}
 export function dayChipLabel(date: string, lang: string): string {
   return new Intl.DateTimeFormat(lang, { weekday: "short", day: "numeric", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`));
 }

@@ -71,7 +71,8 @@ function FormBody({ event }: { event?: PanelEvent }) {
   const [touched, setTouched] = useState<Partial<Record<FieldKey, boolean>>>({});
   const [submitted, setSubmitted] = useState(false);
   const [serverIssues, setServerIssues] = useState<Issues>({});
-  const [banner, setBanner] = useState<null | "limit" | "failed">(null);
+  const [banner, setBanner] = useState<null | "limit" | "failed" | "sessions">(null);
+  const [sessionsOutside, setSessionsOutside] = useState(0);
   const [saving, setSaving] = useState(false);
   const [pending, setPending] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -189,6 +190,9 @@ function FormBody({ event }: { event?: PanelEvent }) {
       const { issues, unknown } = fromServer(r.fields);
       setServerIssues(issues);
       if (unknown) setBanner("failed");
+    } else if (r.status === "sessions_outside_dates") {
+      setSessionsOutside(r.count);
+      setBanner("sessions");
     } else setBanner(r.status === "limit" ? "limit" : "failed"); // typed values stay in the form
     setFocusTick((n) => n + 1);
   };
@@ -296,7 +300,11 @@ function FormBody({ event }: { event?: PanelEvent }) {
             {banner && (
               <div className="pe-alert" role="alert" tabIndex={-1} ref={bannerRef}>
                 <Ic n="warn" />
-                <span>{t(banner === "limit" ? "peLimitServer" : "peErrSaveFailed")}</span>
+                <span>
+                  {banner === "sessions"
+                    ? sessionsOutside === 1 ? t("sedDatesBlocked1") : t("sedDatesBlockedN", { n: sessionsOutside })
+                    : t(banner === "limit" ? "peLimitServer" : "peErrSaveFailed")}
+                </span>
               </div>
             )}
             {submitted && shownKeys.length > 0 && (

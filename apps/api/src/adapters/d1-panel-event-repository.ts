@@ -1,4 +1,4 @@
-import { MAX_EVENTS_PER_ORGANIZER, type EventInput, type EventStatus, type PanelEvent } from "@atlas/contract";
+import { MAX_EVENTS_PER_ORGANIZER, formatUtcInstant, sessionWindow, type EventInput, type EventStatus, type PanelEvent } from "@atlas/contract";
 import { MAP_JOIN_COLUMNS, storedMapFromJoin, toPanelMap, type MapJoinRow, type StoredMapImage } from "./d1-map-image-repository";
 
 interface Row extends MapJoinRow {
@@ -126,17 +126,32 @@ export class D1PanelEventRepository {
     }
   }
 
-  /** Full replace of the editable fields, in any status. Slug, status, owner and day start are never touched. */
-  async update(id: string, ownerId: string, e: EventInput, now: number): Promise<boolean> {
+  /**
+   * Full replace of the editable fields, in any status. Slug, status, owner and day start are never touched.
+   * Slice 13: refused (nothing written) while any stored Session would start outside the new `sessionWindow`; the check is
+   * part of the UPDATE itself (NOT EXISTS), so a Session saved between a pre-check and the write cannot slip through.
+   * Instants are `YYYY-MM-DDTHH:MM:SSZ` strings, so they compare as text.
+   */
+  async update(id: string, ownerId: string, e: EventInput, now: number): Promise<"ok" | "not_found" | { sessionsOutside: number }> {
+    const own = await this.db.prepare(`SELECT day_start FROM events WHERE id = ?1 AND owner_id = ?2`).bind(id, ownerId).first<{ day_start: string }>();
+    if (!own) return "not_found";
+    const w = sessionWindow(e.startDate, e.endDate, own.day_start, e.timeZone);
+    const from = formatUtcInstant(w.from);
+    const until = formatUtcInstant(w.until);
+    const outside = `s.event_id = ?1 AND (s.start_utc < ?2 OR s.start_utc >= ?3)`;
     const res = await this.db
       .prepare(
-        `UPDATE events SET name = ?3, start_date = ?4, end_date = ?5, time_zone = ?6, city = ?7, country = ?8,
-                language = ?9, description = ?10, website = ?11, venue_address = ?12, updated_at = ?13
-         WHERE id = ?1 AND owner_id = ?2`,
+        `UPDATE events SET name = ?4, start_date = ?5, end_date = ?6, time_zone = ?7, city = ?8, country = ?9,
+                language = ?10, description = ?11, website = ?12, venue_address = ?13, updated_at = ?14
+         WHERE id = ?1 AND owner_id = ?15 AND NOT EXISTS (SELECT 1 FROM event_point_sessions s WHERE ${outside})`,
       )
-      .bind(id, ownerId, e.name, e.startDate, e.endDate, e.timeZone, e.city, e.country, e.language, e.description, e.website, e.venueAddress, now)
+      .bind(id, from, until, e.name, e.startDate, e.endDate, e.timeZone, e.city, e.country, e.language, e.description, e.website, e.venueAddress, now, ownerId)
       .run();
-    return res.meta.changes === 1;
+    if (res.meta.changes === 1) return "ok";
+    const n = await this.db.prepare(`SELECT count(*) AS n FROM event_point_sessions s WHERE ${outside}`).bind(id, from, until).first<{ n: number }>();
+    if (n && n.n > 0) return { sessionsOutside: n.n };
+    // Not the caller's event any more (deleted in between), or a Session moved between the two statements: say not found.
+    return "not_found";
   }
 
   /** Hard delete. Maps, points and sessions go with it (ON DELETE CASCADE). */

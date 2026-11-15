@@ -38,6 +38,8 @@ const MESSAGES: Record<ErrorCode, string> = {
   map_required: "Upload a map before publishing.",
   transition_cap_reached: "Too many publish actions today. Try again tomorrow.",
   points_required: "Place at least one Point on the map before publishing.",
+  point_has_sessions: "This place has shows. Confirm deleting them or move them first.",
+  sessions_outside_dates: "Some shows would fall outside the new dates.",
 };
 
 export function errorResponse(
@@ -48,8 +50,10 @@ export function errorResponse(
   extraHeaders: Record<string, string> = {},
   fields?: FieldError[],
   reason?: InvalidUploadReason,
+  /** Slice 13: structured facts of `point_has_sessions` (`affected`) and `sessions_outside_dates` (`count`). Ids and numbers only. */
+  detail?: { affected?: Array<{ pointId: string; sessions: number }>; count?: number },
 ): Response {
-  return c.json({ error: { code, ...(reason ? { reason } : {}), message: MESSAGES[code], requestId: c.get("requestId"), ...(fields ? { fields } : {}) } }, status, {
+  return c.json({ error: { code, ...(reason ? { reason } : {}), message: MESSAGES[code], requestId: c.get("requestId"), ...(fields ? { fields } : {}), ...(detail?.affected ? { affected: detail.affected } : {}), ...(detail?.count !== undefined ? { count: detail.count } : {}) } }, status, {
     "Cache-Control": cacheControl,
     ...extraHeaders,
   });

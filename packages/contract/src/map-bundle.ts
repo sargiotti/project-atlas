@@ -4,10 +4,10 @@ import {
   DEFAULT_DAY_START,
   MAX_SESSION_MS,
   UTC_INSTANT_REGEX,
-  addDays,
+  isInSessionWindow,
   isValidTimeZone,
-  localToUtc,
   parseUtcInstant,
+  sessionWindow,
 } from "./schedule.ts";
 import { fieldErrorSchema } from "./field-errors.ts";
 import { FORBIDDEN_MULTI_LINE, FORBIDDEN_SINGLE_LINE } from "./text-rules.ts";
@@ -224,8 +224,7 @@ export const mapBundleSchema = z
     const { timeZone, startDate, endDate } = bundle.event;
     // Field errors (bad zone or dates) are reported by their own schemas; do not run date maths on them.
     if (!isValidTimeZone(timeZone) || !isoDate.safeParse(startDate).success || !isoDate.safeParse(endDate).success) return;
-    const from = localToUtc(startDate, "00:00", timeZone);
-    const until = localToUtc(addDays(endDate, 1), "00:00", timeZone);
+    const window = sessionWindow(startDate, endDate, bundle.event.dayStart, timeZone);
     bundle.sessions.forEach((s, i) => {
       const issue = (message: string, key: string) =>
         ctx.addIssue({ code: "custom", message, path: ["sessions", i, key] });
@@ -236,7 +235,7 @@ export const mapBundleSchema = z
       perPoint.set(s.pointId, n);
       if (n === MAX_SESSIONS_PER_POINT + 1) issue(`more than ${MAX_SESSIONS_PER_POINT} sessions at one point`, "pointId");
       const start = parseUtcInstant(s.start);
-      if (start !== null && (start < from || start >= until)) issue("start is outside the event dates", "start");
+      if (start !== null && !isInSessionWindow(start, window)) issue("start is outside the event dates", "start");
     });
   });
 export type MapBundle = z.infer<typeof mapBundleSchema>;
@@ -283,6 +282,10 @@ export const ERROR_CODES = [
   "transition_cap_reached",
   // Slice 08c (points editor): publish-request with 0 Points.
   "points_required",
+  // Slice 13 (schedule editor). `point_has_sessions`: Points PUT would delete (without `deleteSessionsOf`) or recategorize a
+  // Point that has Sessions. `sessions_outside_dates`: an event edit would leave Sessions outside the new window.
+  "point_has_sessions",
+  "sessions_outside_dates",
 ] as const;
 export const errorCodeSchema = z.enum(ERROR_CODES);
 export type ErrorCode = z.infer<typeof errorCodeSchema>;
@@ -312,6 +315,10 @@ export const errorResponseSchema = z.object({
     requestId: z.string(),
     /** Only on `validation_error` of the panel event endpoints. Codes only, never the submitted values. */
     fields: z.array(fieldErrorSchema).optional(),
+    /** Only on 409 `point_has_sessions`: the Points that block the save and how many Sessions each has. */
+    affected: z.array(z.object({ pointId: z.string(), sessions: z.number().int().min(1) })).max(MAX_POINTS_PER_MAP).optional(),
+    /** Only on 409 `sessions_outside_dates`: how many stored Sessions would fall outside the new dates. */
+    count: z.number().int().min(1).optional(),
   }),
 });
 export type ErrorResponse = z.infer<typeof errorResponseSchema>;

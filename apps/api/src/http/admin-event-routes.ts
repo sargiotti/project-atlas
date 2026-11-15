@@ -17,6 +17,7 @@ import { runTransition } from "../application/publication";
 import type { PublishAction } from "../domain/publication";
 import { errorResponse } from "./errors";
 import { logPublication, refusalResponse } from "./publication-http";
+import { D1EventSessionsRepository } from "../adapters/d1-event-sessions-repository";
 import { toPreviewBody } from "./preview-body";
 import { D1EventPointsRepository } from "../adapters/d1-event-points-repository";
 import type { AppContext, AppEnv } from "./types";
@@ -85,9 +86,9 @@ export function registerAdminEventRoutes(app: Hono<AppEnv>): void {
     if (!ADMIN_EVENT_ID.test(id)) return notFound(c);
     const r = await new D1AdminEventRepository(c.env.DB).review(id);
     if (!r) return notFound(c);
-    const points = await new D1EventPointsRepository(c.env.DB).listForEvent(id);
+    const [points, sessions] = await Promise.all([new D1EventPointsRepository(c.env.DB).listForEvent(id), new D1EventSessionsRepository(c.env.DB).listForEvent(id)]);
     const body: AdminReviewResponse = {
-      ...toPreviewBody(r.event, points),
+      ...toPreviewBody(r.event, points, sessions),
       review: {
         id: r.event.id,
         status: r.event.status,

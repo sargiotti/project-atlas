@@ -117,14 +117,14 @@ describe("save: create, update and delete in one atomic request", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("cache-control")).toBe("private, no-store");
     const saved = savePointsResponseSchema.parse(await res.json());
-    expect(saved.counts).toEqual({ created: 3, updated: 0, deleted: 0 });
+    expect(saved.counts).toEqual({ created: 3, updated: 0, deleted: 0, sessionsDeleted: 0 });
     expect(saved.created.map((c) => c.index)).toEqual([0, 1, 2]);
     expect(new Set(saved.created.map((c) => c.id)).size).toBe(3);
     expect(saved.created.every((c) => /^[0-9a-f-]{36}$/.test(c.id))).toBe(true);
     // sortPoints order: category order (stage, food, ..., toilets), then name
     expect(saved.points.map((p) => p.name)).toEqual(["Alpha", "Tacos", null]);
     expect(Date.parse(saved.eventUpdatedAt)).toBeGreaterThan(Date.parse(first.eventUpdatedAt));
-    expect(await getPoints(o, ev.id)).toEqual({ points: saved.points, eventUpdatedAt: saved.eventUpdatedAt });
+    expect(await getPoints(o, ev.id)).toEqual({ points: saved.points, sessionCounts: {}, eventUpdatedAt: saved.eventUpdatedAt });
 
     // Second save: update one, delete one, keep one, add one
     const alpha = saved.points.find((p) => p.name === "Alpha")!;
@@ -135,11 +135,11 @@ describe("save: create, update and delete in one atomic request", () => {
     });
     expect(res2.status).toBe(200);
     const saved2 = savePointsResponseSchema.parse(await res2.json());
-    expect(saved2.counts).toEqual({ created: 1, updated: 1, deleted: 1 });
+    expect(saved2.counts).toEqual({ created: 1, updated: 1, deleted: 1, sessionsDeleted: 0 });
     expect(saved2.created).toEqual([{ index: 2, id: expect.any(String) }]);
     expect(saved2.points.map((p) => [p.name, p.category])).toEqual([["Alpha 2", "stage"], ["Tacos", "food"], [null, "info"]]);
     expect(await dbPoints(ev.id)).toHaveLength(3);
-    expect(await getPoints(o, ev.id)).toEqual({ points: saved2.points, eventUpdatedAt: saved2.eventUpdatedAt });
+    expect(await getPoints(o, ev.id)).toEqual({ points: saved2.points, sessionCounts: {}, eventUpdatedAt: saved2.eventUpdatedAt });
   });
 
   it("a no-op save writes nothing and keeps updated_at; a real change moves it strictly forward", async () => {
@@ -152,7 +152,7 @@ describe("save: create, update and delete in one atomic request", () => {
     const noop = await put(o, ev.id, { baseUpdatedAt: saved.eventUpdatedAt, points: saved.points });
     expect(noop.status).toBe(200);
     const body = savePointsResponseSchema.parse(await noop.json());
-    expect(body.counts).toEqual({ created: 0, updated: 0, deleted: 0 });
+    expect(body.counts).toEqual({ created: 0, updated: 0, deleted: 0, sessionsDeleted: 0 });
     expect(body.eventUpdatedAt).toBe(saved.eventUpdatedAt);
     expect(await updatedAt(ev.id)).toBe(afterCreate);
 

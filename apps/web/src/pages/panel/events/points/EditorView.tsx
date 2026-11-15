@@ -3,7 +3,7 @@ import type { PanelEvent, Point } from "@atlas/contract";
 import LangSwitch from "../../../../components/LangSwitch";
 import { getEvent } from "../../../../api/panelEvents";
 import { safeVariants } from "../../../../api/mapBundle";
-import { getPoints, savePoints, type ServerPoint } from "../../../../api/panelPoints";
+import { getPoints, savePoints, type ServerPoint, type SessionCounts } from "../../../../api/panelPoints";
 import { useI18n } from "../../../../i18n/I18nProvider";
 import { displayName } from "../../../../lib/pointLabel";
 import { historyReducer, initialHistory, HISTORY_LIMIT } from "../../../../lib/pointsHistory";
@@ -48,7 +48,7 @@ const patch = (key: string, change: Partial<EditorPoint>) => (ps: EditorPoint[])
   return next;
 };
 
-type Props = { event: PanelEvent; initial: { points: ServerPoint[]; updatedAt: string }; organizerId: string };
+type Props = { event: PanelEvent; initial: { points: ServerPoint[]; updatedAt: string; sessionCounts: SessionCounts }; organizerId: string };
 
 /**
  * Slice 08c. Everything here is local until Save: place, move, name, delete and undo only change `points`. Save sends the
@@ -68,6 +68,11 @@ export default function EditorView({ event, initial, organizerId }: Props) {
   const dirty = useMemo(() => countChanges(base.points, points), [base.points, points]);
   const [savedMark, setSavedMark] = useState<EditorPoint[] | null>(null);
   const [gone, setGone] = useState(false);
+  // Slice 13: how many shows each saved place has (from the server, at `base.updatedAt`), and the places whose shows the
+  // organizer agreed to delete with them. The acknowledgement is only sent after the confirmation modal.
+  const [counts, setCounts] = useState<SessionCounts>(initial.sessionCounts ?? {});
+  const ack = useRef(new Set<string>());
+  const [delAsk, setDelAsk] = useState<{ ids: string[]; then: { key: string } | "save" } | null>(null);
 
   // ---- UI state ------------------------------------------------------------------------------------------------
   const [tab, setTab] = useState<"pieces" | "placed">("pieces");
@@ -88,6 +93,7 @@ export default function EditorView({ event, initial, organizerId }: Props) {
   const [blocked, setBlocked] = useState(false);
   const [conflict, setConflict] = useState<"idle" | "reloading" | "failed">("idle");
   const [conflictOpen, setConflictOpen] = useState(false);
+  const [conflictKind, setConflictKind] = useState<"changed" | "sessions">("changed");
   const [leaveTo, setLeaveTo] = useState<string | null>(null);
   const [draftKept, setDraftKept] = useState(true);
   const [questOn, setQuestOn] = useState(() => !onboardingSeen() && initial.points.length === 0);
@@ -114,7 +120,7 @@ export default function EditorView({ event, initial, organizerId }: Props) {
   const mapPoints = useMemo(() => points.map(toView), [points]);
   const pendingIds = useMemo(() => new Set(points.filter(needsName).map((p) => p.key)), [points]);
   const selected = points.find((p) => p.key === selKey) ?? null;
-  const blocking = !!offer || conflictOpen || leaveTo !== null || gone;
+  const blocking = !!offer || conflictOpen || leaveTo !== null || gone || delAsk !== null;
 
   // Everything the global key handler needs, as of the latest render.
   const live = useRef({ points, selKey, armed, blocking, dirty, base, saving, offer, past: h.past.length });
@@ -163,10 +169,14 @@ export default function EditorView({ event, initial, organizerId }: Props) {
     }
   };
 
+  /** Deleting a saved place that has shows asks first (the count is the server's); everything else just deletes. */
   const remove = (key: string) => {
     const p = live.current.points.find((q) => q.key === key);
     if (!p) return;
-    const text = t("pedDeleted", { name: needsName(p) ? categoryLabel(p.category) : nameOf(p) });
+    if (p.id && (counts[p.id] ?? 0) > 0 && !ack.current.has(p.id)) return void setDelAsk({ ids: [p.id], then: { key } });
+    const n = p.id ? (counts[p.id] ?? 0) : 0;
+    const name = needsName(p) ? categoryLabel(p.category) : nameOf(p);
+    const text = n > 0 ? (n === 1 ? t("sedDeletedWith1", { name }) : t("sedDeletedWithN", { name, n })) : t("pedDeleted", { name });
     dispatch({ type: "apply", fn: (ps) => ps.filter((q) => q.key !== key) });
     setSelKey(null);
     setFresh(null);
@@ -212,8 +222,9 @@ export default function EditorView({ event, initial, organizerId }: Props) {
   };
 
   // The latest actions, for handlers registered once (global keys, the map's click callback).
-  const act = useRef({ place, remove });
-  act.current = { place, remove };
+  const act = useRef({ place, remove, save: () => {} });
+  act.current.place = place;
+  act.current.remove = remove;
 
   const onMapClick = useCallback((x: number, y: number, inside: boolean) => {
     const c = live.current.armed;
@@ -233,6 +244,11 @@ export default function EditorView({ event, initial, organizerId }: Props) {
       if (s.blocking) return;
       const el = e.target as HTMLElement | null;
       const typing = !!el?.closest?.("input, textarea, select, [contenteditable='true']");
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "s") {
+        e.preventDefault(); // never the browser's "save page"; works while typing in a field too
+        act.current.save();
+        return;
+      }
       if ((e.ctrlKey || e.metaKey) && !e.altKey) {
         if (typing) return; // the browser's own text undo
         const k = e.key.toLowerCase();
@@ -343,7 +359,11 @@ export default function EditorView({ event, initial, organizerId }: Props) {
       say(t("pedErrNeedName"));
       return;
     }
-    const body = { baseUpdatedAt: base.updatedAt, points: points.map(toItem) };
+    // Places with shows that this save would delete: the organizer must have agreed (modal), else ask now.
+    const deleted = base.points.filter((b) => !points.some((p) => p.id === b.id)).map((b) => b.id!).filter((id) => (counts[id] ?? 0) > 0);
+    const unacked = deleted.filter((id) => !ack.current.has(id));
+    if (unacked.length) return void setDelAsk({ ids: unacked, then: "save" });
+    const body = { baseUpdatedAt: base.updatedAt, points: points.map(toItem), ...(deleted.length ? { deleteSessionsOf: deleted } : {}) };
     if (bodyBytes(JSON.stringify(body)) > MAX_BODY_BYTES) {
       setBanner({ kind: "err", text: t("pedErrTooBig") });
       return;
@@ -359,6 +379,8 @@ export default function EditorView({ event, initial, organizerId }: Props) {
         const server = r.points.map(fromServer);
         const selIndex = selKey ? sentKeys.indexOf(selKey) : -1;
         setBase({ points: server, updatedAt: r.eventUpdatedAt });
+        setCounts(r.sessionCounts);
+        ack.current.clear();
         dispatch({ type: "reset", points: server });
         setSavedMark(server);
         clearDraft(organizerId, event.id);
@@ -368,7 +390,9 @@ export default function EditorView({ event, initial, organizerId }: Props) {
         return; // the status chip is a live region: it announces "Saved"
       }
       case "event_changed":
+      case "point_has_sessions":
         writeDraft();
+        setConflictKind(r.status === "event_changed" ? "changed" : "sessions");
         setConflict("idle");
         setConflictOpen(true);
         return;
@@ -407,6 +431,17 @@ export default function EditorView({ event, initial, organizerId }: Props) {
     }
   };
 
+  act.current.save = () => void save();
+
+  const confirmDelete = () => {
+    if (!delAsk) return;
+    for (const id of delAsk.ids) ack.current.add(id);
+    const then = delAsk.then;
+    setDelAsk(null);
+    if (then === "save") void save();
+    else remove(then.key);
+  };
+
   // A stale save: reload the server's set; the local draft (already written) is offered back afterwards.
   const reload = async () => {
     setConflict("reloading");
@@ -422,6 +457,8 @@ export default function EditorView({ event, initial, organizerId }: Props) {
       const server = pr.points.map(fromServer);
       const d = loadDraft(organizerId, event.id);
       setBase({ points: server, updatedAt: pr.eventUpdatedAt });
+      setCounts(pr.sessionCounts);
+      ack.current.clear();
       dispatch({ type: "reset", points: server });
       setStatus(er.event.status);
       setSavedMark(null);
@@ -557,6 +594,9 @@ export default function EditorView({ event, initial, organizerId }: Props) {
           showErrors={showErrors}
           serverError={!!selected && serverBad.has(selected.key)}
           nameRef={nameRef}
+          eventId={event.id}
+          sessionCount={selected?.id ? (counts[selected.id] ?? 0) : 0}
+          canLink={!!selected?.id && ["stage", "landmark"].includes(base.points.find((b) => b.id === selected.id)?.category ?? "")}
           onChange={(c) => selected && change(selected.key, c)}
           onDelete={() => selected && remove(selected.key)}
           onConfirm={() => {
@@ -589,14 +629,32 @@ export default function EditorView({ event, initial, organizerId }: Props) {
       )}
       {conflictOpen && (
         <Dialog titleId={`${uid}-ct`} descId={`${uid}-cd`} initialFocus={() => document.getElementById(`${uid}-reload`)} onClose={() => {}} hideEscHint>
-          <h2 id={`${uid}-ct`}>{t("pedConflictT")}</h2>
-          <p className="pe-dlgp" id={`${uid}-cd`}>{t("pedConflictS")}</p>
+          <h2 id={`${uid}-ct`}>{conflictKind === "sessions" ? t("sedHasSessionsT") : t("pedConflictT")}</h2>
+          <p className="pe-dlgp" id={`${uid}-cd`}>{conflictKind === "sessions" ? t("sedHasSessionsS") : t("pedConflictS")}</p>
           {conflict === "failed" && <p className="pe-dlgerr" role="alert">{t("pedErrFail")}</p>}
           <div className="pe-acts">
             <button type="button" id={`${uid}-reload`} className="btn primary" disabled={conflict === "reloading"} onClick={() => void reload()}>{t("pedReload")}</button>
           </div>
         </Dialog>
       )}
+      {delAsk && (() => {
+        const total = delAsk.ids.reduce((n, id) => n + (counts[id] ?? 0), 0);
+        const names = delAsk.ids.map((id) => base.points.find((b) => b.id === id)).filter(Boolean).map((b) => nameOf(b!));
+        return (
+          <Dialog titleId={`${uid}-xt`} descId={`${uid}-xd`} initialFocus={() => document.getElementById(`${uid}-xno`)} onClose={() => setDelAsk(null)}>
+            <div className="pe-dico"><Ic n="trash" size={24} /></div>
+            <h2 id={`${uid}-xt`}>{t("sedDelT")}</h2>
+            <p className="pe-dlgp" id={`${uid}-xd`}>
+              {delAsk.ids.length > 1 ? t("sedDelSMany", { p: delAsk.ids.length, n: total }) : total === 1 ? t("sedDelS1") : t("sedDelSN", { n: total })}
+            </p>
+            <ul className="pe-dlgp ped-dlgnames">{names.map((n, i) => <li key={i} dir="auto">{n}</li>)}</ul>
+            <div className="pe-acts">
+              <button type="button" id={`${uid}-xno`} className="btn" onClick={() => setDelAsk(null)}>{t("cancel")}</button>
+              <button type="button" className="btn danger solid" onClick={confirmDelete}><Ic n="trash" size={18} />{delAsk.ids.length > 1 ? t("sedDelBtnMany") : t("sedDelBtn")}</button>
+            </div>
+          </Dialog>
+        );
+      })()}
       {leaveTo !== null && (
         <Dialog titleId={`${uid}-lt`} descId={`${uid}-ld`} initialFocus={() => document.getElementById(`${uid}-stay`)} onClose={() => setLeaveTo(null)}>
           <h2 id={`${uid}-lt`}>{t("pedLeaveT")}</h2>

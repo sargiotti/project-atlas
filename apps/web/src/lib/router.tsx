@@ -61,11 +61,11 @@ export function matchInviteToken(path: string): string | null {
 }
 
 const ID = "[a-z0-9-]{1,64}";
-/** `/panel/events/<id>[/edit|/preview|/points]` -> { id, view }. `new` is matched before this. Bad ids give null. */
-export function matchPanelEvent(path: string): { id: string; view: "hub" | "edit" | "preview" | "points" } | null {
-  const m = new RegExp(`^/panel/events/(${ID})(?:/(edit|preview|points))?$`).exec(path);
+/** `/panel/events/<id>[/edit|/preview|/points|/schedule]` -> { id, view }. `new` is matched before this. Bad ids give null. */
+export function matchPanelEvent(path: string): { id: string; view: "hub" | "edit" | "preview" | "points" | "schedule" } | null {
+  const m = new RegExp(`^/panel/events/(${ID})(?:/(edit|preview|points|schedule))?$`).exec(path);
   if (!m) return null;
-  return { id: m[1], view: (m[2] as "edit" | "preview" | "points" | undefined) ?? "hub" };
+  return { id: m[1], view: (m[2] as "edit" | "preview" | "points" | "schedule" | undefined) ?? "hub" };
 }
 
 /** `/panel/admin/review/<id>` -> id. Bad ids give null (underscores allowed: seeded demo events). */

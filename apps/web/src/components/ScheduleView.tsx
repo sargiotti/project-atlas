@@ -62,6 +62,8 @@ type Props = {
   /** Changes whenever a block is tapped, so the grid can scroll it into view above the sheet. */
   revealNonce: number;
   onPickSession: (s: TimedSession) => void;
+  /** Slice 13: the organizer's preview opens on this day (the grid is remounted when it changes). */
+  initialDay?: string;
 };
 
 type Pending =
@@ -71,7 +73,7 @@ type Pending =
   | { type: "reveal" };
 
 export default function ScheduleView(props: Props) {
-  const { active, event, points, sessions, atMs, selectedSessionId, sheetOpen, revealNonce, onPickSession } = props;
+  const { active, event, points, sessions, atMs, selectedSessionId, sheetOpen, revealNonce, onPickSession, initialDay } = props;
   const { t, lang } = useI18n();
   const { timeZone, dayStart } = event;
   const now = useNow(atMs, active);
@@ -87,7 +89,7 @@ export default function ScheduleView(props: Props) {
   );
   // Where the grid opens is decided once, with the clock of that moment.
   const initial = useRef(opening);
-  const [picked, setPicked] = useState<string | null>(null);
+  const [picked, setPicked] = useState<string | null>(initialDay ?? null);
   const [zoom, setZoom] = useState(readZoom);
   const ppm = ZOOM_STEPS[zoom]!.ppm;
   const minH = ppm < 1 ? 24 : 44;

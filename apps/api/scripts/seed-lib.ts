@@ -7,14 +7,15 @@ import {
   DEFAULT_DAY_START,
   MAX_POINTS_PER_MAP,
   MAX_SESSIONS_PER_EVENT,
-  addDays,
   contentLanguageSchema,
   formatUtcInstant,
+  isInSessionWindow,
   localToUtc,
   mapThemeSchema,
   parseUtcInstant,
   pointCategorySchema,
   sessionSchema,
+  sessionWindow,
   slugSchema,
   timeZoneSchema,
   type Session,
@@ -127,8 +128,7 @@ export type SeedFile = z.infer<typeof seedFileSchema>;
 export function resolveSessions(seed: SeedFile): Session[] {
   const { slug, timeZone, dates } = seed.event;
   const pointIds = new Set(seed.points.map((p) => p.id));
-  const from = localToUtc(dates.start, "00:00", timeZone);
-  const until = localToUtc(addDays(dates.end, 1), "00:00", timeZone);
+  const window = sessionWindow(dates.start, dates.end, seed.event.dayStart, timeZone);
   const ids = new Set<string>();
   return seed.sessions.map((s) => {
     if (!pointIds.has(s.point)) throw new Error(`${slug}: session ${s.id} refers to unknown point ${s.point}`);
@@ -147,7 +147,7 @@ export function resolveSessions(seed: SeedFile): Session[] {
     if (!parsed.success) throw new Error(`${slug}: invalid session ${s.id}
 ${z.prettifyError(parsed.error)}`);
     const start = parseUtcInstant(parsed.data.start)!;
-    if (start < from || start >= until) throw new Error(`${slug}: session ${s.id} starts outside the event dates`);
+    if (!isInSessionWindow(start, window)) throw new Error(`${slug}: session ${s.id} starts outside the event dates`);
     return parsed.data;
   });
 }

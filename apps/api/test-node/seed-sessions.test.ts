@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { mapBundleSchema, parseUtcInstant, sessionDay } from "@atlas/contract";
+import { isInSessionWindow, mapBundleSchema, parseUtcInstant, sessionDay, sessionWindow } from "@atlas/contract";
 import { loadAllSeeds, resolveSessions } from "../scripts/seed-lib";
 
 const root = resolve(import.meta.dirname, "../../..");
@@ -30,6 +30,14 @@ function bundleOf(slug: string) {
 describe("demo seed programme", () => {
   it("all demo events pass the Map Bundle contract with their sessions", () => {
     for (const s of seeds) expect(() => bundleOf(s.seed.event.slug), s.seed.event.slug).not.toThrow();
+  });
+
+  it("every seeded session starts inside its event's session window (the bundle drops anything outside)", () => {
+    for (const s of seeds) {
+      const e = s.seed.event;
+      const w = sessionWindow(e.dates.start, e.dates.end, e.dayStart, e.timeZone);
+      for (const x of bundleOf(e.slug).sessions) expect(isInSessionWindow(parseUtcInstant(x.start)!, w), `${e.slug} ${x.title}`).toBe(true);
+    }
   });
 
   it("nightfall-meadows has 3+ stages, overlapping sets, an after-midnight set and a very long name", () => {

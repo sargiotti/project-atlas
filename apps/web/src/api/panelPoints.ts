@@ -9,17 +9,20 @@ export type ServerPoint = Point;
 
 /** What goes over the wire. New Points carry no `id`: the server assigns it. */
 export type DraftItem = { id?: string; category: string; name: string | null; description: string; x: number; y: number };
-export type SaveBody = { baseUpdatedAt: string; points: DraftItem[] };
+export type SaveBody = { baseUpdatedAt: string; points: DraftItem[]; deleteSessionsOf?: string[] };
+
+/** Sessions per Point id (slice 13), only Points that have some. */
+export type SessionCounts = Record<string, number>;
 
 export type PointFieldError = { index: number; field: string; code: string };
 
 export type LoadResult =
-  | { status: "ok"; points: ServerPoint[]; eventUpdatedAt: string }
+  | { status: "ok"; points: ServerPoint[]; eventUpdatedAt: string; sessionCounts: SessionCounts }
   | { status: "unauthenticated" | "not_found" | "map_required" | "error" };
 
 export type SaveResult =
-  | { status: "ok"; points: ServerPoint[]; eventUpdatedAt: string; created: { index: number; id: string }[] }
-  | { status: "unauthenticated" | "not_found" | "map_required" | "event_changed" | "too_large" | "error" }
+  | { status: "ok"; points: ServerPoint[]; eventUpdatedAt: string; sessionCounts: SessionCounts; sessionsDeleted: number; created: { index: number; id: string }[] }
+  | { status: "unauthenticated" | "not_found" | "map_required" | "event_changed" | "point_has_sessions" | "too_large" | "error" }
   | { status: "rate_limited"; retryAfter: number }
   | { status: "invalid"; fields: PointFieldError[] };
 
@@ -40,7 +43,7 @@ export async function getPoints(eventId: string, signal?: AbortSignal): Promise<
     if (res.status === 409) return (await codeOf(res)).code === "map_required" ? { status: "map_required" } : { status: "error" };
     if (!res.ok) return { status: "error" };
     const d = panelPointsResponseSchema.parse(await res.json());
-    return { status: "ok", points: d.points, eventUpdatedAt: d.eventUpdatedAt };
+    return { status: "ok", points: d.points, eventUpdatedAt: d.eventUpdatedAt, sessionCounts: d.sessionCounts };
   } catch (e: any) {
     if (e?.name === "AbortError") throw e;
     return { status: "error" };
@@ -70,11 +73,12 @@ export async function savePoints(eventId: string, body: SaveBody): Promise<SaveR
     }
     if (res.ok) {
       const d = savePointsResponseSchema.parse(await res.json());
-      return { status: "ok", points: d.points, eventUpdatedAt: d.eventUpdatedAt, created: d.created };
+      return { status: "ok", points: d.points, eventUpdatedAt: d.eventUpdatedAt, sessionCounts: d.sessionCounts, sessionsDeleted: d.counts.sessionsDeleted, created: d.created };
     }
     const { code, fields } = await codeOf(res);
     if (res.status === 409 && code === "event_changed") return { status: "event_changed" };
     if (res.status === 409 && code === "map_required") return { status: "map_required" };
+    if (res.status === 409 && code === "point_has_sessions") return { status: "point_has_sessions" };
     if (res.status === 400 && code === "validation_error") {
       const list = Array.isArray(fields) ? fields.map((f: any) => parseFieldPath(f?.path, f?.code)).filter((f): f is PointFieldError => !!f) : [];
       return { status: "invalid", fields: list };

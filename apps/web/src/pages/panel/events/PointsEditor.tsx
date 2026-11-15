@@ -13,7 +13,7 @@ import { Ic, LoadError, Loading, PanelNotFound, useDocTitle } from "./common";
 /** Below this width only a notice is shown (the editor needs a mouse and room). Touch drag still works from here up. */
 export const EDITOR_MIN_WIDTH = 1024;
 
-function useViewportWidth() {
+export function useViewportWidth() {
   const [w, setW] = useState(() => window.innerWidth);
   useEffect(() => {
     const on = () => setW(window.innerWidth);
@@ -29,10 +29,11 @@ export default function PointsEditor({ id }: { id: string }) {
   return width >= EDITOR_MIN_WIDTH ? <Loader id={id} /> : <SmallScreen id={id} />;
 }
 
-function SmallScreen({ id }: { id: string }) {
+/** The "open this on a computer" notice. The Schedule editor (slice 13) reuses it with its own copy. */
+export function SmallScreen({ id, keys = { title: "pedTitle", head: "pedSmallT", text: "pedSmallS" } }: { id: string; keys?: { title: string; head: string; text: string } }) {
   const { t } = useI18n();
   const [copied, setCopied] = useState(false);
-  useDocTitle(`${t("pedTitle")} · ${t("appName")}`);
+  useDocTitle(`${t(keys.title as any)} · ${t("appName")}`);
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -47,8 +48,8 @@ function SmallScreen({ id }: { id: string }) {
       <div className="ped-small-head"><Brand /></div>
       <div className="status-card" role="region" aria-labelledby="ped-small-t">
         <Ic n="map" size={40} />
-        <h1 id="ped-small-t">{t("pedSmallT")}</h1>
-        <p>{t("pedSmallS")}</p>
+        <h1 id="ped-small-t">{t(keys.head as any)}</h1>
+        <p>{t(keys.text as any)}</p>
         <div className="pe-acts">
           <button type="button" className="btn primary" onClick={() => void copy()}>{copied ? <><Ic n="check" size={18} />{t("pedLinkCopied")}</> : t("pedCopyLink")}</button>
           <Link to={`/panel/events/${id}`} className="btn">{t("pedBack")}</Link>
@@ -60,7 +61,7 @@ function SmallScreen({ id }: { id: string }) {
 
 type State =
   | { k: "loading" | "error" | "missing" | "nomap" }
-  | { k: "ok"; event: PanelEvent; points: ServerPoint[]; updatedAt: string };
+  | { k: "ok"; event: PanelEvent; points: ServerPoint[]; updatedAt: string; sessionCounts: Record<string, number> };
 
 function Loader({ id }: { id: string }) {
   const { t } = useI18n();
@@ -80,7 +81,7 @@ function Loader({ id }: { id: string }) {
         }
         if (e.status === "error" || p.status === "error") return void setState({ k: "error" });
         if (p.status !== "ok" || !e.event.map) return void setState({ k: "nomap" });
-        setState({ k: "ok", event: e.event, points: p.points, updatedAt: p.eventUpdatedAt });
+        setState({ k: "ok", event: e.event, points: p.points, updatedAt: p.eventUpdatedAt, sessionCounts: p.sessionCounts });
       })
       .catch(() => {});
     return () => ctrl.abort();
@@ -105,5 +106,5 @@ function Loader({ id }: { id: string }) {
     );
   }
   if (state.k !== "ok") return null;
-  return <EditorView event={state.event} initial={{ points: state.points, updatedAt: state.updatedAt }} organizerId={organizerId} />;
+  return <EditorView event={state.event} initial={{ points: state.points, updatedAt: state.updatedAt, sessionCounts: state.sessionCounts }} organizerId={organizerId} />;
 }
