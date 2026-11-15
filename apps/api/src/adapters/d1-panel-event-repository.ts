@@ -1,7 +1,8 @@
 import { MAX_EVENTS_PER_ORGANIZER, formatUtcInstant, sessionWindow, type EventInput, type EventStatus, type PanelEvent } from "@atlas/contract";
 import { MAP_JOIN_COLUMNS, storedMapFromJoin, toPanelMap, type MapJoinRow, type StoredMapImage } from "./d1-map-image-repository";
+import { COVER_JOIN_COLUMNS, storedCoverFromJoin, toPanelCover, type CoverJoinRow, type StoredCover } from "./d1-cover-repository";
 
-interface Row extends MapJoinRow {
+interface Row extends MapJoinRow, CoverJoinRow {
   id: string;
   slug: string;
   status: EventStatus;
@@ -28,8 +29,8 @@ export const COLUMNS = `e.id AS id, e.slug AS slug, e.publish_state AS status, e
   e.requested_at AS requested_at, e.approved_at AS approved_at, e.owner_id AS owner_id, e.name AS name, e.start_date AS start_date,
   e.end_date AS end_date, e.time_zone AS time_zone, e.city AS city, e.country AS country, e.language AS language,
   e.description AS description, e.website AS website, e.venue_address AS venue_address, e.day_start AS day_start, e.created_at AS created_at,
-  e.updated_at AS updated_at, ${MAP_JOIN_COLUMNS}`;
-export const FROM = `events e LEFT JOIN event_map_images m ON m.event_id = e.id`;
+  e.updated_at AS updated_at, ${MAP_JOIN_COLUMNS}, ${COVER_JOIN_COLUMNS}`;
+export const FROM = `events e LEFT JOIN event_map_images m ON m.event_id = e.id LEFT JOIN event_covers c ON c.event_id = e.id`;
 
 export interface OwnedEvent extends PanelEvent {
   dayStart: string;
@@ -37,10 +38,13 @@ export interface OwnedEvent extends PanelEvent {
   ownerId: string | null;
   /** Same map as `map`, as stored (the preview route needs the raw numbers and keys). */
   storedMap: StoredMapImage | null;
+  /** Same cover as `cover`, as stored (the preview route needs the public shape and the keys). */
+  storedCover: StoredCover | null;
 }
 
 export const toEvent = (r: Row): OwnedEvent => {
   const storedMap = storedMapFromJoin(r);
+  const storedCover = storedCoverFromJoin(r);
   return {
   id: r.id,
   slug: r.slug,
@@ -62,6 +66,8 @@ export const toEvent = (r: Row): OwnedEvent => {
   ownerId: r.owner_id,
   map: storedMap ? toPanelMap(storedMap) : null,
   storedMap,
+  cover: storedCover ? toPanelCover(storedCover) : null,
+  storedCover,
   createdAt: new Date(r.created_at).toISOString(),
   updatedAt: new Date(r.updated_at).toISOString(),
   };

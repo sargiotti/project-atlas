@@ -17,12 +17,12 @@ import { validateMapPair } from "../domain/map-image";
 import { errorResponse } from "./errors";
 import type { AppContext, AppEnv } from "./types";
 
-const EVENT_ID = /^[a-z0-9-]{1,64}$/;
+export const EVENT_ID = /^[a-z0-9-]{1,64}$/;
 const MEDIA_FILE = /^[0-9a-f]{32}-(full|small)\.(webp|jpg)$/;
-const SESSION_COOKIE = "__Host-atlas_session";
-const TOKEN_43 = /^[A-Za-z0-9_-]{43}$/;
+export const SESSION_COOKIE = "__Host-atlas_session";
+export const TOKEN_43 = /^[A-Za-z0-9_-]{43}$/;
 const PARTS = new Set(["full", "small", "theme"]);
-const NO_STORE = "private, no-store";
+export const NO_STORE = "private, no-store";
 
 /** One privacy-safe line per map action: request id, action, organizer, event, reason code. Never file names or bytes. */
 function logMap(c: AppContext, action: string, eventId: string, reason?: string): void {
@@ -53,7 +53,7 @@ const uploadLimiter: MiddlewareHandler<AppEnv> = async (c, next) => {
  * Owner guard. Missing, someone else's and demo events are all 404. Since slice 08b the map and theme can change in
  * every status (edits on an In review or Published event need no re-review), so there is no status check.
  */
-const ownerGuard: MiddlewareHandler<AppEnv> = async (c, next) => {
+export const ownerGuard: MiddlewareHandler<AppEnv> = async (c, next) => {
   const id = c.req.param("id") ?? "";
   if (!EVENT_ID.test(id) || !(await new D1MapImageRepository(c.env.DB).isOwner(id, c.get("user").id))) {
     return errorResponse(c, 404, "event_not_found", NO_STORE);
@@ -70,32 +70,34 @@ function rejected(c: AppContext, eventId: string, failure: { code: "unsupported_
   return errorResponse(c, 400, "invalid_upload", NO_STORE, {}, undefined, failure.reason);
 }
 
-const seconds = (ms: number) => Math.max(1, Math.ceil(ms / 1000));
+export const seconds = (ms: number) => Math.max(1, Math.ceil(ms / 1000));
 
-async function deleteKeys(c: AppContext, keys: string[], what: string): Promise<void> {
+export async function deleteKeys(c: AppContext, keys: string[], what: string, tag = "map"): Promise<void> {
   if (keys.length === 0) return;
   try {
     await c.env.MAPS.delete(keys);
   } catch (err) {
-    console.error(`[map] requestId=${c.get("requestId")} action=r2_delete_failed what=${what} name=${err instanceof Error ? err.name : "NonError"}`);
+    console.error(`[${tag}] requestId=${c.get("requestId")} action=r2_delete_failed what=${what} name=${err instanceof Error ? err.name : "NonError"}`);
   }
 }
 
 /**
- * Hard delete support: removes every object under `maps/{eventId}/` (the keys referenced in D1 and any orphans).
- * Never throws: failures are logged and the caller still answers 204.
+ * Hard delete support: removes every object under `maps/{eventId}/` and `covers/{eventId}/` (the keys referenced in D1 and
+ * any orphans). Each prefix is swept on its own, so a failure on one still sweeps the other. Never throws: failures are
+ * logged and the caller still answers 204.
  */
-export async function deleteEventMapObjects(c: AppContext, eventId: string): Promise<void> {
-  try {
-    const prefix = `maps/${eventId}/`;
-    let cursor: string | undefined;
-    do {
-      const page = await c.env.MAPS.list({ prefix, cursor });
-      if (page.objects.length > 0) await c.env.MAPS.delete(page.objects.map((o) => o.key));
-      cursor = page.truncated ? page.cursor : undefined;
-    } while (cursor);
-  } catch (err) {
-    console.error(`[map] requestId=${c.get("requestId")} action=r2_sweep_failed event=${eventId} name=${err instanceof Error ? err.name : "NonError"}`);
+export async function deleteEventMediaObjects(c: AppContext, eventId: string): Promise<void> {
+  for (const [tag, prefix] of [["map", `maps/${eventId}/`], ["cover", `covers/${eventId}/`]] as const) {
+    try {
+      let cursor: string | undefined;
+      do {
+        const page = await c.env.MAPS.list({ prefix, cursor });
+        if (page.objects.length > 0) await c.env.MAPS.delete(page.objects.map((o) => o.key));
+        cursor = page.truncated ? page.cursor : undefined;
+      } while (cursor);
+    } catch (err) {
+      console.error(`[${tag}] requestId=${c.get("requestId")} action=r2_sweep_failed event=${eventId} name=${err instanceof Error ? err.name : "NonError"}`);
+    }
   }
 }
 
@@ -232,7 +234,7 @@ export function registerMapRoutes(app: Hono<AppEnv>): void {
   });
 }
 
-function randomHex32(): string {
+export function randomHex32(): string {
   const b = crypto.getRandomValues(new Uint8Array(16));
   return Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
 }
@@ -242,7 +244,7 @@ function randomHex32(): string {
  * Class B read. 300 / 60 s tolerates a venue behind one NAT; it is an approximate backstop. Runs BEFORE the D1 read.
  * Fails open (absent binding or limiter error). Visitors never get 429 in normal use: images are immutable-cached.
  */
-const mediaLimiter: MiddlewareHandler<AppEnv> = async (c, next) => {
+export const mediaLimiter: MiddlewareHandler<AppEnv> = async (c, next) => {
   const limiter = c.env.MEDIA_LIMITER;
   if (limiter) {
     let allowed = true;

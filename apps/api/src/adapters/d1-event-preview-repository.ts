@@ -4,6 +4,7 @@ import type { StoredEventPreview } from "../domain/event-preview";
 import { publishedEvent } from "./sql";
 
 interface Row {
+  id: string;
   slug: string;
   name: string;
   start_date: string;
@@ -20,12 +21,15 @@ export class D1EventPreviewRepository implements EventPreviewRepository {
     // One bounded query for every event (same ordering and cap as the list, so LIMIT bounds rows read).
     const { results } = await this.db
       .prepare(
-        `SELECT slug, name, start_date, end_date, city, country, og_key
-         FROM events WHERE ${publishedEvent()} ORDER BY start_date, slug LIMIT ?1`,
+        `SELECT e.id AS id, e.slug AS slug, e.name AS name, e.start_date AS start_date, e.end_date AS end_date, e.city AS city,
+                e.country AS country, c.og_key AS og_key
+         FROM events e LEFT JOIN event_covers c ON c.event_id = e.id
+         WHERE ${publishedEvent("e")} ORDER BY e.start_date, e.slug LIMIT ?1`,
       )
       .bind(MAX_EVENTS_IN_LIST)
       .all<Row>();
     return results.map((r) => ({
+      id: r.id,
       slug: r.slug,
       name: r.name,
       startDate: r.start_date,

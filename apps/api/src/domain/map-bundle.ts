@@ -1,4 +1,4 @@
-import { POINT_CATEGORIES, type MapBundle, type MapTheme, type Point, type Session } from "@atlas/contract";
+import { POINT_CATEGORIES, type CoverImage, type MapBundle, type MapTheme, type Point, type Session } from "@atlas/contract";
 
 /** Raw facts about an Event Map as stored. Free of framework and I/O types. */
 export interface StoredEventMap {
@@ -8,6 +8,9 @@ export interface StoredEventMap {
     description?: string;
     website?: string;
     venueAddress?: string;
+    /** Slice 14. Always set by the repository; optional so older fixtures still build. */
+    cover?: CoverImage | null;
+    tone?: number;
   };
   map: {
     id: string;

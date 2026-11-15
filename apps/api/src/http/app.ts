@@ -13,9 +13,12 @@ import { registerAuthRoutes } from "./auth-routes";
 import { registerPanelRoutes } from "./panel-routes";
 import { registerAdminEventRoutes } from "./admin-event-routes";
 import { registerMediaRoutes } from "./map-routes";
+import { registerCoverMediaRoutes } from "./cover-routes";
 import type { AppContext, AppEnv } from "./types";
 
 export type { Env } from "./types";
+
+const COVER_OG_PATH = /^\/media\/covers\/[a-z0-9_-]{1,64}\/[0-9a-f]{32}-og\.jpg$/;
 
 /** 200 JSON with weak ETag and the given Cache-Control, or 304 when If-None-Match matches. */
 async function cachedJson(c: AppContext, body: string, cacheControl = "public, max-age=300"): Promise<Response> {
@@ -42,7 +45,9 @@ export function createApp() {
     c.res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
     const path = c.req.path;
     c.res.headers.set("Content-Security-Policy", path.startsWith("/e/") ? HTML_CSP : path.startsWith("/media/") ? MEDIA_CSP : API_CSP);
-    if (path.startsWith("/media/")) c.res.headers.set("Cross-Origin-Resource-Policy", "same-site");
+    // Link-preview crawlers embed the og image from another origin, so only `-og.jpg` of covers is cross-origin (public once
+    // published; the only cost is hotlinking). Everything else under /media stays same-site.
+    if (path.startsWith("/media/")) c.res.headers.set("Cross-Origin-Resource-Policy", COVER_OG_PATH.test(path) ? "cross-origin" : "same-site");
   });
 
   // Per-IP rate limit (60 req / 60 s, configured in wrangler.toml). Fails open if the
@@ -65,6 +70,7 @@ export function createApp() {
   registerAdminEventRoutes(app);
   registerPanelRoutes(app);
   registerMediaRoutes(app);
+  registerCoverMediaRoutes(app);
 
   app.get("/api/v1/events/:slug/map-bundle", async (c) => {
     const parsed = slugSchema.safeParse(c.req.param("slug"));

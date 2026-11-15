@@ -2,11 +2,14 @@ import type { EventMapRepository } from "../application/get-map-bundle";
 import type { StoredEventMap } from "../domain/map-bundle";
 import { sessionWindow, isInSessionWindow, parseUtcInstant } from "@atlas/contract";
 import { publishedEvent } from "./sql";
+import { COVER_JOIN_COLUMNS, storedCoverFromJoin, toPublicCover, type CoverJoinRow } from "./d1-cover-repository";
+import { toneOf } from "@atlas/contract";
 
 const FIRST_MAP_ID = `(SELECT m.id FROM event_maps m JOIN events e ON e.id = m.event_id
   WHERE e.slug = ?1 AND ${publishedEvent("e")} ORDER BY m.position LIMIT 1)`;
 
-interface MapRow {
+interface MapRow extends CoverJoinRow {
+  event_id: string;
   slug: string;
   name: string;
   start_date: string;
@@ -27,7 +30,7 @@ interface MapRow {
   image_format: "svg" | "webp";
 }
 
-interface UploadedMapRow {
+interface UploadedMapRow extends CoverJoinRow {
   slug: string;
   name: string;
   start_date: string;
@@ -69,8 +72,12 @@ interface PointRow {
 }
 
 /** Slice 08d: the About-sheet columns. Empty optionals (NULL or '') are omitted, like the preview does. */
-function aboutOf(r: { city: string; country: string; description: string | null; website: string | null; venue_address: string | null }) {
+function aboutOf(r: { city: string; country: string; description: string | null; website: string | null; venue_address: string | null } & CoverJoinRow, eventId: string) {
+  const stored = storedCoverFromJoin(r);
   return {
+    // Slice 14: cover (null when none) and the tone for the colour cover. The event id itself stays private.
+    cover: stored ? toPublicCover(stored) : null,
+    tone: toneOf(eventId),
     // Legacy rows may have empty city/country (column default ''): omit, never fail the whole bundle.
     ...(r.city ? { city: r.city } : {}),
     ...(r.country ? { country: r.country } : {}),
@@ -110,10 +117,10 @@ export class D1EventMapRepository implements EventMapRepository {
     const [mapResult, pointsResult, sessionsResult, uploadedResult, uploadedPointsResult, uploadedSessionsResult] = await this.db.batch<MapRow | PointRow | SessionRow | UploadedMapRow>([
       this.db
         .prepare(
-          `SELECT e.slug, e.name, e.start_date, e.end_date, e.language, e.time_zone, e.day_start,
+          `SELECT e.slug, e.name, e.start_date, e.end_date, e.language, e.time_zone, e.day_start, e.id AS event_id,
                   e.city, e.country, e.description, e.website, e.venue_address,
-                  m.id AS map_id, m.theme, m.width, m.height, m.image_key, m.image_format
-           FROM event_maps m JOIN events e ON e.id = m.event_id
+                  m.id AS map_id, m.theme, m.width, m.height, m.image_key, m.image_format, ${COVER_JOIN_COLUMNS}
+           FROM event_maps m JOIN events e ON e.id = m.event_id LEFT JOIN event_covers c ON c.event_id = e.id
            WHERE m.id = ${FIRST_MAP_ID} AND ${publishedEvent("e")}`,
         )
         .bind(slug),
@@ -136,8 +143,8 @@ export class D1EventMapRepository implements EventMapRepository {
         .prepare(
           `SELECT e.slug, e.name, e.start_date, e.end_date, e.language, e.time_zone, e.day_start, e.id AS event_id,
                   e.city, e.country, e.description, e.website, e.venue_address,
-                  m.theme, m.format, m.full_key, m.full_width, m.full_height, m.small_key, m.small_width
-           FROM events e JOIN event_map_images m ON m.event_id = e.id
+                  m.theme, m.format, m.full_key, m.full_width, m.full_height, m.small_key, m.small_width, ${COVER_JOIN_COLUMNS}
+           FROM events e JOIN event_map_images m ON m.event_id = e.id LEFT JOIN event_covers c ON c.event_id = e.id
            WHERE e.slug = ?1 AND ${publishedEvent("e")}`,
         )
         .bind(slug),
@@ -173,7 +180,7 @@ export class D1EventMapRepository implements EventMapRepository {
           language: up.language,
           timeZone: up.time_zone,
           dayStart: up.day_start,
-          ...aboutOf(up),
+          ...aboutOf(up, up.event_id),
         },
         map: {
           id: up.event_id,
@@ -203,7 +210,7 @@ export class D1EventMapRepository implements EventMapRepository {
         language: row.language,
         timeZone: row.time_zone,
         dayStart: row.day_start,
-        ...aboutOf(row),
+        ...aboutOf(row, row.event_id),
       },
       map: {
         id: row.map_id,

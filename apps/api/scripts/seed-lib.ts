@@ -164,6 +164,34 @@ export interface LoadedSeed {
   cover: LoadedCover | null;
 }
 
+/**
+ * Where a seeded cover lives in R2 and what the `event_covers` row says (slice 14). Seeds bypass the upload validation, so
+ * the 960x640 masters stay valid. Tokens are deterministic (a hash of the bytes and the file kind), so re-seeding the same
+ * art writes the same keys and leaves no orphans; the upload flow uses random tokens instead.
+ */
+export interface SeedCoverObjects {
+  eventId: string;
+  fullKey: string;
+  fullWidth: number;
+  fullHeight: number;
+  /** The same bytes as `full`: the master is 960 px wide, which is already >= 800, so no re-encode. */
+  smallKey: string;
+  ogKey: string;
+}
+
+export function planSeedCover(slug: string, cover: LoadedCover, og: Uint8Array): SeedCoverObjects {
+  const eventId = `evt_${slug}`;
+  const token = (kind: string, bytes: Uint8Array) => createHash("sha256").update(kind).update(bytes).digest("hex").slice(0, 32);
+  return {
+    eventId,
+    fullKey: `covers/${eventId}/${token("full", cover.bytes)}-full.webp`,
+    fullWidth: cover.width,
+    fullHeight: cover.height,
+    smallKey: `covers/${eventId}/${token("800", cover.bytes)}-800.webp`,
+    ogKey: `covers/${eventId}/${token("og", og)}-og.jpg`,
+  };
+}
+
 export interface LoadedCover {
   bytes: Buffer;
   width: number;
@@ -283,15 +311,17 @@ const NOW = "(strftime('%s','now') * 1000)";
  * Idempotent statements: upsert event and map, then delete + reinsert the map's points.
  * Deterministic ids: evt_{slug}, map_{slug}_1, {slug}-{seedId}.
  */
-export function buildSeedStatements(seeds: LoadedSeed[], ogKeys: ReadonlyMap<string, string> = new Map()): string[] {
+export function buildSeedStatements(seeds: LoadedSeed[], covers: ReadonlyMap<string, SeedCoverObjects> = new Map()): string[] {
   const out: string[] = [];
-  for (const { seed, imageKey, format, cover } of seeds) {
+  for (const { seed, imageKey, format } of seeds) {
     const { slug } = seed.event;
     const eventId = `evt_${slug}`;
     const mapId = `map_${slug}_1`;
     out.push(
-      `INSERT INTO events (id, slug, name, start_date, end_date, city, country, latitude, longitude, cover_key, cover_width, cover_height, og_key, language, time_zone, day_start, publish_state, approved_at, created_at, updated_at) VALUES (${q(eventId)}, ${q(slug)}, ${q(seed.event.name)}, ${q(seed.event.dates.start)}, ${q(seed.event.dates.end)}, ${q(seed.event.city)}, ${q(seed.event.country)}, ${coord(seed.event.latitude)}, ${coord(seed.event.longitude)}, ${cover ? q(cover.key) : "NULL"}, ${cover ? cover.width : "NULL"}, ${cover ? cover.height : "NULL"}, ${ogKeys.has(slug) ? q(ogKeys.get(slug)!) : "NULL"}, ${q(seed.event.language)}, ${q(seed.event.timeZone)}, ${q(seed.event.dayStart)}, 'published', ${NOW}, ${NOW}, ${NOW}) ON CONFLICT(slug) DO UPDATE SET time_zone = excluded.time_zone, day_start = excluded.day_start, name = excluded.name, start_date = excluded.start_date, end_date = excluded.end_date, city = excluded.city, country = excluded.country, latitude = excluded.latitude, longitude = excluded.longitude, cover_key = excluded.cover_key, cover_width = excluded.cover_width, cover_height = excluded.cover_height, og_key = excluded.og_key, language = excluded.language, updated_at = ${NOW}, approved_at = CASE WHEN events.publish_state = 'published' THEN ${NOW} ELSE events.approved_at END WHERE events.owner_id IS NULL`,
+      `INSERT INTO events (id, slug, name, start_date, end_date, city, country, latitude, longitude, language, time_zone, day_start, publish_state, approved_at, created_at, updated_at) VALUES (${q(eventId)}, ${q(slug)}, ${q(seed.event.name)}, ${q(seed.event.dates.start)}, ${q(seed.event.dates.end)}, ${q(seed.event.city)}, ${q(seed.event.country)}, ${coord(seed.event.latitude)}, ${coord(seed.event.longitude)}, ${q(seed.event.language)}, ${q(seed.event.timeZone)}, ${q(seed.event.dayStart)}, 'published', ${NOW}, ${NOW}, ${NOW}) ON CONFLICT(slug) DO UPDATE SET time_zone = excluded.time_zone, day_start = excluded.day_start, name = excluded.name, start_date = excluded.start_date, end_date = excluded.end_date, city = excluded.city, country = excluded.country, latitude = excluded.latitude, longitude = excluded.longitude, language = excluded.language, updated_at = ${NOW}, approved_at = CASE WHEN events.publish_state = 'published' THEN ${NOW} ELSE events.approved_at END WHERE events.owner_id IS NULL`,
       `INSERT INTO event_maps (id, event_id, position, width, height, theme, image_key, image_format, created_at, updated_at) VALUES (${q(mapId)}, ${q(eventId)}, 1, ${seed.map.width}, ${seed.map.height}, ${q(seed.event.mapTheme)}, ${q(imageKey)}, ${q(format)}, ${NOW}, ${NOW}) ON CONFLICT(id) DO UPDATE SET width = excluded.width, height = excluded.height, theme = excluded.theme, image_key = excluded.image_key, image_format = excluded.image_format, updated_at = ${NOW}`,
+      // Slice 14: the cover row (the objects are put into R2 by the seed script first). Idempotent; no cover declared = row removed.
+      ...coverStatements(seed.event.slug, eventId, covers.get(slug)),
       // Sessions first (they reference points); also covers sessions of a previous seed of this event.
       `DELETE FROM point_sessions WHERE event_id = ${q(eventId)}`,
       `DELETE FROM points WHERE map_id = ${q(mapId)}`,
@@ -308,4 +338,12 @@ export function buildSeedStatements(seeds: LoadedSeed[], ogKeys: ReadonlyMap<str
     }
   }
   return out;
+}
+
+/** Upsert (or delete) the `event_covers` row of a seeded event. Focal point centred. Keys come from `planSeedCover` only. */
+function coverStatements(slug: string, eventId: string, c: SeedCoverObjects | undefined): string[] {
+  if (!c) return [`DELETE FROM event_covers WHERE event_id = ${q(eventId)}`];
+  return [
+    `INSERT INTO event_covers (event_id, full_key, full_width, full_height, small_key, small_width, small_height, og_key, focal_x, focal_y, created_at, updated_at) VALUES (${q(eventId)}, ${q(c.fullKey)}, ${c.fullWidth}, ${c.fullHeight}, ${q(c.smallKey)}, ${c.fullWidth}, ${c.fullHeight}, ${q(c.ogKey)}, 0.5, 0.5, ${NOW}, ${NOW}) ON CONFLICT(event_id) DO UPDATE SET full_key = excluded.full_key, full_width = excluded.full_width, full_height = excluded.full_height, small_key = excluded.small_key, small_width = excluded.small_width, small_height = excluded.small_height, og_key = excluded.og_key, updated_at = ${NOW}`,
+  ];
 }

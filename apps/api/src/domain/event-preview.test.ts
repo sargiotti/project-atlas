@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { toneOf } from "@atlas/contract";
 import { buildEventPreview, cleanText, countryName, formatDateRange } from "./event-preview";
 
 describe("formatDateRange", () => {
@@ -13,6 +14,7 @@ describe("formatDateRange", () => {
 
 describe("buildEventPreview", () => {
   const base = {
+    id: "evt-1",
     slug: "x",
     name: "Havneløbet 2026",
     startDate: "2026-11-10",
@@ -26,8 +28,8 @@ describe("buildEventPreview", () => {
     expect(buildEventPreview(base)).toEqual({
       title: "Havneløbet 2026",
       description: "10–22 Nov 2026 · København, Denmark",
-      imagePath: null,
-      imageAlt: "Cover illustration for Havneløbet 2026",
+      imagePath: `/tone-og/${toneOf("evt-1")}.jpg`,
+      imageAlt: "Cover image for Havneløbet 2026",
     });
   });
 
@@ -37,10 +39,14 @@ describe("buildEventPreview", () => {
     expect(buildEventPreview({ ...base, startDate: "2026-13-01" }).description).toBe("København, Denmark");
   });
 
-  it("only accepts well-formed image keys", () => {
-    expect(buildEventPreview({ ...base, ogKey: "a-b.0123abcd.jpg" }).imagePath).toBe("/og/a-b.0123abcd.jpg");
-    expect(buildEventPreview({ ...base, ogKey: "A.0123abcd.jpg" }).imagePath).toBeNull();
-    expect(buildEventPreview({ ...base, ogKey: "a.0123abcd.jpg/../x" }).imagePath).toBeNull();
+  it("uses the cover's og image only for a well-formed key of this very event, else the tone image", () => {
+    const tone = `/tone-og/${toneOf("evt-1")}.jpg`;
+    const key = `covers/evt-1/${"0123abcd".repeat(4)}-og.jpg`;
+    expect(buildEventPreview({ ...base, ogKey: key }).imagePath).toBe(`/media/${key}`);
+    expect(buildEventPreview({ ...base, ogKey: `covers/evt-2/${"0123abcd".repeat(4)}-og.jpg` }).imagePath).toBe(tone);
+    expect(buildEventPreview({ ...base, ogKey: `covers/evt-1/${"0123abcd".repeat(4)}-full.webp` }).imagePath).toBe(tone);
+    expect(buildEventPreview({ ...base, ogKey: `covers/evt-1/../x/${"0123abcd".repeat(4)}-og.jpg` }).imagePath).toBe(tone);
+    expect(buildEventPreview({ ...base, ogKey: "A.0123abcd.jpg" }).imagePath).toBe(tone);
   });
 });
 

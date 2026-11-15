@@ -34,12 +34,16 @@ import { toPreviewBody } from "./preview-body";
 import { generateSlug } from "../domain/slug";
 import { errorResponse } from "./errors";
 import { guardMutations, guardOrigin, limitBody, requireAuth } from "./auth-routes";
-import { deleteEventMapObjects, registerMapRoutes } from "./map-routes";
+import { deleteEventMediaObjects, registerMapRoutes } from "./map-routes";
+import { registerCoverRoutes } from "./cover-routes";
 import type { AppContext, AppEnv } from "./types";
 
 const EVENT_ID = /^[a-z0-9-]{1,64}$/;
 const SLUG_ATTEMPTS = 3;
 const MAP_UPLOAD_PATH = /^\/api\/v1\/panel\/events\/[^/]+\/map$/;
+/** Slice 14: the two multipart cover routes (PUT replace, PATCH focal). Their own body limits are set in cover-routes. */
+const COVER_PUT_PATH = /^\/api\/v1\/panel\/events\/[^/]+\/cover$/;
+const COVER_FOCAL_PATH = /^\/api\/v1\/panel\/events\/[^/]+\/cover\/focal$/;
 /** The ONLY route with the 512 KB body limit: PUT, anchored, no trailing slash, event id in its own charset. */
 const POINTS_SAVE_PATH = /^\/api\/v1\/panel\/events\/[a-z0-9-]{1,64}\/points$/;
 const limitPointsBody = bodyLimit({
@@ -113,7 +117,7 @@ const panelWriteLimiter: MiddlewareHandler<AppEnv> = async (c, next) => {
   await next();
 };
 
-const toPanelEvent = ({ dayStart: _dayStart, storedMap: _storedMap, ownerId: _ownerId, ...e }: OwnedEvent) => e;
+const toPanelEvent = ({ dayStart: _dayStart, storedMap: _storedMap, storedCover: _storedCover, ownerId: _ownerId, ...e }: OwnedEvent) => e;
 
 async function readJson(c: AppContext): Promise<unknown> {
   try {
@@ -132,7 +136,11 @@ export function registerPanelRoutes(app: Hono<AppEnv>): void {
   // Deny by default: every route under the prefix needs a session. Any role may use it (own events only).
   // The map upload is multipart with its own 2 MiB limit (set in map-routes after the owner check): it keeps the
   // Origin / Sec-Fetch-Site check but skips the JSON-only rule and the 8 KB limit.
-  const isMapUpload = (c: AppContext) => c.req.method === "POST" && MAP_UPLOAD_PATH.test(c.req.path);
+  // Multipart carve-out: exactly these (method, path) pairs keep the Origin check but skip the JSON-only rule and the 8 KB limit.
+  const isMapUpload = (c: AppContext) =>
+    (c.req.method === "POST" && MAP_UPLOAD_PATH.test(c.req.path)) ||
+    (c.req.method === "PUT" && COVER_PUT_PATH.test(c.req.path)) ||
+    (c.req.method === "PATCH" && COVER_FOCAL_PATH.test(c.req.path));
   const isPointsSave = (c: AppContext) => c.req.method === "PUT" && POINTS_SAVE_PATH.test(c.req.path);
   const isSessionsSave = (c: AppContext) => c.req.method === "PUT" && SESSIONS_SAVE_PATH.test(c.req.path);
   app.use(
@@ -223,8 +231,8 @@ export function registerPanelRoutes(app: Hono<AppEnv>): void {
     const id = c.req.param("id");
     if (!EVENT_ID.test(id)) return notFound(c);
     if (!(await new D1PanelEventRepository(c.env.DB).delete(id, c.get("user").id))) return notFound(c);
-    // Event row (and its map row, by cascade) is gone: now remove every stored object under maps/{id}/.
-    await deleteEventMapObjects(c, id);
+    // Event row (and its map and cover rows, by cascade) is gone: now remove every stored object under maps/{id}/ and covers/{id}/.
+    await deleteEventMediaObjects(c, id);
     logPanel(c, "event_deleted", "ok", id);
     return c.body(null, 204);
   });
@@ -449,4 +457,5 @@ export function registerPanelRoutes(app: Hono<AppEnv>): void {
   organizerAction("unpublish", "unpublish");
 
   registerMapRoutes(app);
+  registerCoverRoutes(app);
 }
