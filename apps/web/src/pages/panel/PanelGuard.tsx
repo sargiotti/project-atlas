@@ -5,7 +5,7 @@ import { fetchMe, logout } from "../../api/auth";
 import { useI18n } from "../../i18n/I18nProvider";
 import { Link, navigate } from "../../lib/router";
 import { Brand } from "./parts";
-import { clearAllDrafts, purgeForeignDrafts } from "../../lib/pointsDraft";
+import { clearAllDrafts, purgeForeignDrafts } from "../../lib/draftStorage";
 import { MeContext, PendingContext, usePending } from "./pending";
 
 export function initials(name: string, email: string) {
@@ -46,7 +46,7 @@ function UserMenu({ me }: { me: Organizer }) {
 
   const signOut = async () => {
     setFailed(false);
-    // Unsaved Points drafts must not outlive the session on a shared computer: wipe them before the request.
+    // Unsaved drafts (Points and Schedule editors) must not outlive the session on a shared computer: wipe them before the request.
     clearAllDrafts();
     if (await logout()) navigate("/panel/login", true);
     else setFailed(true);

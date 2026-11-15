@@ -40,7 +40,7 @@ function mockApi(routes: Record<string, Handler>) {
 const baseRoutes = (points: any[] = [], event: any = EV, updatedAt = T0): Record<string, Handler> => ({
   "GET /auth/me": () => json({ organizer }),
   [`GET /panel/events/${ID}`]: () => json({ event }),
-  [`GET /panel/events/${ID}/points`]: () => json({ points, eventUpdatedAt: updatedAt }),
+  [`GET /panel/events/${ID}/points`]: () => json({ points, eventUpdatedAt: updatedAt, sessionCounts: {} }),
 });
 const PUT = `PUT /panel/events/${ID}/points`;
 const open = (lang: "en" | "es" | "da" = "en") => {
@@ -99,7 +99,7 @@ describe("saving", () => {
   it("blocks Save while a Name-it pin has no name, takes the organizer to it, then saves the full set", async () => {
     const fetchMock = mockApi({
       ...baseRoutes(),
-      [PUT]: () => json({ points: [{ id: "srv-1", name: "Main stage", category: "stage", description: "", x: 0.3, y: 0.3 }], eventUpdatedAt: T1, counts: { created: 1, updated: 0, deleted: 0 }, created: [{ index: 0, id: "srv-1" }] }),
+      [PUT]: () => json({ points: [{ id: "srv-1", name: "Main stage", category: "stage", description: "", x: 0.3, y: 0.3 }], eventUpdatedAt: T1, sessionCounts: {}, counts: { created: 1, updated: 0, deleted: 0, sessionsDeleted: 0 }, created: [{ index: 0, id: "srv-1" }] }),
     });
     const user = userEvent.setup();
     open();
@@ -130,7 +130,7 @@ describe("saving", () => {
   it("says the points are visible within a few minutes when the event is published", async () => {
     mockApi({
       ...baseRoutes([], { ...EV, status: "published" }),
-      [PUT]: () => json({ points: [{ id: "srv-1", name: null, category: "toilets", description: "", x: 0.3, y: 0.3 }], eventUpdatedAt: T1, counts: { created: 1, updated: 0, deleted: 0 }, created: [{ index: 0, id: "srv-1" }] }),
+      [PUT]: () => json({ points: [{ id: "srv-1", name: null, category: "toilets", description: "", x: 0.3, y: 0.3 }], eventUpdatedAt: T1, sessionCounts: {}, counts: { created: 1, updated: 0, deleted: 0, sessionsDeleted: 0 }, created: [{ index: 0, id: "srv-1" }] }),
     });
     const user = userEvent.setup();
     open();
@@ -157,7 +157,7 @@ describe("saving", () => {
     let loads = 0;
     const fetchMock = mockApi({
       ...baseRoutes(),
-      [`GET /panel/events/${ID}/points`]: () => json(loads++ === 0 ? { points: [], eventUpdatedAt: T0 } : { points: [other], eventUpdatedAt: T1 }),
+      [`GET /panel/events/${ID}/points`]: () => json(loads++ === 0 ? { points: [], eventUpdatedAt: T0, sessionCounts: {} } : { points: [other], eventUpdatedAt: T1, sessionCounts: {} }),
       [PUT]: () => json(errorBody("event_changed"), 409),
     });
     const user = userEvent.setup();
@@ -207,7 +207,7 @@ describe("Just-drop points and their localized label", () => {
   it("sends name null and shows the label in the viewer's language; a custom name is kept as-is; clearing it goes back to null", async () => {
     const fetchMock = mockApi({
       ...baseRoutes(),
-      [PUT]: () => json({ points: [{ id: "srv-1", name: null, category: "toilets", description: "", x: 0.3, y: 0.3 }], eventUpdatedAt: T1, counts: { created: 1, updated: 0, deleted: 0 }, created: [{ index: 0, id: "srv-1" }] }),
+      [PUT]: () => json({ points: [{ id: "srv-1", name: null, category: "toilets", description: "", x: 0.3, y: 0.3 }], eventUpdatedAt: T1, sessionCounts: {}, counts: { created: 1, updated: 0, deleted: 0, sessionsDeleted: 0 }, created: [{ index: 0, id: "srv-1" }] }),
     });
     const user = userEvent.setup();
     open("es");
@@ -292,7 +292,7 @@ describe("local draft", () => {
   it("is written while there are unsaved changes, scoped by organizer and event, and removed after a save", async () => {
     mockApi({
       ...baseRoutes(),
-      [PUT]: () => json({ points: [{ id: "srv-1", name: null, category: "toilets", description: "", x: 0.3, y: 0.3 }], eventUpdatedAt: T1, counts: { created: 1, updated: 0, deleted: 0 }, created: [{ index: 0, id: "srv-1" }] }),
+      [PUT]: () => json({ points: [{ id: "srv-1", name: null, category: "toilets", description: "", x: 0.3, y: 0.3 }], eventUpdatedAt: T1, sessionCounts: {}, counts: { created: 1, updated: 0, deleted: 0, sessionsDeleted: 0 }, created: [{ index: 0, id: "srv-1" }] }),
     });
     const user = userEvent.setup();
     open();

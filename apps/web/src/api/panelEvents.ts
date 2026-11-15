@@ -36,13 +36,14 @@ function common(res: Response): Fail | null {
   return null;
 }
 
-async function errorBody(res: Response): Promise<{ code: string; fields: FieldError[] }> {
+async function errorBody(res: Response): Promise<{ code: string; fields: FieldError[]; count: number }> {
   try {
     const j = await res.json();
     const parsed = z.array(fieldErrorSchema).safeParse(j?.error?.fields);
-    return { code: typeof j?.error?.code === "string" ? j.error.code : "error", fields: parsed.success ? parsed.data : [] };
+    const count = Number.isInteger(j?.error?.count) && j.error.count > 0 ? j.error.count : 0;
+    return { code: typeof j?.error?.code === "string" ? j.error.code : "error", fields: parsed.success ? parsed.data : [], count };
   } catch {
-    return { code: "error", fields: [] };
+    return { code: "error", fields: [], count: 0 };
   }
 }
 
@@ -92,6 +93,8 @@ export type SaveResult =
   | { status: "ok"; event: PanelEvent }
   | { status: "invalid"; fields: FieldError[] }
   | { status: "limit" }
+  /** Slice 13: the new dates or time zone would leave `count` shows outside the event. Nothing was saved. */
+  | { status: "sessions_outside_dates"; count: number }
   | Fail;
 
 async function save(method: "POST" | "PUT", path: string, input: unknown): Promise<SaveResult> {
@@ -100,8 +103,9 @@ async function save(method: "POST" | "PUT", path: string, input: unknown): Promi
     const c = common(res);
     if (c) return c;
     if (res.ok) return { status: "ok", event: panelEventResponseSchema.parse(await res.json()).event };
-    const { code, fields } = await errorBody(res);
+    const { code, fields, count } = await errorBody(res);
     if (res.status === 400 && code === "validation_error") return { status: "invalid", fields };
+    if (res.status === 409 && code === "sessions_outside_dates") return { status: "sessions_outside_dates", count };
     if (res.status === 409 && code === "event_limit_reached") return { status: "limit" };
     return { status: "error" };
   } catch {

@@ -1,12 +1,13 @@
 import { MAX_POINTS_PER_MAP, pointCategorySchema, pointIdSchema } from "@atlas/contract";
 import { z } from "zod";
+import { DRAFT_MAX_AGE_MS, draftStore } from "./draftStorage";
 import { newKey, type EditorPoint } from "./pointsModel";
 
 // Slice 08c, security P4: the ONE accepted use of localStorage for panel data. It holds only the organizer's own,
 // non-secret Points of one event (no tokens, no email, no map URLs, no server responses), scoped by organizer and
 // event, never auto-sent, dropped when stale, and wiped on sign out.
 const PREFIX = "atlas.pointsDraft.";
-const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const MAX_AGE_MS = DRAFT_MAX_AGE_MS;
 export const draftKey = (organizerId: string, eventId: string) => `${PREFIX}v1.${organizerId}.${eventId}`;
 
 // A client copy of the save schema, plus `tmpId`. Text lengths are loose on purpose: an over-long field is a
@@ -32,22 +33,7 @@ const draftSchema = z.strictObject({
 });
 export type Draft = { savedAt: number; baseUpdatedAt: string; points: EditorPoint[] };
 
-const store = () => {
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
-};
-
-function keysWithPrefix(ls: Storage): string[] {
-  const out: string[] = [];
-  for (let i = 0; i < ls.length; i++) {
-    const k = ls.key(i);
-    if (k && k.startsWith(PREFIX)) out.push(k);
-  }
-  return out;
-}
+const store = draftStore;
 
 /** Parsed draft, or null. An invalid, tampered or older-than-7-days draft is deleted on the spot. */
 export function loadDraft(organizerId: string, eventId: string): Draft | null {
@@ -100,29 +86,6 @@ export function saveDraft(organizerId: string, eventId: string, baseUpdatedAt: s
 export function clearDraft(organizerId: string, eventId: string) {
   try {
     store()?.removeItem(draftKey(organizerId, eventId));
-  } catch {
-    /* ignore */
-  }
-}
-
-/** Sign out: every draft of every organizer, before the logout request is awaited. */
-export function clearAllDrafts() {
-  const ls = store();
-  if (!ls) return;
-  try {
-    for (const k of keysWithPrefix(ls)) ls.removeItem(k);
-  } catch {
-    /* ignore */
-  }
-}
-
-/** After a successful /auth/me: drafts left by another account on this browser are deleted. */
-export function purgeForeignDrafts(organizerId: string) {
-  const ls = store();
-  if (!ls) return;
-  try {
-    const mine = `${PREFIX}v1.${organizerId}.`;
-    for (const k of keysWithPrefix(ls)) if (!k.startsWith(mine)) ls.removeItem(k);
   } catch {
     /* ignore */
   }

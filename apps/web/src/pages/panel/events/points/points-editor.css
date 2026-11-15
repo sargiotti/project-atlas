@@ -183,7 +183,14 @@
 .ped-small .status-card { margin-top: 32px; }
 
 /* hub entry card */
-@media (min-width: 1024px) { .pe-hpoints { grid-column: span 8; } }
+@media (min-width: 1024px) { .pe-hpoints, .pe-hschedule { grid-column: span 8; } }
+
+/* Inspector "Shows" block and the delete-with-shows modal (slice 13) */
+.ped-shows { gap: 6px; padding: 12px; background: var(--surface-2, var(--bg)); border-radius: 14px; }
+.ped-shows .ped-shows-n { margin: 0; font-weight: 700; }
+.ped-shows .btn { justify-self: start; text-decoration: none; }
+.ped-dlgnames { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 2px; font-weight: 700; color: var(--ink); }
+.ped-catgrid button:disabled { opacity: 0.35; cursor: not-allowed; }
 
 @media (prefers-reduced-motion: reduce) {
   .ped .marker.pending .marker-art, .ped .marker.hl::before, .ped-piece.nudge, .ped-chip.saving .dot, .ped-toast { animation: none; }

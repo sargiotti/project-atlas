@@ -13,6 +13,7 @@ import EventForm from "./events/EventForm";
 import EventHub from "./events/EventHub";
 import EventPreview from "./events/EventPreview";
 import PointsEditor from "./events/PointsEditor";
+import ScheduleEditor from "./events/ScheduleEditor";
 import EventsList from "./events/EventsList";
 
 /**
@@ -66,6 +67,13 @@ function Screens() {
     return (
       <PanelGuard bare>
         <PointsEditor key={ev.id} id={ev.id} />
+      </PanelGuard>
+    );
+  }
+  if (ev?.view === "schedule") {
+    return (
+      <PanelGuard bare>
+        <ScheduleEditor key={ev.id} id={ev.id} />
       </PanelGuard>
     );
   }

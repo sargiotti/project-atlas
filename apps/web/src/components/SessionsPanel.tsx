@@ -37,6 +37,7 @@ export default function SessionsPanel({
   atMs,
   focusId,
   focusDay,
+  readOnly,
 }: {
   point: Point;
   event: Pick<EventInfo, "slug" | "name" | "timeZone" | "dayStart">;
@@ -45,6 +46,8 @@ export default function SessionsPanel({
   /** Session to outline (tapped in the Schedule grid) and its day. */
   focusId?: string;
   focusDay?: string;
+  /** Slice 13: the organizer's preview. No "Add to calendar" (the sessions may be unsaved). */
+  readOnly?: boolean;
 }) {
   const { t, lang } = useI18n();
   const { timeZone, dayStart } = event;
@@ -131,7 +134,7 @@ export default function SessionsPanel({
           ) : (
             <div className="prog-gap" />
           )}
-          <AddToCalendar input={calInput(hero)} variant="primary" />
+          {!readOnly && <AddToCalendar input={calInput(hero)} variant="primary" />}
         </div>
       )}
 
@@ -149,7 +152,7 @@ export default function SessionsPanel({
                   {s.title}
                   {s.description && <small className="ses-desc">{s.description}</small>}
                 </span>
-                <AddToCalendar input={calInput(s)} variant="icon" />
+                {!readOnly && <AddToCalendar input={calInput(s)} variant="icon" />}
               </li>
             ))}
           </ul>

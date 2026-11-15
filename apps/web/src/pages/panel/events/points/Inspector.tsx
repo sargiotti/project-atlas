@@ -4,6 +4,7 @@ import { CATEGORY_INFO } from "../../../../markers/categories";
 import { useI18n } from "../../../../i18n/I18nProvider";
 import { displayName } from "../../../../lib/pointLabel";
 import { POINT_CATEGORIES, POINT_DESCRIPTION_MAX, POINT_NAME_MAX, cpLen, isNameIt, type EditorPoint } from "../../../../lib/pointsModel";
+import { Link } from "../../../../lib/router";
 import { Ic } from "../common";
 
 type Props = {
@@ -15,6 +16,11 @@ type Props = {
   /** The server rejected this Point's name or description. */
   serverError: boolean;
   nameRef: React.RefObject<HTMLInputElement | null>;
+  eventId: string;
+  /** Slice 13: shows this saved place has (0 for a new place). */
+  sessionCount: number;
+  /** The place is saved as a stage or landmark, so the Schedule editor can open it. */
+  canLink: boolean;
   onChange: (patch: Partial<Pick<EditorPoint, "name" | "description" | "category">>) => void;
   onDelete: () => void;
   onConfirm: () => void;
@@ -22,7 +28,7 @@ type Props = {
 };
 
 /** Right panel: the selected Point as an editable form. All text is rendered and edited as plain text. */
-export default function Inspector({ point, fresh, showErrors, serverError, nameRef, onChange, onDelete, onConfirm, onCancelFresh }: Props) {
+export default function Inspector({ point, fresh, showErrors, serverError, nameRef, eventId, sessionCount, canLink, onChange, onDelete, onConfirm, onCancelFresh }: Props) {
   const { t } = useI18n();
   const uid = useId().replace(/:/g, "");
 
@@ -37,6 +43,7 @@ export default function Inspector({ point, fresh, showErrors, serverError, nameR
             <div><dt><kbd>{t("pedKeyNudge")}</kbd></dt><dd>{t("pedKeyNudgeS")}</dd></div>
             <div><dt><kbd>{t("pedKeyDel")}</kbd></dt><dd>{t("pedKeyDelS")}</dd></div>
             <div><dt><kbd>{t("pedKeyUndo")}</kbd></dt><dd>{t("pedKeyUndoS")}</dd></div>
+            <div><dt><kbd>{t("sedKeySave")}</kbd></dt><dd>{t("sedKeySaveS")}</dd></div>
           </dl>
         </div>
       </div>
@@ -52,6 +59,7 @@ export default function Inspector({ point, fresh, showErrors, serverError, nameR
   const nameMissing = nameIt && name.trim() === "";
   const nameErr = nameLen > POINT_NAME_MAX ? t("pedNameLong") : nameMissing && (showErrors || serverError) ? t("pedNameRequired") : serverError ? t("pedErrField") : null;
   const descErr = descLen > POINT_DESCRIPTION_MAX ? t("pedDescLong") : null;
+  const locked = sessionCount > 0;
 
   return (
     <div className="ped-ibody">
@@ -135,12 +143,33 @@ export default function Inspector({ point, fresh, showErrors, serverError, nameR
           <span className="ped-lbl" id={`${uid}-cat`}>{t("pedCategory")}</span>
           <div className="ped-catgrid" role="group" aria-labelledby={`${uid}-cat`}>
             {POINT_CATEGORIES.map((c) => (
-              <button key={c} type="button" className={point.category === c ? "on" : ""} aria-pressed={point.category === c} aria-label={t(`cat_${c}` as any)} title={t(`cat_${c}` as any)} onClick={() => onChange({ category: c })}>
+              <button key={c} type="button" className={point.category === c ? "on" : ""} aria-pressed={point.category === c} aria-label={t(`cat_${c}` as any)} title={t(`cat_${c}` as any)} disabled={locked && c !== "stage" && c !== "landmark"} onClick={() => onChange({ category: c })}>
                 <CategoryIcon category={c} size={26} />
               </button>
             ))}
           </div>
+          {locked && <p className="ped-fhint">{t("sedInsLocked")}</p>}
         </div>
+
+        {(point.category === "stage" || point.category === "landmark") && (
+          <div className="ped-fld ped-shows">
+            <span className="ped-lbl">{t(point.category === "stage" ? "sedInsHeadS" : "sedInsHeadL")}</span>
+            {!canLink ? (
+              <p className="ped-fhint">{t("sedInsSaveFirst")}</p>
+            ) : (
+              <>
+                <p className="ped-shows-n">
+                  {sessionCount === 0
+                    ? t(point.category === "stage" ? "sedInsNoneS" : "sedInsNoneL")
+                    : t(`sedInsCount${point.category === "stage" ? "S" : "L"}${sessionCount === 1 ? "1" : "N"}` as any, { n: sessionCount })}
+                </p>
+                <Link to={`/panel/events/${eventId}/schedule?place=${encodeURIComponent(point.id!)}`} className="btn sm">
+                  <Ic n="cal" size={16} />{t(point.category === "stage" ? "sedInsEditS" : "sedInsEditL")}
+                </Link>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="ped-ifoot">

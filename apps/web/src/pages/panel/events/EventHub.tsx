@@ -106,6 +106,16 @@ export default function EventHub({ id }: { id: string }) {
           </section>
         )}
 
+        {e.map && (
+          <section className="pe-hcardw pe-hpoints pe-hschedule" aria-labelledby={`${id}-sch`}>
+            <h2 className="pe-ctitle" id={`${id}-sch`}><Ic n="cal" size={16} />{t("sedHubTitle")}</h2>
+            <p className="pe-sub">{t("sedHubText")}</p>
+            <div className="pe-brow">
+              <Link to={`/panel/events/${e.id}/schedule`} className="btn primary"><Ic n="cal" size={18} />{t("sedHubBtn")}</Link>
+            </div>
+          </section>
+        )}
+
         <section className="pe-hcardw pe-hpath">
           <h2 className="pe-ctitle">{t("pePathTitle")}</h2>
           <ol className="pe-trail">

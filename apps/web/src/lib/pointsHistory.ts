@@ -3,17 +3,18 @@ import type { EditorPoint } from "./pointsModel";
 // Undo/redo for the editor: client-only, a stack of whole-array snapshots (the arrays are small and immutable).
 export const HISTORY_LIMIT = 50;
 
-export type HState = { points: EditorPoint[]; past: EditorPoint[][]; future: EditorPoint[][]; coalesce: string | null };
-export type HAction =
-  | { type: "apply"; fn: (p: EditorPoint[]) => EditorPoint[]; coalesce?: string }
+// Generic since slice 13: the Schedule editor reuses it for its sessions (the field is still called `points`).
+export type HState<T = EditorPoint> = { points: T[]; past: T[][]; future: T[][]; coalesce: string | null };
+export type HAction<T = EditorPoint> =
+  | { type: "apply"; fn: (p: T[]) => T[]; coalesce?: string }
   | { type: "undo" }
   | { type: "redo" }
-  | { type: "reset"; points: EditorPoint[] }
+  | { type: "reset"; points: T[] }
   | { type: "seal" };
 
-export const initialHistory = (points: EditorPoint[]): HState => ({ points, past: [], future: [], coalesce: null });
+export const initialHistory = <T = EditorPoint>(points: T[]): HState<T> => ({ points, past: [], future: [], coalesce: null });
 
-export function historyReducer(s: HState, a: HAction): HState {
+export function historyReducer<T = EditorPoint>(s: HState<T>, a: HAction<T>): HState<T> {
   switch (a.type) {
     case "apply": {
       const next = a.fn(s.points);
