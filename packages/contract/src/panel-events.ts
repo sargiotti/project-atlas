@@ -3,7 +3,7 @@ import { EVENT_INPUT_FIELDS, FIELD_ERROR_CODES, type EventInputField, type Field
 import { EVENT_TIME_ZONES } from "./time-zones.ts";
 import { FORBIDDEN_MULTI_LINE, FORBIDDEN_SINGLE_LINE } from "./text-rules.ts";
 import { eventStatusSchema } from "./event-status.ts";
-import { MAX_POINTS_PER_MAP, eventMapSchema, eventSchema, mapThemeSchema, pointSchema, sessionSchema, slugSchema } from "./map-bundle.ts";
+import { MAX_POINTS_PER_MAP, eventAboutSchema, eventMapSchema, eventSchema, mapThemeSchema, pointSchema, sessionSchema, slugSchema } from "./map-bundle.ts";
 
 const FIELD_CODE_SET: ReadonlySet<string> = new Set(FIELD_ERROR_CODES);
 
@@ -158,6 +158,11 @@ const websiteSchema = z
 const optional = <T extends z.ZodType>(schema: T) =>
   z.preprocess((v) => (v === undefined || (typeof v === "string" && v.trim() === "") ? null : v), schema.nullable());
 
+export const VENUE_ADDRESS_MAX = 120;
+
+/** Slice 08d: venue address. Same text pipeline as `city`, plus no URL (`://` anywhere, or starting with `www.`). */
+const venueAddressSchema = text(0, VENUE_ADDRESS_MAX, false).refine((s) => !(/:\/\//.test(s) || /^www\./i.test(s)), "address_has_url");
+
 export const eventInputSchema = z
   .strictObject({
     name: text(3, 80, false),
@@ -169,6 +174,7 @@ export const eventInputSchema = z
     language: eventLanguageSchema,
     description: optional(text(0, 500, true)),
     website: optional(websiteSchema),
+    venueAddress: optional(venueAddressSchema),
   })
   .superRefine((e, ctx) => {
     // Date field errors are reported on their own; no span maths on a date that is not a real day.
@@ -259,6 +265,7 @@ export const panelEventSchema = z.object({
   language: z.string(),
   description: z.string().nullable(),
   website: z.string().nullable(),
+  venueAddress: z.string().nullable(),
   map: panelMapSchema.nullable(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
@@ -273,14 +280,7 @@ export type PanelEventResponse = z.infer<typeof panelEventResponseSchema>;
 
 /** Owner preview: the public bundle shape after slice 08, but the map is null. Public-shaped fields only. */
 export const eventPreviewResponseSchema = z.object({
-  event: eventSchema.and(
-    z.object({
-      city: z.string(),
-      country: z.string(),
-      description: z.string().optional(),
-      website: z.string().optional(),
-    }),
-  ),
+  event: eventSchema.and(eventAboutSchema),
   map: eventMapSchema.nullable(),
   points: z.array(pointSchema).max(MAX_POINTS_PER_MAP),
   sessions: z.array(sessionSchema).max(0),

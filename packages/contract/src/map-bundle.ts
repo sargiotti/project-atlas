@@ -72,6 +72,49 @@ export const eventSchema = z
   });
 export type EventInfo = z.infer<typeof eventSchema>;
 
+/**
+ * Slice 08d: the About-sheet fields of the public bundle and of the owner preview / Admin review. All organizer text,
+ * so the output checks apply (a poisoned or legacy row never reaches visitors). Server always sends city and country;
+ * they are optional here only so a stale cached bundle (service worker) still parses on the client.
+ */
+export const eventAboutSchema = z.object({
+  city: z
+    .string()
+    .min(1)
+    .max(80)
+    .refine((s) => !FORBIDDEN_SINGLE_LINE.test(s), "control or bidi characters not allowed")
+    .optional(),
+  country: z.string().regex(/^[A-Z]{2}$/).optional(),
+  /** Plain text, `
+` allowed. Render as text, never as HTML; URLs are not links. Omitted when none. */
+  description: z
+    .string()
+    .max(500)
+    .refine((s) => !FORBIDDEN_MULTI_LINE.test(s), "control or bidi characters not allowed")
+    .optional(),
+  /** https only, stored as URL.href. Omitted when none. */
+  website: z
+    .string()
+    .max(200)
+    .refine((s) => {
+      if (!s.startsWith("https://")) return false;
+      try {
+        return new URL(s).protocol === "https:";
+      } catch {
+        return false;
+      }
+    }, "website must be an https URL")
+    .optional(),
+  /** Single line, plain text. Omitted when none. */
+  venueAddress: z
+    .string()
+    .min(1)
+    .max(120)
+    .refine((s) => !FORBIDDEN_SINGLE_LINE.test(s), "control or bidi characters not allowed")
+    .optional(),
+});
+export type EventAbout = z.infer<typeof eventAboutSchema>;
+
 export const imageVariantSchema = z.object({
   url: z.string().min(1),
   width: z.number().int().positive(),
@@ -167,7 +210,7 @@ export type Session = z.infer<typeof sessionSchema>;
 
 export const mapBundleSchema = z
   .object({
-    event: eventSchema,
+    event: eventSchema.and(eventAboutSchema),
     map: eventMapSchema,
     points: z.array(pointSchema).max(MAX_POINTS_PER_MAP),
     /** Slice 09. Sorted by start, end, id. Absent in older payloads (a stale cached bundle): no sessions. */
