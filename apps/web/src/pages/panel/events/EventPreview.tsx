@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { getPreview } from "../../../api/panelEvents";
+import { getEvent, getPreview } from "../../../api/panelEvents";
 import { safeVariants } from "../../../api/mapBundle";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { Link, navigate } from "../../../lib/router";
@@ -13,16 +13,22 @@ const MapViewer = lazy(() => import("../../../components/MapViewer"));
 
 /**
  * /panel/events/:id/preview: the event as visitors will see it: the uploaded map, or "Map coming soon" while there is none. A /panel route, so
- * noindex and no-store. The band is not dismissible; there is no Share and no visitor language switch.
+ * noindex and no-store. The band is not dismissible; there is no visitor language switch. Share only when published.
  */
 export default function EventPreview({ id }: { id: string }) {
   const { t } = useI18n();
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<"loading" | "error" | "missing" | EventPreviewResponse>("loading");
+  // Share only makes sense once the link works, i.e. the event is published. Unknown counts as not published.
+  const [published, setPublished] = useState(false);
 
   useEffect(() => {
     const ctrl = new AbortController();
     setState("loading");
+    setPublished(false);
+    getEvent(id, ctrl.signal)
+      .then((r) => r.status === "ok" && setPublished(r.event.status === "published"))
+      .catch(() => {});
     getPreview(id, ctrl.signal)
       .then((r) => {
         if (r.status === "unauthenticated") navigate("/panel/login", true, true);
@@ -39,10 +45,10 @@ export default function EventPreview({ id }: { id: string }) {
   if (state === "loading") return <Loading />;
   if (state === "error") return <LoadError onRetry={() => setAttempt((n) => n + 1)} />;
   if (state === "missing") return <PanelNotFound />;
-  return <PreviewView id={id} data={state} />;
+  return <PreviewView id={id} data={state} published={published} />;
 }
 
-function PreviewView({ id, data }: { id: string; data: EventPreviewResponse }) {
+function PreviewView({ id, data, published }: { id: string; data: EventPreviewResponse; published: boolean }) {
   const { t } = useI18n();
   return (
     <div className="pe-pv">
@@ -52,13 +58,13 @@ function PreviewView({ id, data }: { id: string; data: EventPreviewResponse }) {
         <Link to={`/panel/events/${id}/edit`} className="btn sm"><Ic n="pencil" size={16} /><span className="lbl-dk">{t("peEdit")}</span></Link>
         <Link to={`/panel/events/${id}`} className="btn sm ghost"><Ic n="left" size={16} /><span className="lbl-dk">{t("pePvBack")}</span></Link>
       </div>
-      <PreviewStage data={data} />
+      <PreviewStage data={data} canShare={published} />
     </div>
   );
 }
 
 /** The event as visitors see it, read-only. Also used by the Admin review screen (no edit controls here). */
-export function PreviewStage({ data }: { data: EventPreviewResponse }) {
+export function PreviewStage({ data, canShare = false }: { data: EventPreviewResponse; canShare?: boolean }) {
   const { t, lang } = useI18n();
   const e = data.event;
   const points = data.points;
@@ -93,7 +99,7 @@ export function PreviewStage({ data }: { data: EventPreviewResponse }) {
           <LogoMark size={30} />
           <div className="pe-topbar-title" dir="auto" lang={e.language}>
             <h1>{e.name}</h1>
-            <small>{dateRange(e.startDate, e.endDate, lang)} · {e.city}</small>
+            <small>{[dateRange(e.startDate, e.endDate, lang), e.city].filter(Boolean).join(" · ")}</small>
           </div>
           <button
             ref={infoBtn}
@@ -149,10 +155,12 @@ export function PreviewStage({ data }: { data: EventPreviewResponse }) {
               timeZone={e.timeZone}
               city={e.city}
               country={e.country}
+              venueAddress={e.venueAddress}
               description={e.description}
               website={e.website}
               language={e.language}
               linkWebsite
+              share={canShare ? { slug: e.slug, name: e.name } : null}
             />
           </section>
         )}

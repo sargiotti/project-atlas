@@ -19,6 +19,7 @@ export type FormValues = {
   timeZone: string;
   city: string;
   country: string;
+  venueAddress: string;
   language: string;
   description: string;
   website: string;
@@ -28,7 +29,7 @@ export type Issue = FieldErrorCode;
 export type Issues = Partial<Record<FieldKey, Issue>>;
 
 /** Visual order of the fields (also the tab order and the summary order). */
-export const FIELD_ORDER: FieldKey[] = ["name", "language", "startDate", "endDate", "timeZone", "city", "country", "description", "website"];
+export const FIELD_ORDER: FieldKey[] = ["name", "language", "startDate", "endDate", "timeZone", "city", "country", "venueAddress", "description", "website"];
 
 export function blankValues(language: string): FormValues {
   return {
@@ -38,6 +39,7 @@ export function blankValues(language: string): FormValues {
     timeZone: browserZone() ?? "",
     city: "",
     country: "",
+    venueAddress: "",
     language,
     description: "",
     website: "",
@@ -52,6 +54,7 @@ export function fromEvent(e: PanelEvent): FormValues {
     timeZone: e.timeZone,
     city: e.city,
     country: e.country,
+    venueAddress: e.venueAddress ?? "",
     language: e.language,
     description: e.description ?? "",
     website: e.website ?? "",
@@ -67,6 +70,7 @@ export function toInput(v: FormValues) {
     timeZone: v.timeZone,
     city: v.city,
     country: v.country,
+    venueAddress: v.venueAddress.trim() === "" ? null : v.venueAddress,
     language: v.language,
     description: v.description.trim() === "" ? null : v.description,
     website: v.website.trim() === "" ? null : v.website,
@@ -91,8 +95,8 @@ export function daysInclusive(start: string, end: string): number | null {
   return Math.round((utcDay(end) - utcDay(start)) / 86_400_000) + 1;
 }
 
-/** Characters as the server counts them (NFC, trimmed, `\r\n` as `\n`). */
-export const textLength = (s: string) => normalizeText(s).length;
+/** Code points as the server counts them (NFC, trimmed, `\r\n` as `\n`). */
+export const textLength = (s: string) => Array.from(normalizeText(s)).length;
 
 const REQUIRED_KEYS: FieldKey[] = ["name", "startDate", "endDate", "timeZone", "city", "country"];
 const IN_ZONE_LIST: ReadonlySet<string> = new Set(EVENT_TIME_ZONES);

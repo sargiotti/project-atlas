@@ -16,7 +16,7 @@ const MAP = {
 const EV = {
   id: ID, slug: "fiesta-x7k2q9", status: "draft", statusReason: null, requestedAt: null, approvedAt: null,
   name: "Fiesta de mi barrio", startDate: "2026-12-12", endDate: "2026-12-13", timeZone: "America/Buenos_Aires",
-  city: "Rosario", country: "AR", language: "es", description: null, website: null, map: null,
+  city: "Rosario", country: "AR", language: "es", description: null, website: null, venueAddress: null, map: null,
   createdAt: "2026-11-14T10:00:00.000Z", updatedAt: "2026-11-14T10:00:00.000Z",
 };
 const organizer = { id: "o1", displayName: "Ada", email: "ada@example.com", role: "organizer" };
