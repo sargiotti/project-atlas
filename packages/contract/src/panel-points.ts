@@ -124,8 +124,6 @@ export function toPointFieldErrors(error: z.ZodError): FieldError[] {
     else if (issue.code === "too_small") code = "too_short";
     else if (issue.code === "too_big") code = "too_long";
     else code = "invalid";
-    // A missing key is `required` (zod reports invalid_type with an undefined input).
-    if (issue.code === "invalid_type" && (issue as { input?: unknown }).input === undefined) code = "required";
     const key = `${path}:${code}`;
     if (!seen.has(key)) {
       seen.add(key);

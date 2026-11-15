@@ -72,7 +72,9 @@ const DELETE_SQL = `DELETE FROM event_points WHERE event_id = ?1 AND id IN (SELE
 const BUMP_SQL = `UPDATE events SET updated_at = ?2 WHERE id = ?1 AND owner_id = ?4 AND updated_at = ?5
   AND (SELECT count(*) FROM event_points c WHERE c.event_id = ?1) = ?6 AND ?7 <= ${MAX_POINTS_PER_MAP}`;
 // Last statement: raises (malformed JSON) unless the whole save landed, which rolls the batch back.
-const ASSERT_SQL = `SELECT CASE WHEN (SELECT count(*) FROM event_points WHERE event_id = ?1) = ?2
+// `changes() = 1` is the bump (the last write): it proves THIS batch's bump applied, even when a concurrent save landed the
+// same final count and the same version number.
+const ASSERT_SQL = `SELECT CASE WHEN changes() = 1 AND (SELECT count(*) FROM event_points WHERE event_id = ?1) = ?2
   AND (SELECT updated_at FROM events WHERE id = ?1 AND owner_id = ?3) = ?4 THEN 1 ELSE json('rolled back') END AS ok`;
 
 /** A write changed a different number of rows than the diff said. Thrown (after logging) so the caller answers 500. */
