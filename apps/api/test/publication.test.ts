@@ -75,6 +75,8 @@ const uploadForm = (theme = "light", w = 2400) => {
 const uploadMap = async (o: User, id: string, theme = "light", w = 2400) => {
   const res = await call(`/api/v1/panel/events/${id}/map`, { method: "POST", cookie: o.session, form: uploadForm(theme, w) });
   expect(res.status).toBe(200);
+  // Slice 08c: publishing needs at least one Point. Direct insert, so the event version is untouched.
+  await env.DB.prepare("INSERT OR IGNORE INTO event_points (event_id, id, category, name, description, x, y, created_at, updated_at) VALUES (?1, 'seed-point', 'stage', 'Main stage', '', 0.5, 0.5, 0, 0)").bind(id).run();
   return panelMapResponseSchema.parse(await res.json()).map;
 };
 
