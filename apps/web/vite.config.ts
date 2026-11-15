@@ -42,15 +42,15 @@ function linkPreviewMeta(): Plugin {
   };
 }
 
-// In dev the Worker (wrangler, :8787) serves the API and the seeded map SVGs.
-const worker = "http://localhost:8787";
+// In dev the Worker (wrangler, :8787) serves the API, the seeded map SVGs and the uploaded images (/media/*).
+const worker = process.env.ATLAS_WORKER ?? "http://localhost:8787";
 
 export default defineConfig({
   plugins: [react(), linkPreviewMeta()],
   // Slice 09: the same origin is baked into the calendar link-back (https://<origin>/e/<slug>).
   define: { __PUBLIC_ORIGIN__: JSON.stringify(readPublicOrigin()) },
   server: {
-    proxy: { "/api": worker, "/maps": worker },
+    proxy: { "/api": worker, "/maps": worker, "/media": worker },
   },
   build: {
     outDir: "dist",
