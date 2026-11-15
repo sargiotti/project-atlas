@@ -10,6 +10,7 @@ import {
   sessionWindow,
 } from "./schedule.ts";
 import { fieldErrorSchema } from "./field-errors.ts";
+import { coverImageSchema, toneSchema } from "./cover.ts";
 import { FORBIDDEN_MULTI_LINE, FORBIDDEN_SINGLE_LINE } from "./text-rules.ts";
 
 export const SLUG_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -112,6 +113,12 @@ export const eventAboutSchema = z.object({
     .max(120)
     .refine((s) => !FORBIDDEN_SINGLE_LINE.test(s), "control or bidi characters not allowed")
     .optional(),
+  /**
+   * Slice 14: the cover (null: none) and the tone (0-7) for the colour cover. The server always sends both; optional here
+   * only so a stale cached bundle still parses.
+   */
+  cover: coverImageSchema.nullable().optional(),
+  tone: toneSchema.optional(),
 });
 export type EventAbout = z.infer<typeof eventAboutSchema>;
 
@@ -273,6 +280,9 @@ export const ERROR_CODES = [
   "event_not_draft",
   "map_changed",
   "map_not_found",
+  // Slice 14 (event cover). `cover_changed`: a concurrent replace won or `baseVersion` is stale (retryable after reload).
+  "cover_not_found",
+  "cover_changed",
   "unsupported_image_type",
   "invalid_upload",
   // Slice 08b (publish with Admin approval).
@@ -302,6 +312,11 @@ export const INVALID_UPLOAD_REASONS = [
   "aspect_out_of_range",
   "aspect_mismatch",
   "metadata_present",
+  // Slice 14 (event cover).
+  "og_size_invalid",
+  "og_not_baseline",
+  "animated_image",
+  "bad_focal",
 ] as const;
 export const invalidUploadReasonSchema = z.enum(INVALID_UPLOAD_REASONS);
 export type InvalidUploadReason = z.infer<typeof invalidUploadReasonSchema>;

@@ -1,18 +1,9 @@
 import { z } from "zod";
+import { coverImageSchema, toneSchema } from "./cover.ts";
 import { isoDate, slugSchema } from "./map-bundle.ts";
 
 /** Hard cap on the list endpoint (no pagination yet). */
 export const MAX_EVENTS_IN_LIST = 50;
-
-/** Same-origin, content-hashed cover file: `/covers/{slug}.{hash8}.webp`. */
-export const COVER_URL_REGEX = /^\/covers\/[a-z0-9]+(-[a-z0-9]+)*\.[0-9a-f]{8}\.webp$/;
-
-export const coverImageSchema = z.object({
-  url: z.string().regex(COVER_URL_REGEX, "Invalid cover URL"),
-  width: z.number().int().positive(),
-  height: z.number().int().positive(),
-});
-export type CoverImage = z.infer<typeof coverImageSchema>;
 
 /**
  * `?near=` override for /api/v1/events (slice 03): `none` or an ISO 3166-1 alpha-2 code.
@@ -30,7 +21,10 @@ export const eventSummaryBaseSchema = z.object({
   city: z.string().min(1).max(80),
   /** ISO 3166-1 alpha-2. Show the localized name via Intl.DisplayNames. */
   country: z.string().regex(/^[A-Z]{2}$/),
+  /** Slice 14: uploaded cover, or null (clients draw the colour cover of `tone`). */
   cover: coverImageSchema.nullable(),
+  /** Slice 14: 0-7, from the event id (`toneOf`). The id itself is not public. */
+  tone: toneSchema,
 });
 export type EventSummaryBase = z.infer<typeof eventSummaryBaseSchema>;
 
