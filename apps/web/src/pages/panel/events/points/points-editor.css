@@ -183,6 +183,9 @@
 .ped-small .status-card { margin-top: 32px; }
 
 /* hub entry card */
+.pe-hpoints { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+.pe-hpoints .pe-ctitle, .pe-hpoints .pe-sub { margin: 0; }
+.pe-hpoints .pe-brow { align-self: stretch; margin-top: 6px; }
 @media (min-width: 1024px) { .pe-hpoints, .pe-hschedule { grid-column: span 8; } }
 
 /* Inspector "Shows" block and the delete-with-shows modal (slice 13) */
