@@ -32,3 +32,6 @@ Thumbs.db
 # Design: only final approved assets are versioned (deliverables stay local)
 design/*
 !design/assets/
+
+# Public web build config is committed (no secrets)
+!apps/web/.env.production

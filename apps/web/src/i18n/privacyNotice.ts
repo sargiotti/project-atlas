@@ -3,7 +3,7 @@
 import type { Lang } from "./messages";
 
 /** Date shown as "Last updated". Change this single value when the text changes (and at merge time). */
-export const PRIVACY_LAST_UPDATED = "2026-11-15";
+export const PRIVACY_LAST_UPDATED = "2026-11-16";
 
 export type PrivacySection = { heading: string; lines: string[] };
 export type PrivacyNotice = { title: string; updatedLabel: string; sections: PrivacySection[] };
@@ -19,7 +19,7 @@ const en: PrivacyNotice = {
     {
       heading: "If you visit event maps",
       lines: [
-        "You don't need an account. We don't add advertising or analytics tools, or tracking cookies, and we don't build profiles of visitors.",
+        "You don't need an account. We don't use advertising or tracking cookies, and we don't build profiles of visitors. To see how many people use Atlas, we use Cloudflare Web Analytics. It sets no cookies and keeps only aggregate counts of the page visited, the page you came from (referrer), your browser and device type, your country and page load performance. It doesn't identify you or follow you across sites.",
         "Your browser only remembers your language and schedule zoom if you change them. That stays on your device.",
         "Your IP address is used for about one minute to protect the service from abuse (rate limiting), and to show events near you first (approximate location from your IP). Atlas itself doesn't store it.",
         'If you tap "Add to Google Calendar", Google receives that event\'s details.',
@@ -32,6 +32,7 @@ const en: PrivacyNotice = {
         "After you accept, your email stays in your organizer account, because we use it to recognize you when you sign in with Google.",
         "When you sign in with Google, we receive and keep your Google account ID, your email and your name. We don't get your password or anything else from your Google account.",
         "A session cookie keeps you signed in for up to 7 days. Expired sessions are removed.",
+        "The organizer area (/panel) is also counted by Cloudflare Web Analytics, with the same aggregate data described above. The invitation page is not.",
         "Your events are kept until you delete them. Once an event is published, its information is public. You are responsible for what you publish: please don't include other people's personal data without their permission.",
       ],
     },
@@ -91,7 +92,7 @@ const es: PrivacyNotice = {
     {
       heading: "Si visitás mapas de eventos",
       lines: [
-        "No necesitás cuenta. No agregamos herramientas de publicidad ni de analítica, ni cookies de seguimiento, y no armamos perfiles de quienes nos visitan.",
+        "No necesitás cuenta. No usamos publicidad ni cookies de seguimiento, y no armamos perfiles de quienes nos visitan. Para saber cuánta gente usa Atlas, usamos Cloudflare Web Analytics. No usa cookies y solo guarda conteos agregados de la página visitada, la página de la que venís (referente), tu navegador y tipo de dispositivo, tu país y el rendimiento de carga. No te identifica ni te sigue entre sitios.",
         "Tu navegador solo recuerda tu idioma y el zoom del programa si los cambiás. Eso queda en tu dispositivo.",
         "Tu dirección IP se usa durante aproximadamente un minuto para proteger el servicio de abusos (límite de peticiones) y para mostrarte primero los eventos cercanos (ubicación aproximada a partir de la IP). Atlas en sí no la almacena.",
         'Si tocás "Agregar a Google Calendar", Google recibe los datos de ese evento.',
@@ -104,6 +105,7 @@ const es: PrivacyNotice = {
         "Después de que aceptás, tu email queda en tu cuenta de organizador, porque lo usamos para reconocerte cuando entrás con Google.",
         "Cuando entrás con Google, recibimos y guardamos el identificador de tu cuenta de Google, tu email y tu nombre. No recibimos tu contraseña ni nada más de tu cuenta.",
         "Una cookie de sesión te mantiene conectado hasta 7 días. Las sesiones vencidas se eliminan.",
+        "El panel de organizadores (/panel) también se mide con Cloudflare Web Analytics, con los mismos datos agregados descritos arriba. La página de invitación no.",
         "Tus eventos se guardan hasta que los borres. Cuando un evento se publica, su información es pública. Sos responsable de lo que publicás: no incluyas datos personales de otras personas sin su permiso.",
       ],
     },
@@ -163,7 +165,7 @@ const da: PrivacyNotice = {
     {
       heading: "Hvis du besøger begivenhedskort",
       lines: [
-        "Du behøver ikke en konto. Vi tilføjer ikke reklame- eller analyseværktøjer eller sporingscookies, og vi opbygger ikke profiler af besøgende.",
+        "Du behøver ikke en konto. Vi bruger ikke reklamer eller sporingscookies, og vi opbygger ikke profiler af besøgende. For at se, hvor mange der bruger Atlas, bruger vi Cloudflare Web Analytics. Det sætter ingen cookies og gemmer kun samlede tal for den besøgte side, siden du kom fra (henvisning), din browser og enhedstype, dit land og sidens indlæsningshastighed. Det identificerer dig ikke og følger dig ikke på tværs af websteder.",
         "Din browser husker kun dit sprog og zoom i programmet, hvis du ændrer dem. Det bliver på din enhed.",
         "Din IP-adresse bruges i cirka et minut for at beskytte tjenesten mod misbrug (begrænsning af antal forespørgsler) og for at vise begivenheder tæt på dig først (omtrentlig placering ud fra din IP). Atlas gemmer den ikke selv.",
         'Hvis du trykker på "Føj til Google Kalender", modtager Google oplysningerne om den begivenhed.',
@@ -176,6 +178,7 @@ const da: PrivacyNotice = {
         "Når du har accepteret, bliver din e-mail liggende på din arrangørkonto, fordi vi bruger den til at genkende dig, når du logger ind med Google.",
         "Når du logger ind med Google, modtager og gemmer vi dit Google-konto-ID, din e-mail og dit navn. Vi får ikke din adgangskode eller andet fra din Google-konto.",
         "En sessionscookie holder dig logget ind i op til 7 dage. Udløbne sessioner fjernes.",
+        "Arrangørområdet (/panel) tælles også af Cloudflare Web Analytics med de samme samlede data som beskrevet ovenfor. Invitationssiden gør det ikke.",
         "Dine begivenheder gemmes, indtil du sletter dem. Når en begivenhed er udgivet, er dens oplysninger offentlige. Du er ansvarlig for det, du udgiver: lad være med at medtage andres personoplysninger uden deres tilladelse.",
       ],
     },

@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { defineConfig, type Plugin } from "vitest/config";
 import react from "@vitejs/plugin-react";
+import { beaconTag } from "./beaconTag";
 
 /**
  * Bakes the absolute Home link-preview URLs into index.html (slice 04). The origin has ONE source of truth:
@@ -46,7 +47,7 @@ function linkPreviewMeta(): Plugin {
 const worker = process.env.ATLAS_WORKER ?? "http://localhost:8787";
 
 export default defineConfig({
-  plugins: [react(), linkPreviewMeta()],
+  plugins: [react(), linkPreviewMeta(), beaconTag()],
   // Slice 09: the same origin is baked into the calendar link-back (https://<origin>/e/<slug>).
   define: { __PUBLIC_ORIGIN__: JSON.stringify(readPublicOrigin()) },
   server: {
