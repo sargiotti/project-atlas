@@ -6,6 +6,14 @@ import { Routes } from "../src/App";
 import { scheduleDraftKey } from "../src/lib/scheduleDraft";
 import { errorBody, goTo, json } from "./fixtures";
 
+// The 1 MiB limit is shrunk for the oversize test only, so it does not need to render a thousand shows.
+const bodyLimit = vi.hoisted(() => ({ override: undefined as number | undefined }));
+vi.mock("../src/lib/scheduleModel", async (orig) => {
+  const actual: any = await orig();
+  return { ...actual, get MAX_BODY_BYTES() { return bodyLimit.override ?? actual.MAX_BODY_BYTES; } };
+});
+afterEach(() => { bodyLimit.override = undefined; });
+
 const ID = "5b1c2d3e-0000-4000-8000-000000000001";
 const ORG = "o1";
 const T0 = "2026-11-14T18:20:00.000Z";
@@ -304,8 +312,9 @@ describe("saving", () => {
 
   it("refuses a body over 1 MiB before sending, with a clear message", async () => {
     const put = vi.fn(() => json(saved([])));
-    // 1000 one-minute shows with 300 four-byte characters each: about 1.2 MB once encoded
-    const heavy = Array.from({ length: 1000 }, (_, i) => ({
+    // 4 shows with 300 four-byte characters each (about 4.8 KB encoded) against a 3 KB limit
+    bodyLimit.override = 3000;
+    const heavy = Array.from({ length: 4 }, (_, i) => ({
       id: `s${i}`, pointId: "stage-1", title: `Show ${i}`, description: "\u{1F600}".repeat(300),
       start: new Date(Date.UTC(2026, 11, 12, 9, 0) + i * 120_000).toISOString().slice(0, 19) + "Z",
       end: new Date(Date.UTC(2026, 11, 12, 9, 1) + i * 120_000).toISOString().slice(0, 19) + "Z",

@@ -63,33 +63,26 @@ afterEach(() => {
 
 /** Fills every required field with valid values (the country through the picker). */
 async function fillValid(user: ReturnType<typeof userEvent.setup>, name = "Noche de murgas") {
-  await user.type(screen.getByLabelText("Event name"), name);
+  fireEvent.change(screen.getByLabelText("Event name"), { target: { value: name } });
   fireEvent.change(screen.getByLabelText("Starts"), { target: { value: "2027-02-13" } });
   fireEvent.change(screen.getByLabelText("Ends"), { target: { value: "2027-02-14" } });
-  await user.type(screen.getByLabelText("City"), "Montevideo");
+  fireEvent.change(screen.getByLabelText("City"), { target: { value: "Montevideo" } });
   await user.click(screen.getByRole("button", { name: /^Country Choose/ }));
-  await user.type(screen.getByRole("combobox", { name: "Search country" }), "Urug");
+  fireEvent.change(screen.getByRole("combobox", { name: "Search country" }), { target: { value: "Urug" } });
   await user.keyboard("{Enter}");
 }
 const saveButton = () => screen.getAllByRole("button", { name: /^Save$/ })[0];
 
 describe("create flow", () => {
-  it("shows client errors next to the fields, offers a one-tap https fix, then saves and lands on the hub", async () => {
+  it("shows client errors next to the fields and offers a one-tap https fix, sending nothing while invalid", async () => {
     const posted: any[] = [];
-    mockApi({
-      ...base,
-      "POST /panel/events": (_u, init) => {
-        posted.push(JSON.parse(String(init!.body)));
-        return json({ event: { ...EV, name: "Noche de murgas" } }, 201);
-      },
-      [`GET /panel/events/${ID}`]: () => json({ event: { ...EV, name: "Noche de murgas" } }),
-    });
+    mockApi({ ...base, "POST /panel/events": (_u, init) => { posted.push(JSON.parse(String(init!.body))); return json({ event: EV }, 201); } });
     const user = userEvent.setup();
     renderAt("/panel/events/new");
     await screen.findByRole("heading", { name: "New event" });
 
-    await user.type(screen.getByLabelText("Event name"), "Fi");
-    await user.type(screen.getByLabelText(/Website/), "http://fiesta.com.ar");
+    fireEvent.change(screen.getByLabelText("Event name"), { target: { value: "Fi" } });
+    fireEvent.change(screen.getByLabelText(/Website/), { target: { value: "http://fiesta.com.ar" } });
     await user.click(saveButton());
 
     const summary = await screen.findByRole("alert");
@@ -103,9 +96,24 @@ describe("create flow", () => {
     expect(screen.getByLabelText(/Website/)).toHaveValue("http://fiesta.com.ar");
     await user.click(screen.getByRole("button", { name: "Use https://fiesta.com.ar" }));
     expect(screen.getByLabelText(/Website/)).toHaveValue("https://fiesta.com.ar");
+    expect(posted).toHaveLength(0);
+  });
 
-    await user.clear(screen.getByLabelText("Event name"));
+  it("saves a valid form once and lands on the hub", async () => {
+    const posted: any[] = [];
+    mockApi({
+      ...base,
+      "POST /panel/events": (_u, init) => {
+        posted.push(JSON.parse(String(init!.body)));
+        return json({ event: { ...EV, name: "Noche de murgas" } }, 201);
+      },
+      [`GET /panel/events/${ID}`]: () => json({ event: { ...EV, name: "Noche de murgas" } }),
+    });
+    const user = userEvent.setup();
+    renderAt("/panel/events/new");
+    await screen.findByRole("heading", { name: "New event" });
     await fillValid(user);
+    fireEvent.change(screen.getByLabelText(/Website/), { target: { value: "https://fiesta.com.ar" } });
     await user.click(saveButton());
 
     expect(await screen.findByText("Draft saved")).toBeInTheDocument();

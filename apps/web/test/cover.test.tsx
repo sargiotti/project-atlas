@@ -62,12 +62,12 @@ const open = (path: string) => {
 };
 
 async function fillValid(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText("Event name"), "Noche de murgas");
+  fireEvent.change(screen.getByLabelText("Event name"), { target: { value: "Noche de murgas" } });
   fireEvent.change(screen.getByLabelText("Starts"), { target: { value: "2027-02-13" } });
   fireEvent.change(screen.getByLabelText("Ends"), { target: { value: "2027-02-14" } });
-  await user.type(screen.getByLabelText("City"), "Montevideo");
+  fireEvent.change(screen.getByLabelText("City"), { target: { value: "Montevideo" } });
   await user.click(screen.getByRole("button", { name: /^Country Choose/ }));
-  await user.type(screen.getByRole("combobox", { name: "Search country" }), "Urug");
+  fireEvent.change(screen.getByRole("combobox", { name: "Search country" }), { target: { value: "Urug" } });
   await user.keyboard("{Enter}");
 }
 
@@ -107,11 +107,8 @@ describe("cover in the create form", () => {
     const stage = await screen.findByRole("group", { name: /Focal point/ });
     expect(pipe.put).not.toHaveBeenCalled();
     expect(calls(api, "POST /panel/events")).toHaveLength(0);
-    stage.focus();
-    await user.keyboard("{ArrowRight}");
-    expect(screen.getByRole("button", { name: "Middle" })).toHaveAttribute("aria-pressed", "false");
+    expect(stage).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Top left" }));
-    expect(screen.getByRole("button", { name: "Top left" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText("The cover uploads right after your event is created. Nothing is sent before that.")).toBeInTheDocument();
 
     await fillValid(user);
@@ -123,6 +120,19 @@ describe("cover in the create form", () => {
     const [eventId, sent] = pipe.put.mock.calls[0];
     expect(eventId).toBe(ID);
     expect(sent).toMatchObject({ fx: 0.15, fy: 0.15 });
+  });
+
+  it("moves the focal point with the keyboard and the quick grid", async () => {
+    mockApi(createRoutes());
+    const user = userEvent.setup();
+    open("/panel/events/new");
+    await user.upload(await screen.findByLabelText("Choose image"), pic());
+    const stage = await screen.findByRole("group", { name: /Focal point/ });
+    stage.focus();
+    await user.keyboard("{ArrowRight}");
+    expect(screen.getByRole("button", { name: "Middle" })).toHaveAttribute("aria-pressed", "false");
+    await user.click(screen.getByRole("button", { name: "Top left" }));
+    expect(screen.getByRole("button", { name: "Top left" })).toHaveAttribute("aria-pressed", "true");
   });
 
   it("disables Save while the event is being created", async () => {
