@@ -51,12 +51,15 @@ export default function EventPreview({ id }: { id: string }) {
 
 function PreviewView({ id, data, published }: { id: string; data: EventPreviewResponse; published: boolean }) {
   const { t } = useI18n();
+  // Published events say so (neutral bar); every other status keeps the draft bar.
+  const long = t(published ? "pePvPubBanner" : "pePvBanner");
+  const short = t(published ? "pePvPubShort" : "pePvDraft");
   return (
     <div className="pe-pv">
-      <div className="pe-pvbar" role="region" aria-label={t("pePvBanner")}>
+      <div className={published ? "pe-pvbar pub" : "pe-pvbar"} role="region" aria-label={long}>
         <Link to={`/panel/events/${id}`} className="btn sm ghost" aria-label={t("pePvBack")}><Ic n="left" size={16} /><span className="lbl-dk">{t("pePvBack")}</span></Link>
         <Ic n="eye" />
-        <b><span className="pv-long">{t("pePvBanner")}</span><span className="pv-short" aria-hidden="true">{t("pePvDraft")}</span></b>
+        <b><span className="pv-long">{long}</span><span className="pv-short" aria-hidden="true">{short}</span></b>
         <Link to={`/panel/events/${id}/edit`} className="btn sm" aria-label={t("peEdit")}><Ic n="pencil" size={16} /><span className="lbl-dk">{t("peEdit")}</span></Link>
       </div>
       <PreviewStage data={data} canShare={published} />

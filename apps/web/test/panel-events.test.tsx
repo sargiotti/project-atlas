@@ -370,6 +370,36 @@ describe("venue address", () => {
   });
 });
 
+describe("owner preview status bar", () => {
+  const pv = {
+    event: { slug: EV.slug, name: "Fiesta", startDate: "2026-12-12", endDate: "2026-12-13", language: "es", timeZone: "UTC", dayStart: "06:00", city: "Rosario", country: "AR" },
+    map: null,
+    cover: null,
+    points: [],
+    sessions: [],
+  };
+  const open = (status: string) => {
+    mockApi({
+      ...base,
+      [`GET /panel/events/${ID}`]: () => json({ event: { ...EV, status } }),
+      [`GET /panel/events/${ID}/preview`]: () => json(pv),
+    });
+    renderAt(`/panel/events/${ID}/preview`);
+  };
+
+  it("says Published, not Draft, for a published event", async () => {
+    open("published");
+    expect(await screen.findByRole("region", { name: "Published: this is how visitors see it" })).toBeInTheDocument();
+    expect(screen.queryByText(/Draft: only you can see this/)).not.toBeInTheDocument();
+  });
+
+  it("keeps the draft notice for a draft", async () => {
+    open("draft");
+    expect(await screen.findByRole("region", { name: "Draft: only you can see this" })).toBeInTheDocument();
+    expect(screen.queryByText(/Published: this is how/)).not.toBeInTheDocument();
+  });
+});
+
 describe("time zone prefill", () => {
   it("maps modern browser names onto the fixed list", () => {
     expect(matchZone("Europe/Kyiv")).toBe("Europe/Kiev");
