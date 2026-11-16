@@ -1,3 +1,4 @@
+import { HomeTrailTile } from "../components/HomeTrailTile";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { slugSchema, type EventSummary } from "@atlas/contract";
 import { fetchEvents } from "../api/events";
@@ -145,7 +146,13 @@ export default function Home() {
 
   return (
     <Shell wide>
-      <h1 className="h-tagline" lang={lang === "en" ? undefined : "en"}>Find <span className="h-tagline-em">your</span> way</h1>
+      <div className="home-hero">
+        <div className="home-hero-text">
+          <h1 className="h-tagline" lang={lang === "en" ? undefined : "en"}>Find <span className="h-tagline-em">your</span> way</h1>
+          <p className="home-hero-value"><strong className="home-hero-lead">{t("homeValueLead")}</strong> {t("homeValue")}</p>
+        </div>
+        <HomeTrailTile className="home-hero-tile" />
+      </div>
       {state.kind === "ok" && sorted.length > 0 && (
         <SearchField query={query} setQuery={setQuery} shown={visible.length} total={sorted.length} inputRef={inputRef} />
       )}

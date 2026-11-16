@@ -36,6 +36,8 @@
   --danger: #b3261e;
   --danger-bg: #fdeceb;
   --field: #ffffff;
+  --tile-ground: #DDE8C4; --tile-water: #A9D4E6; --tile-road: #F3E6C8;
+  --tile-block: #F2B8A0; --tile-tree: #9CC28A; --tile-shadow: rgba(30, 35, 64, 0.3);
 }
 
 /* Dark Map Theme. */
@@ -60,6 +62,8 @@
   --danger: #ffb4ab;
   --danger-bg: rgba(255, 180, 171, 0.12);
   --field: #1E2340;
+  --tile-ground: #2A3150; --tile-water: #3A5E8C; --tile-road: #4A5275;
+  --tile-block: #3B4468; --tile-tree: #3F5A5A; --tile-shadow: rgba(0, 0, 0, 0.45);
 }
 
 /* Non-map pages follow the system colour scheme. */
@@ -83,6 +87,8 @@
     --danger: #ffb4ab;
     --danger-bg: rgba(255, 180, 171, 0.12);
     --field: #1E2340;
+    --tile-ground: #2A3150; --tile-water: #3A5E8C; --tile-road: #4A5275;
+    --tile-block: #3B4468; --tile-tree: #3F5A5A; --tile-shadow: rgba(0, 0, 0, 0.45);
   }
 }
 
@@ -355,8 +361,20 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
 
 /* ---- home: event cards (design deliverable 04, layout B) ---------------------------------- */
 .app.wide .shell-header, .app.wide .shell-main { max-width: 960px; }
-.h-tagline { font: 800 1.35rem/1.25 var(--display); letter-spacing: -0.03em; margin: 0 0 18px; }
-@media (min-width: 640px) { .h-tagline { font-size: 1.75rem; } }
+.home-hero { display: flex; gap: 12px; align-items: flex-start; margin: 0 0 18px; }
+.home-hero-text { flex: 1; min-width: 0; }
+.h-tagline { font: 800 1.75rem/1.05 var(--display); letter-spacing: -0.03em; margin: 0 0 6px; }
+.home-hero-value { margin: 0; font-size: 15px; line-height: 1.4; color: var(--ink-2); max-width: 46ch; }
+.home-hero-lead { font-weight: 700; color: var(--ink); }
+.home-hero-tile { flex: none; display: block; width: 84px; height: 84px; border-radius: 18px; border: 1px solid var(--line); }
+@media (max-width: 359px) { .h-tagline { font-size: 1.5rem; } }
+@media (min-width: 640px) {
+  .home-hero { gap: 28px; align-items: center; }
+  .h-tagline { font-size: 3rem; line-height: 1.02; margin-bottom: 10px; }
+  .home-hero-value { font-size: 18px; }
+  .home-hero-tile { width: 128px; height: 128px; border-radius: 24px; }
+}
+@media (forced-colors: active) { .home-hero-tile { display: none; } }
 .h-tagline-em { color: var(--em); text-transform: uppercase; }
 .cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
 .ecard { display: block; height: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; color: var(--ink); text-decoration: none; transition: border-color 0.2s, transform 0.1s; }
