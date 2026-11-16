@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Point } from "@atlas/contract";
-import { MarkerToken, QuestArrow, TOKEN_SIZE, type MapTheme } from "../markers/Pixel";
+import { MarkerToken, QuestArrow, PIN_ANCHOR, SELECTED_SCALE, type MapTheme } from "../markers/Pixel";
 import { useI18n } from "../i18n/I18nProvider";
 import { pointAriaLabel } from "../lib/pointLabel";
 
@@ -434,8 +434,10 @@ type MarkerProps = {
 const DRAG_SLOP = 5;
 
 const Marker = memo(function Marker({ point, theme, selected, label, onSelect, onFocusPoint, stage, onDrag, pending, highlighted, stamped, tip }: MarkerProps) {
-  const sz = selected ? TOKEN_SIZE.selected : TOKEN_SIZE.default;
-  const off = 22 - sz.anchor; // centre the token's anchor in the 44x44 hit box
+  const k = selected ? SELECTED_SCALE : 1;
+  // The 48x56 button has its tip at (24,52); a selected pin grows from the tip, not the centre.
+  const offX = PIN_ANCHOR.x * (1 - k);
+  const offY = PIN_ANCHOR.y * (1 - k);
   // Editor: drag a pin with Pointer Events. Below the slop it stays a click (select).
   const drag = useRef<{ id: number; sx: number; sy: number; dx: number; dy: number; active: boolean } | null>(null);
   const swallowClick = useRef(false);
@@ -498,7 +500,7 @@ const Marker = memo(function Marker({ point, theme, selected, label, onSelect, o
       }}
       onFocus={() => onFocusPoint(point)}
     >
-      <span className="marker-art" style={{ left: off, top: off }}>
+      <span className="marker-art" style={{ left: offX, top: offY }}>
         <MarkerToken category={point.category} theme={theme} selected={selected} />
       </span>
       {selected && (

@@ -93,7 +93,7 @@ async function encodeUnder(c: HTMLCanvasElement, type: "image/webp" | "image/jpe
 }
 
 let badge: Promise<ImageBitmap | null> | undefined;
-/** The Atlas badge of link previews (slice 04), drawn at (309, 554). Same-origin static file; a failure just skips it. */
+/** The Atlas badge of link previews (slice 04), drawn at (299, 546), same position as the build-time tone-og images (apps/api/scripts/og-image.ts); the Worker draws no badge at runtime. Same-origin static file; a failure just skips it. */
 function loadBadge() {
   badge ??= fetch("/cover-badge.png")
     .then((r) => (r.ok ? r.blob() : Promise.reject(new Error("badge"))))
@@ -106,7 +106,7 @@ function loadBadge() {
 async function renderOg(stored: CanvasImageSource & { width: number; height: number }, f: Focal): Promise<Blob | null> {
   const out = resizeRect(stored, surfaceRect(stored.width, stored.height, OG_SIZE.width / OG_SIZE.height, f), OG_SIZE);
   const b = await loadBadge();
-  if (b) out.getContext("2d")!.drawImage(b, 309, 554, 168, 72);
+  if (b) out.getContext("2d")!.drawImage(b, 299, 546, 168, 72);
   const blob = await encodeUnder(out, "image/jpeg", OG_MAX_BYTES);
   if (!blob) return null;
   return isBaselineJpeg(new Uint8Array(await blob.arrayBuffer())) ? blob : null;

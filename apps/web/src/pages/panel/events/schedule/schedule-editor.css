@@ -5,25 +5,25 @@
 */
 .sed {
   --rail-w: 290px; --insp-w: 340px;
-  --tl-bg: #f1eef8; --cand: #6f55c8; --cand-bg: rgba(111, 85, 200, 0.1);
+  --tl-bg: #F3ECDF; --cand: #E2532A; --cand-bg: rgba(226, 83, 42, 0.1);
   --clash: #b3261e; --clash-bg: rgba(179, 38, 30, 0.1); --clash-stripe: rgba(179, 38, 30, 0.22);
   --new-bg: #e3f4e8; --new-line: #9ccfae;
-  --blk: #efeafb; --blk-line: #d6ccf3; --mid: #8b84a6;
+  --blk: #F3ECDF; --blk-line: #E6DFD2; --mid: #8D91A8;
 }
 @media (min-width: 1280px) { .sed { --rail-w: 300px; --insp-w: 360px; } }
 @media (prefers-color-scheme: dark) {
   .app.pe[data-theme="auto"] .sed {
-    --tl-bg: #221e3b; --cand: #b5a4f0; --cand-bg: rgba(181, 164, 240, 0.14);
+    --tl-bg: #141830; --cand: #FF8A63; --cand-bg: rgba(255, 138, 99, 0.14);
     --clash: #ffb4ab; --clash-bg: rgba(255, 180, 171, 0.12); --clash-stripe: rgba(255, 180, 171, 0.26);
     --new-bg: rgba(143, 214, 168, 0.18); --new-line: #5f9d76;
-    --blk: #363063; --blk-line: #4d4683; --mid: #8f88b3;
+    --blk: #262D4D; --blk-line: #3A4166; --mid: #8D91A8;
   }
 }
 .sed a.btn { text-decoration: none; }
 
 /* step header: the badge uses the UI font (the pixel font's small "2" reads as "8") */
 .sed .sh { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 1rem; }
-.sed .sh .num { width: 26px; height: 26px; border-radius: 8px; background: var(--accent); color: var(--on-accent, #fff); display: grid; place-items: center; font: 700 1rem/1 "Atkinson Hyperlegible", var(--ui); flex: none; }
+.sed .sh .num { width: 26px; height: 26px; border-radius: 8px; background: var(--accent); color: var(--on-accent, #fff); display: grid; place-items: center; font: 700 1rem/1 var(--ui); flex: none; }
 .sed .sh.done .num { background: var(--live); color: #fff; }
 .sed .sh.off { opacity: 0.45; }
 
@@ -42,7 +42,7 @@
 .sed .prow .ds { display: block; font-size: 0.8rem; color: var(--ink-2); }
 .sed .prow.nudge { animation: sed-nudge 1.4s ease-in-out infinite; border-color: var(--accent); }
 @keyframes sed-nudge { 50% { transform: translateX(4px); } }
-.sed-rfoot a { color: var(--accent); font-weight: 700; }
+.sed-rfoot a { color: var(--link); font-weight: 700; }
 
 /* ---- centre: steps 2 and 3 ---- */
 .sed-center { grid-row: 2; grid-column: 2; position: relative; min-width: 0; min-height: 0; overflow: auto; background: var(--bg); }
@@ -94,9 +94,9 @@
 .sed-editrow { list-style: none; }
 
 /* the show form */
-.sed-form { display: grid; gap: 10px; background: var(--surface); border: 2px solid var(--accent); border-radius: 18px; padding: 14px 16px; box-shadow: 0 6px 18px rgba(111, 85, 200, 0.12); }
+.sed-form { display: grid; gap: 10px; background: var(--surface); border: 2px solid var(--accent); border-radius: 18px; padding: 14px 16px; box-shadow: 0 6px 18px rgba(226, 83, 42, 0.12); }
 .sed-form .fhead { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.sed-form .fhead b { font: 700 1.02rem/1.2 var(--pix, var(--ui)); }
+.sed-form .fhead b { font: 700 1.02rem/1.2 var(--display); }
 .sed-form .fhead .fs { color: var(--ink-2); font-size: 0.84rem; }
 .sed-form .ped-fld label small.over { color: var(--danger); font-weight: 700; }
 .sed-form .trow { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
@@ -119,13 +119,13 @@
 .sed-form .conf .fx { display: flex; flex-wrap: wrap; gap: 6px; }
 .sed-form .conf .fx button { min-height: 34px; border-radius: 999px; border: 1.5px solid var(--danger); background: var(--surface); color: var(--danger); font: inherit; font-weight: 700; font-size: 0.84rem; padding: 0 12px; cursor: pointer; }
 .sed-form .conf .fx button:hover { background: var(--danger); color: #fff; }
-.sed-form .adddesc { justify-self: start; border: 0; background: none; color: var(--accent); font: inherit; font-weight: 700; font-size: 0.88rem; padding: 4px 0; cursor: pointer; }
+.sed-form .adddesc { justify-self: start; border: 0; background: none; color: var(--link); font: inherit; font-weight: 700; font-size: 0.88rem; padding: 4px 0; cursor: pointer; }
 .sed-form .facts { display: flex; align-items: center; gap: 8px; }
 .sed-form .facts .kb { font-size: 0.8rem; color: var(--ink-2); }
 .sed-form .facts .sp { flex: 1; }
 .sed-form .pend { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-line); border-radius: 10px; padding: 5px 10px; font-size: 0.82rem; font-weight: 700; }
 .sed-form.nudge { animation: sed-fnudge 1.6s ease-in-out infinite; }
-@keyframes sed-fnudge { 50% { box-shadow: 0 0 0 6px rgba(111, 85, 200, 0.25), 0 6px 18px rgba(111, 85, 200, 0.12); } }
+@keyframes sed-fnudge { 50% { box-shadow: 0 0 0 6px rgba(226, 83, 42, 0.25), 0 6px 18px rgba(226, 83, 42, 0.12); } }
 
 /* ---- right: what visitors see ---- */
 .sed-insp { background: var(--surface); }
@@ -134,7 +134,7 @@
 .sed-ph h2 { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); display: flex; align-items: center; gap: 6px; margin: 0; }
 .sed-ph .seg { display: flex; background: var(--bg); border: 1.5px solid var(--line); border-radius: 999px; padding: 3px; }
 .sed-ph .seg button { flex: 1; border: 0; background: none; border-radius: 999px; min-height: 34px; font: inherit; font-weight: 700; font-size: 0.86rem; color: var(--ink-2); cursor: pointer; }
-.sed-ph .seg button.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 4px rgba(20, 16, 40, 0.15); }
+.sed-ph .seg button.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 4px rgba(30, 35, 64, 0.15); }
 .sed-pb { flex: 1; min-height: 0; overflow: auto; padding: 14px; background: var(--canvas); position: relative; }
 .sed-pb .sessions { margin-top: 0; }
 .sed-pnone { color: var(--ink-2); font-size: 0.9rem; margin: 0; }

@@ -109,7 +109,7 @@ export default function Palette({ theme, armed, onArm, onDrop, stageRef, count, 
       }}
     >
       {named && <span className="pen" aria-hidden="true"><Ic n="pencil" size={14} /></span>}
-      <span className="tok"><MarkerToken category={category} theme={theme} /></span>
+      <span className="tok"><MarkerToken category={category} theme={theme} scale={0.7} /></span>
       <span className="lbl">{t(`cat_${category}` as any)}</span>
     </button>
   );
@@ -125,7 +125,7 @@ export default function Palette({ theme, armed, onArm, onDrop, stageRef, count, 
       {drag && (
         <div className={`ped-ghost${drag.over ? "" : " no"}`} style={{ left: drag.x, top: drag.y }} aria-hidden="true">
           <span className="target" />
-          <span className="lift"><MarkerToken category={drag.category} theme={theme} /></span>
+          <span className="lift"><MarkerToken category={drag.category} theme={theme} scale={0.85} /></span>
           <span className="gl">{drag.over ? t("pedGhostOk") : t("pedGhostNo")}</span>
         </div>
       )}

@@ -255,11 +255,11 @@ export default function MapCard({ eventId, map, onMap, onUnauthenticated, onNotF
           {hardMsg}
           {!hardErr && (
             <svg className="pe-mart" viewBox="0 0 16 16" shapeRendering="crispEdges" aria-hidden="true">
-              <rect x="1" y="3" width="14" height="11" fill="#fff8ec" /><rect x="1" y="3" width="14" height="1" fill="#2f2a4f" /><rect x="1" y="13" width="14" height="1" fill="#2f2a4f" />
-              <rect x="1" y="3" width="1" height="11" fill="#2f2a4f" /><rect x="14" y="3" width="1" height="11" fill="#2f2a4f" /><rect x="5" y="4" width="1" height="9" fill="#b9a8f0" />
-              <rect x="10" y="4" width="1" height="9" fill="#b9a8f0" /><rect x="2" y="9" width="3" height="3" fill="#b5db7a" /><rect x="11" y="5" width="3" height="2" fill="#b5db7a" />
-              <rect x="6" y="6" width="4" height="1" fill="#6f55c8" /><rect x="8" y="7" width="1" height="3" fill="#6f55c8" /><rect x="7" y="9" width="3" height="1" fill="#6f55c8" />
-              <rect x="11" y="9" width="2" height="2" fill="#6f55c8" /><rect x="11" y="0" width="3" height="1" fill="#6f55c8" /><rect x="12" y="1" width="1" height="1" fill="#6f55c8" />
+              <rect x="1" y="3" width="14" height="11" fill="#fff8ec" /><rect x="1" y="3" width="14" height="1" fill="#1E2340" /><rect x="1" y="13" width="14" height="1" fill="#1E2340" />
+              <rect x="1" y="3" width="1" height="11" fill="#1E2340" /><rect x="14" y="3" width="1" height="11" fill="#1E2340" /><rect x="5" y="4" width="1" height="9" fill="#FFC53D" />
+              <rect x="10" y="4" width="1" height="9" fill="#FFC53D" /><rect x="2" y="9" width="3" height="3" fill="#FF6A3D" /><rect x="11" y="5" width="3" height="2" fill="#FF6A3D" />
+              <rect x="6" y="6" width="4" height="1" fill="#E2532A" /><rect x="8" y="7" width="1" height="3" fill="#E2532A" /><rect x="7" y="9" width="3" height="1" fill="#E2532A" />
+              <rect x="11" y="9" width="2" height="2" fill="#E2532A" /><rect x="11" y="0" width="3" height="1" fill="#E2532A" /><rect x="12" y="1" width="1" height="1" fill="#E2532A" />
             </svg>
           )}
           <p className="t">{over ? t("peMapDrop") : hardErr ? "" : t("peMapUpload")}</p>
