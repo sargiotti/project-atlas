@@ -1,11 +1,12 @@
-<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@700&display=swap"><!-- Render at 168x72 with a transparent background to regenerate badge.png --><style>
-html,body{margin:0;background:transparent}
-.b{position:absolute;left:10px;top:8px;width:148px;box-sizing:border-box;justify-content:center;display:flex;align-items:center;gap:8px;height:52px;padding:0 18px 0 12px;background:rgba(255,255,255,.95);border-radius:14px;box-shadow:0 2px 8px rgba(20,16,40,.35);font:700 28px/1 "Pixelify Sans";color:#1f1b33;letter-spacing:.01em}
+<!doctype html><html><head><meta charset="utf-8">
+<!-- Source for badge.png (168x72, transparent PNG). Matches apps/web/public/cover-badge.png.
+Regenerate (from this folder): chrome --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=1
+  --default-background-color=00000000 --window-size=168,72 --screenshot=badge.png badge.source.html
+Fonts are the self-hosted @fontsource copies in the repo's node_modules (no fallback). -->
+<style>
+@font-face{font-family:"Bricolage Grotesque";font-weight:800;src:url("../../../node_modules/@fontsource/bricolage-grotesque/files/bricolage-grotesque-latin-800-normal.woff2") format("woff2")}
+html,body{margin:0;width:168px;height:72px;overflow:hidden;background:transparent}
+.b{position:absolute;left:8px;top:6px;width:152px;height:54px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;padding-bottom:1px;background:#FAF6EF;border-radius:27px;box-shadow:0 2px 8px rgba(30,35,64,.35);font:800 36px/1 "Bricolage Grotesque";letter-spacing:-.03em;color:#1E2340}
+.b span{position:relative;top:-2px}
 svg{display:block}
-</style></head><body><div class="b" id="b"><svg width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges">
-<path fill="#3A2C78" d="M5 0h6v1h-6zM3 1h2v1h-2zM11 1h2v1h-2zM2 2h1v1h-1zM13 2h1v1h-1zM1 3h1v1h-1zM14 3h1v1h-1zM1 4h1v1h-1zM14 4h1v1h-1zM0 5h1v1h-1zM15 5h1v1h-1zM0 6h1v1h-1zM15 6h1v1h-1zM1 7h1v1h-1zM14 7h1v1h-1zM1 8h1v1h-1zM14 8h1v1h-1zM2 9h1v1h-1zM13 9h1v1h-1zM3 10h1v1h-1zM12 10h1v1h-1zM4 11h1v1h-1zM11 11h1v1h-1zM5 12h1v1h-1zM10 12h1v1h-1zM6 13h1v1h-1zM9 13h1v1h-1zM7 14h2v1h-2z"/>
-<path fill="#5B45B0" d="M10 1h1v1h-1zM12 2h1v1h-1zM13 3h1v1h-1zM13 4h1v1h-1zM14 5h1v1h-1zM1 6h1v1h-1zM14 6h1v1h-1zM13 7h1v1h-1zM2 8h1v1h-1zM13 8h1v1h-1zM3 9h1v1h-1zM12 9h1v1h-1zM4 10h1v1h-1zM11 10h1v1h-1zM5 11h1v1h-1zM10 11h1v1h-1zM6 12h1v1h-1zM9 12h1v1h-1zM7 13h2v1h-2z"/>
-<path fill="#7F68D8" d="M5 2h6v1h-6zM3 3h10v1h-10zM3 4h4v1h-4zM9 4h4v1h-4zM2 5h4v1h-4zM10 5h4v1h-4zM2 6h4v1h-4zM10 6h4v1h-4zM3 7h4v1h-4zM9 7h4v1h-4zM3 8h10v1h-10zM4 9h8v1h-8zM5 10h6v1h-6zM6 11h4v1h-4zM7 12h2v1h-2z"/>
-<path fill="#B9A8F0" d="M5 1h5v1h-5zM3 2h2v1h-2zM11 2h1v1h-1zM2 3h1v1h-1zM2 4h1v1h-1zM1 5h1v1h-1zM2 7h1v1h-1z"/>
-<path fill="#B5DB7A" d="M7 4h2v1h-2zM6 5h4v1h-4zM6 6h4v1h-4zM7 7h2v1h-2z"/></svg><span>Atlas</span></div>
-<script>document.fonts.ready.then(()=>{const r=document.getElementById('b').getBoundingClientRect();document.title=r.width+'x'+r.height})</script></body></html>
+</style></head><body><div class="b"><svg width="30" height="30" viewBox="0 0 80 80" shape-rendering="crispEdges" aria-hidden="true"><g fill="#FF6A3D"><rect x="16" y="0" width="48" height="8"/><rect x="8" y="8" width="64" height="8"/><rect x="0" y="16" width="80" height="8"/><rect x="0" y="24" width="24" height="16"/><rect x="56" y="24" width="24" height="16"/><rect x="0" y="40" width="80" height="8"/><rect x="8" y="48" width="64" height="8"/><rect x="16" y="56" width="48" height="8"/><rect x="24" y="64" width="32" height="8"/><rect x="32" y="72" width="16" height="8"/></g><rect x="24" y="24" width="32" height="16" fill="#1E2340"/></svg><span>atlas</span></div></body></html>
