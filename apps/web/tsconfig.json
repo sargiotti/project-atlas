@@ -8,5 +8,5 @@
     "noUncheckedIndexedAccess": false,
     "verbatimModuleSyntax": false
   },
-  "include": ["src", "test", "vite.config.ts"]
+  "include": ["src", "test", "vite.config.ts", "beaconTag.ts"]
 }
