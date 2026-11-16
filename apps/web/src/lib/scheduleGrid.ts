@@ -219,3 +219,11 @@ export function dayTabLabel(date: string, lang: string) {
   const wd = noDot(fmt(lang, date, { weekday: "short" }));
   return `${wd.charAt(0).toUpperCase()}${wd.slice(1)} ${Number(date.slice(8, 10))}`;
 }
+
+/** "Sat 21 Nov" (da "lør. 21. nov."): short weekday + day + short month, for the pre-start banner's absolute line. */
+export function shortDate(date: string, lang: string) {
+  const wd = fmt(lang, date, { weekday: "short" });
+  const dn = String(Number(date.slice(8, 10)));
+  const mo = fmt(lang, date, { month: "short" });
+  return lang === "da" ? `${noDot(wd)}. ${dn}. ${noDot(mo)}.` : `${noDot(wd)} ${dn} ${noDot(mo)}`;
+}

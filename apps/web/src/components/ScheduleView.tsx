@@ -3,7 +3,8 @@ import { sessionDay, utcToLocal, type EventInfo, type Point } from "@atlas/contr
 import { useI18n } from "../i18n/I18nProvider";
 import { displayName } from "../lib/pointLabel";
 import { CATEGORY_INFO } from "../markers/categories";
-import { deviceTimeZone, utcOffsetLabel, weekdayShort, type TimedSession } from "../lib/schedule";
+import { preStartCopy } from "../lib/preStart";
+import { deviceTimeZone, durationLabel, utcOffsetLabel, weekdayShort, type TimedSession } from "../lib/schedule";
 import {
   ZOOM_STEPS,
   bucketByDay,
@@ -12,6 +13,7 @@ import {
   isRunning,
   layoutColumn,
   longDate,
+  shortDate,
   openingFor,
   readZoom,
   weekdayLong,
@@ -336,9 +338,22 @@ export default function ScheduleView(props: Props) {
   // ---- text -------------------------------------------------------------------------------
   const localDateOf = (ms: number) => utcToLocal(ms, timeZone).date;
   let status = "";
+  let pre: { rel: string; abs: string } | null = null;
   if (opening && initial.current) {
     if (opening.state === "before" && opening.first) {
-      status = t("schStarts", { date: longDate(localDateOf(opening.first.startMs), lang), time: utcToLocal(opening.first.startMs, timeZone).time });
+      const startMs = opening.first.startMs;
+      const copy = preStartCopy(startMs, now, timeZone);
+      if (copy) {
+        const local = utcToLocal(startMs, timeZone);
+        const rel =
+          copy.key === "preInMin" ? t("preInMin", { n: String(copy.n) })
+          : copy.key === "preInDur" ? t("preInDur", { dur: durationLabel(copy.minutes, t("unitH")) })
+          : copy.key === "preToday" ? t("preToday", { time: copy.time })
+          : copy.key === "preTomorrow" ? t("preTomorrow")
+          : copy.key === "preInDays" ? t("preInDays", { n: String(copy.n) })
+          : t("preOnDate", { date: longDate(copy.date, lang) });
+        pre = { rel, abs: copy.key === "preOnDate" ? local.time : `${shortDate(local.date, lang)} · ${local.time}` };
+      }
     } else if (opening.state === "after") status = t("schOver");
     else if (opening.state === "gap" && opening.next) {
       const n = opening.next;
@@ -376,6 +391,17 @@ export default function ScheduleView(props: Props) {
 
   return (
     <div className={"sched" + (sheetOpen ? " has-sheet" : "")}>
+      {pre && (
+        <div className="sched-status pre">
+          <span className="ico" aria-hidden="true">
+            <svg className="ln" viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+          </span>
+          <span className="t">
+            <span className="rel">{pre.rel}</span>
+            <span className="abs">{pre.abs}</span>
+          </span>
+        </div>
+      )}
       {status && (
         <div className="sched-status" role="status">
           <svg className="ln" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
