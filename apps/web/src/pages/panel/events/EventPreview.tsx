@@ -20,15 +20,15 @@ export default function EventPreview({ id }: { id: string }) {
   const { t } = useI18n();
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<"loading" | "error" | "missing" | EventPreviewResponse>("loading");
-  // Share only makes sense once the link works, i.e. the event is published. Unknown counts as not published.
-  const [published, setPublished] = useState(false);
+  // Event status, null until known (the bar shows no notice meanwhile). Share only when published.
+  const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
     const ctrl = new AbortController();
     setState("loading");
-    setPublished(false);
+    setStatus(null);
     getEvent(id, ctrl.signal)
-      .then((r) => r.status === "ok" && setPublished(r.event.status === "published"))
+      .then((r) => r.status === "ok" && setStatus(r.event.status))
       .catch(() => {});
     getPreview(id, ctrl.signal)
       .then((r) => {
@@ -46,18 +46,25 @@ export default function EventPreview({ id }: { id: string }) {
   if (state === "loading") return <Loading />;
   if (state === "error") return <LoadError onRetry={() => setAttempt((n) => n + 1)} />;
   if (state === "missing") return <PanelNotFound />;
-  return <PreviewView id={id} data={state} published={published} />;
+  return <PreviewView id={id} data={state} status={status} />;
 }
 
-function PreviewView({ id, data, published }: { id: string; data: EventPreviewResponse; published: boolean }) {
+function PreviewView({ id, data, status }: { id: string; data: EventPreviewResponse; status: string | null }) {
   const { t } = useI18n();
+  const published = status === "published";
+  // Until the status is known: no notice, no stripes. Published is neutral; every other status keeps the striped bar.
+  const [long, short] = !status ? ["", ""]
+    : published ? [t("pePvPubBanner"), t("pePvPubShort")]
+    : status === "in_review" ? [t("pePvReviewBanner"), t("peStReview")]
+    : status === "rejected" ? [t("pePvRejBanner"), t("peStRejected")]
+    : [t("pePvBanner"), t("pePvDraft")];
   return (
     <div className="pe-pv">
-      <div className="pe-pvbar" role="region" aria-label={t("pePvBanner")}>
+      <div className={!status || published ? "pe-pvbar pub" : "pe-pvbar"} role="region" aria-label={long || undefined}>
+        <Link to={`/panel/events/${id}`} className="btn sm ghost" aria-label={t("pePvBack")}><Ic n="left" size={16} /><span className="lbl-dk">{t("pePvBack")}</span></Link>
         <Ic n="eye" />
-        <b>{t("pePvBanner")}</b>
-        <Link to={`/panel/events/${id}/edit`} className="btn sm"><Ic n="pencil" size={16} /><span className="lbl-dk">{t("peEdit")}</span></Link>
-        <Link to={`/panel/events/${id}`} className="btn sm ghost"><Ic n="left" size={16} /><span className="lbl-dk">{t("pePvBack")}</span></Link>
+        <b><span className="pv-long">{long}</span><span className="pv-short" aria-hidden="true">{short}</span></b>
+        <Link to={`/panel/events/${id}/edit`} className="btn sm" aria-label={t("peEdit")}><Ic n="pencil" size={16} /><span className="lbl-dk">{t("peEdit")}</span></Link>
       </div>
       <PreviewStage data={data} canShare={published} />
     </div>

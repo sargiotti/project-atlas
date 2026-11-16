@@ -286,11 +286,18 @@ textarea.pe-inp { height: auto; min-height: 112px; padding: 11px 14px; resize: v
 .pe-pvbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 12px; background: repeating-linear-gradient(135deg, var(--band) 0 12px, var(--band-2) 12px 24px); color: var(--on-band); font-size: 0.92rem; line-height: 1.25; }
 .pe-pvbar > svg { color: #b5db7a; }
 .pe-pvbar b { flex: 1; min-width: 0; }
-.app.pe .pe-pvbar .btn { background: #fff; color: #1f1b33; border-color: #fff; }
-.app.pe .pe-pvbar .btn:hover { background: #ece8f5; }
-.app.pe .pe-pvbar .btn.ghost { background: transparent; color: #fff; border-color: rgba(255, 255, 255, 0.5); }
-.app.pe .pe-pvbar .btn.ghost:hover { background: rgba(255, 255, 255, 0.12); }
+.pe-pvbar .pv-short { display: none; }
+@media (max-width: 479px) { .pe-pvbar .pv-long { display: none; } .pe-pvbar .pv-short { display: inline; } }
+.app.pe .pe-pvbar a.btn { background: #fff; color: #1f1b33; border-color: #fff; }
+.app.pe .pe-pvbar a.btn:hover { background: #ece8f5; }
+.app.pe .pe-pvbar a.btn.ghost { background: transparent; color: #fff; border-color: rgba(255, 255, 255, 0.5); }
+.app.pe .pe-pvbar a.btn.ghost:hover { background: rgba(255, 255, 255, 0.12); }
 .pe-pvbar .lbl-dk { display: none; }
+.pe-pvbar.pub { background: var(--surface-2); color: var(--ink); border-bottom: 1px solid var(--line); }
+.pe-pvbar.pub > svg { color: var(--ink-2); }
+.app.pe .pe-pvbar.pub a.btn { background: var(--surface); color: var(--ink); border-color: var(--line); }
+.app.pe .pe-pvbar.pub a.btn:hover { border-color: var(--ink-2); }
+.app.pe .pe-pvbar.pub a.btn.ghost { background: transparent; }
 .pe-pvstage { flex: 1; position: relative; overflow: hidden; background-color: var(--surface-2); background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 24px 24px; }
 .pe-topbar { position: absolute; z-index: 20; top: 12px; left: 10px; right: 10px; min-height: 60px; display: flex; align-items: center; gap: 8px; padding: 4px 6px 4px 10px; background: var(--surface); color: var(--ink); border-radius: 18px; box-shadow: var(--shadow); }
 .pe-topbar-title { flex: 1; min-width: 0; }
