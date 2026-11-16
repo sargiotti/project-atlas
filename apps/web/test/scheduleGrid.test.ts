@@ -122,3 +122,13 @@ describe("zoom memory", () => {
     expect(readZoom()).toBe(1);
   });
 });
+
+describe("stage colours", () => {
+  it("gives different stages different colours and keeps them across days", async () => {
+    const { placeColorIndex } = await import("../src/lib/scheduleGrid");
+    const all = [{ pointId: "b" }, { pointId: "a" }, { pointId: "c" }];
+    const map = placeColorIndex(all, ["a", "x", "b", "c"]);
+    expect(new Set([map.get("a"), map.get("b"), map.get("c")]).size).toBe(3);
+    expect(map.has("x")).toBe(false); // no Sessions, no colour slot
+  });
+});

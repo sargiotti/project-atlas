@@ -2,7 +2,6 @@ import { Component, useEffect, useLayoutEffect, useMemo, useRef, useState, type 
 import { sessionDay, utcToLocal, type EventInfo, type Point } from "@atlas/contract";
 import { useI18n } from "../i18n/I18nProvider";
 import { displayName } from "../lib/pointLabel";
-import { CATEGORY_INFO } from "../markers/categories";
 import { preStartCopy } from "../lib/preStart";
 import { deviceTimeZone, durationLabel, utcOffsetLabel, weekdayShort, type TimedSession } from "../lib/schedule";
 import {
@@ -15,6 +14,7 @@ import {
   longDate,
   shortDate,
   openingFor,
+  placeColorIndex,
   readZoom,
   weekdayLong,
   writeZoom,
@@ -82,6 +82,7 @@ export default function ScheduleView(props: Props) {
 
   // Bucketing happens once per bundle, not per scroll, zoom or tick.
   const buckets = useMemo(() => bucketByDay(sessions, points.map((p) => p.id)), [sessions, points]);
+  const colorOf = useMemo(() => placeColorIndex(sessions, points.map((p) => p.id)), [sessions, points]);
   const pointById = useMemo(() => new Map(points.map((p) => [p.id, p])), [points]);
   const { days, byDay } = buckets;
 
@@ -499,10 +500,9 @@ export default function ScheduleView(props: Props) {
 
             {columns.map((c) => {
               const p = pointById.get(c.pointId);
-              const bar = CATEGORY_INFO[p?.category ?? ""]?.base;
               return (
-                <div key={c.pointId} className="gcol" style={colWidth(c.maxLanes)}>
-                  <h3 className="gch" style={{ height: HEAD, "--cat": bar } as React.CSSProperties}>
+                <div key={c.pointId} className={`gcol stage-c${colorOf.get(c.pointId) ?? 0}`} style={colWidth(c.maxLanes)}>
+                  <h3 className="gch" style={{ height: HEAD }}>
                     <span>{p ? displayName(p, t) : ""}</span>
                   </h3>
                   <ul

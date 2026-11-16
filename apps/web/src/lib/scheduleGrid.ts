@@ -227,3 +227,18 @@ export function shortDate(date: string, lang: string) {
   const mo = fmt(lang, date, { month: "short" });
   return lang === "da" ? `${noDot(wd)}. ${dn}. ${noDot(mo)}.` : `${noDot(wd)} ${dn} ${noDot(mo)}`;
 }
+
+// ---- stage colours (slice 18) ----------------------------------------------------------------
+/** Number of stage hues; the hues themselves live in styles.css as `.stage-c0` .. `.stage-c7` (AA-checked pastels, light and dark). */
+export const STAGE_COLORS = 8;
+
+/**
+ * Colour index per place: the place's position among the Event's places that have at least one Session
+ * (all days, in `placeOrder`), so a place keeps its colour on every day tab. Colour never comes from data text.
+ */
+export function placeColorIndex(sessions: { pointId: string }[], placeOrder: string[]): Map<string, number> {
+  const used = new Set(sessions.map((s) => s.pointId));
+  const out = new Map<string, number>();
+  for (const id of placeOrder) if (used.has(id) && !out.has(id)) out.set(id, out.size % STAGE_COLORS);
+  return out;
+}

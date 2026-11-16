@@ -65,6 +65,15 @@ describe("schedule grid", () => {
     expect(screen.queryByRole("heading", { name: "Taco Truck" })).not.toBeInTheDocument(); // no Sessions there on Friday
   });
 
+  it("colours each stage differently and keeps a stage's colour across day tabs", async () => {
+    const { user } = await openSchedule("2026-07-10T22:00");
+    const cls = (name: string) => screen.getByRole("heading", { name }).closest(".gcol")!.className.match(/stage-c\d/)![0];
+    const mainFri = cls("Main Stage");
+    await user.click(screen.getByRole("button", { name: "Sat 11" }));
+    expect(cls("Main Stage")).toBe(mainFri);
+    expect(cls("Taco Truck")).not.toBe(mainFri);
+  });
+
   it("brings the visitor back to now with the Now chip after changing day", async () => {
     const { user } = await openSchedule("2026-07-10T22:00");
     await user.click(screen.getByRole("button", { name: "Sat 11" }));
