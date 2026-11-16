@@ -93,7 +93,7 @@ async function encodeUnder(c: HTMLCanvasElement, type: "image/webp" | "image/jpe
 }
 
 let badge: Promise<ImageBitmap | null> | undefined;
-/** The Atlas badge of link previews (slice 04), drawn at (299, 546), as the API does. Same-origin static file; a failure just skips it. */
+/** The Atlas badge of link previews (slice 04), drawn at (299, 546), same position as the build-time tone-og images (apps/api/scripts/og-image.ts); the Worker draws no badge at runtime. Same-origin static file; a failure just skips it. */
 function loadBadge() {
   badge ??= fetch("/cover-badge.png")
     .then((r) => (r.ok ? r.blob() : Promise.reject(new Error("badge"))))
