@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
-import { COUNTRY_CODES, EVENT_LANGUAGES, EVENT_TIME_ZONES, type PanelEvent } from "@atlas/contract";
+import { COUNTRY_CODES, EVENT_LANGUAGES, EVENT_TIME_ZONES, toneOf, type PanelCover, type PanelEvent } from "@atlas/contract";
+import { putCover, type CoverUpload } from "../../../api/panelCover";
+import { CoverMedia } from "../../../components/CoverMedia";
 import { createEvent, getEvent, updateEvent } from "../../../api/panelEvents";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { LANG_NAMES, type Lang, type MessageKey } from "../../../i18n/messages";
+import { clearCoverHandoff, peekCoverHandoff, setCoverHandoff } from "../../../lib/coverHandoff";
+import { encodeCover } from "../../../lib/coverImage";
 import { countryName } from "../../../lib/events";
 import {
   FIELD_ORDER,
@@ -24,6 +28,8 @@ import { Link, navigate, setNavigationGuard } from "../../../lib/router";
 import { browserZone, zoneLabel, zoneOffset } from "../../../lib/timeZones";
 import { AboutRows } from "./About";
 import { Dialog, Ic, LoadError, Loading, PanelNotFound, dateRange, dayNumber, longDay, monthShort, pastel, setFlash, useDocTitle } from "./common";
+import { CropCanvas } from "./CoverPicker";
+import CoverSection, { type CoverDraft } from "./CoverSection";
 import Picker, { type Option } from "./Picker";
 
 /** /panel/events/new and /panel/events/:id/edit. The edit form loads the event first. */
@@ -76,13 +82,18 @@ function FormBody({ event }: { event?: PanelEvent }) {
   const [saving, setSaving] = useState(false);
   const [pending, setPending] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  // Slice 14 cover. `draft` = the picture being picked (create: uploaded right after the event is created). Memory only.
+  const [cover, setCover] = useState<PanelCover | null>(event?.cover ?? null);
+  const [draft, setDraft] = useState<CoverDraft | null>(null);
+  const [coverError, setCoverError] = useState<{ key: MessageKey } | null>(null);
+  const handoff = useMemo(() => (event ? peekCoverHandoff(event.id) : null), []); // eslint-disable-line react-hooks/exhaustive-deps
   const [focusTick, setFocusTick] = useState(0);
   const summaryRef = useRef<HTMLDivElement>(null);
   const bannerRef = useRef<HTMLDivElement>(null);
   const previewId = useRef(event?.id ?? Math.random().toString(36).slice(2, 10)).current;
   const detected = useMemo(() => browserZone(), []);
 
-  const dirty = JSON.stringify(values) !== JSON.stringify(baseline);
+  const dirty = JSON.stringify(values) !== JSON.stringify(baseline) || (!editing && !!draft);
   const clientIssues = useMemo(() => validate(values), [values]);
 
   // Leaving with changes asks first: in-app navigation through the router guard, tab close through beforeunload.
@@ -106,7 +117,8 @@ function FormBody({ event }: { event?: PanelEvent }) {
   // "Add" on the hub opens this form on that field.
   useEffect(() => {
     const want = new URLSearchParams(window.location.search).get("focus");
-    if (want === "description" || want === "website") document.getElementById(fid(want))?.focus();
+    if (want === "cover") document.getElementById("cover")?.scrollIntoView?.({ block: "start" });
+    else if (want === "description" || want === "website") document.getElementById(fid(want))?.focus();
     else document.getElementById(fid("name"))?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -177,8 +189,38 @@ function FormBody({ event }: { event?: PanelEvent }) {
       return;
     }
     setSaving(true);
+    setCoverError(null);
+    // Create with a cover: prepare the files first (local, no request), then create the event ONCE, then upload the cover.
+    let files: CoverUpload | null = null;
+    if (!event && draft) {
+      const enc = await encodeCover(draft.bitmap, draft.focal);
+      if (!enc.ok) {
+        setSaving(false);
+        setCoverError({ key: "cvErrEncode" });
+        return;
+      }
+      files = { full: enc.value.full, small: enc.value.small, og: enc.value.og, fx: draft.focal.x, fy: draft.focal.y };
+    }
     const r = event ? await updateEvent(event.id, toInput(values)) : await createEvent(toInput(values));
     if (r.status === "ok") {
+      if (files) {
+        const c = await putCover(r.event.id, files);
+        if (c.status === "unauthenticated") {
+          navigate("/panel/login", true, true);
+          return;
+        }
+        if (c.status !== "ok") {
+          // The event exists now: never POST it again. Hand the files to the edit form of the new id (Try again / Skip).
+          setCoverHandoff({
+            eventId: r.event.id,
+            files,
+            error: c.status === "error" || c.status === "rate_limited" ? c.key : "cvFailServer",
+            retryAfter: c.status === "rate_limited" ? c.retryAfter : undefined,
+          });
+          navigate(`/panel/events/${r.event.id}/edit`, true, true);
+          return;
+        }
+      }
       setFlash({ kind: event ? "changes" : "saved" });
       navigate(`/panel/events/${r.event.id}`, false, true);
       return;
@@ -269,7 +311,7 @@ function FormBody({ event }: { event?: PanelEvent }) {
     <span className="ok"><Ic n="check" size={16} /><span>{days === 1 ? t("peLasts1") : t("peLastsN", { n: days })}</span></span>
   ) : null;
 
-  const saveLabel = saving ? t("peSaving") : t(editing ? "peSaveChanges" : "peSave");
+  const saveLabel = saving ? t(!editing && draft ? "cvCreating" : "peSaving") : t(editing ? "peSaveChanges" : "peSave");
   const sectionNum = (n: number) => <span className="pe-sn" aria-hidden="true">{n}</span>;
 
   const goSummary = (k: FieldKey) => {
@@ -478,6 +520,27 @@ function FormBody({ event }: { event?: PanelEvent }) {
               </div>
             </section>
 
+            <CoverSection
+              eventId={event?.id}
+              eventName={values.name.trim()}
+              tone={toneOf(event?.id ?? previewId)}
+              stored={cover}
+              published={event?.status === "published"}
+              sectionNumber={5}
+              error={coverError}
+              onStored={setCover}
+              onDraft={setDraft}
+              onReload={() => event && void getEvent(event.id).then((r) => r.status === "ok" && setCover(r.event.cover)).catch(() => {})}
+              onUnauthenticated={() => navigate("/panel/login", true, true)}
+              onNotFound={() => setNotFound(true)}
+              handoff={handoff}
+              onHandoffDone={() => {
+                clearCoverHandoff();
+                setFlash({ kind: "saved" });
+                navigate(`/panel/events/${event!.id}`, false, true);
+              }}
+            />
+
             <div className="pe-savebar">
               <button type="button" className="btn" onClick={() => navigate(backTo)}>{t("cancel")}</button>
               <button type="submit" className="btn primary" disabled={saving}>{saveLabel}</button>
@@ -485,7 +548,7 @@ function FormBody({ event }: { event?: PanelEvent }) {
           </div>
 
           <aside className="pe-pvcol" aria-hidden="true">
-            <LivePreview values={values} id={previewId} />
+            <LivePreview values={values} id={event?.id ?? previewId} cover={cover} draft={draft} />
           </aside>
         </div>
       </form>
@@ -511,7 +574,7 @@ function FormBody({ event }: { event?: PanelEvent }) {
 }
 
 /** The right column (desktop): the card and the "About the event" sheet build as you type. No requests. */
-function LivePreview({ values, id }: { values: FormValues; id: string }) {
+function LivePreview({ values, id, cover, draft }: { values: FormValues; id: string; cover: PanelCover | null; draft: CoverDraft | null }) {
   const { t, lang } = useI18n();
   const f = values;
   const name = f.name.trim();
@@ -523,7 +586,8 @@ function LivePreview({ values, id }: { values: FormValues; id: string }) {
     <>
       <p className="pe-pvlabel"><Ic n="eye" size={16} />{t("peLivePv")}</p>
       <div className="pe-hcard">
-        <div className="pe-cover" style={pastel(id)}>
+        <div className={`pe-cover${cover || draft ? " img" : ""}`} style={pastel(id)}>
+          {draft ? <CropCanvas className="cv-fill" bitmap={draft.bitmap} ratio={3} focal={draft.focal} w={480} /> : cover && <CoverMedia cover={cover} tone={toneOf(id)} size="card" imgClassName="cv-fill" />}
           {start ? (
             <span className="pe-dnum">{dayNumber(start)}<small>{monthShort(start, lang)}</small></span>
           ) : (
@@ -539,6 +603,9 @@ function LivePreview({ values, id }: { values: FormValues; id: string }) {
         </div>
       </div>
       <div className="pe-mini">
+        <div className="cv-minihd">
+          {draft ? <CropCanvas className="cv-fill" bitmap={draft.bitmap} ratio={8 / 3} focal={draft.focal} w={480} /> : <CoverMedia cover={cover} tone={toneOf(id)} size="full" imgClassName="cv-fill" />}
+        </div>
         <p className="pe-mh"><Ic n="info" size={16} />{t("pePvAbout")}</p>
         <h3 dir="auto" lang={f.language}>{name || sk(160)}</h3>
         <AboutRows

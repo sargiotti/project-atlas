@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
-import type { PanelEvent } from "@atlas/contract";
+import { toneOf, type PanelEvent } from "@atlas/contract";
+import { CoverMedia, FallbackCover } from "../../../components/CoverMedia";
 import { deleteEvent, getEvent } from "../../../api/panelEvents";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { countryName } from "../../../lib/events";
@@ -71,7 +72,8 @@ export default function EventHub({ id }: { id: string }) {
       )}
       <div className="pe-hubgrid">
         <section className="pe-hcardw pe-hhero" aria-labelledby={`${id}-h1`}>
-          <div className="pe-cover" style={pastel(e.id)}>
+          <div className={`pe-cover${e.cover ? " img" : ""}`} style={pastel(e.id)}>
+            {e.cover && <CoverMedia cover={e.cover} tone={toneOf(e.id)} size="full" imgClassName="cv-fill" />}
             <DayTile start={e.startDate} />
             <StatusBadge status={e.status} />
           </div>
@@ -132,6 +134,16 @@ export default function EventHub({ id }: { id: string }) {
               onNotice={setNotice}
             />
           </ol>
+          {!e.cover && (
+            <div className="pe-sugg">
+              <div className="cv-thumb" aria-hidden="true"><FallbackCover tone={toneOf(e.id)} /></div>
+              <div>
+                <b>{t("cvHubTitle")}<span className="tag">{t("cvOptional")}</span></b>
+                <small>{t("cvHubText")}</small>
+              </div>
+              <Link to={`/panel/events/${e.id}/edit?focus=cover`} className="btn sm"><Ic n="plus" size={16} />{t("peAdd")}</Link>
+            </div>
+          )}
         </section>
 
         <section className="pe-hcardw pe-hwhen">

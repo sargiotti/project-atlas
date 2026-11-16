@@ -3,24 +3,29 @@
  * no language). Copy rules: design deliverable 05, section 6.
  */
 
-import { CLEAN_STRIP } from "@atlas/contract";
+import { CLEAN_STRIP, toneOf } from "@atlas/contract";
 
 export interface StoredEventPreview {
+  /** Event id: domain only (tone, and the owner prefix of the stored og key). Never printed into the page. */
+  id: string;
   slug: string;
   name: string;
   startDate: string; // YYYY-MM-DD
   endDate: string;
   city: string;
   country: string; // ISO 3166-1 alpha-2
-  /** `{slug}.{hash8}.jpg` as stored; re-validated before it becomes a URL. */
+  /** `covers/{eventId}/{hex32}-og.jpg` as stored; re-validated before it becomes a URL. Null: no cover. */
   ogKey: string | null;
 }
 
 export interface EventPreview {
   title: string;
   description: string;
-  /** Path under the public origin, e.g. `/og/havnelobet.0123abcd.jpg`. Null: keep the brand card. */
-  imagePath: string | null;
+  /**
+   * Path under the public origin: the cover's link-preview JPEG (`/media/covers/{eventId}/{hex32}-og.jpg`), or the static
+   * image of the event's tone (`/tone-og/{0..7}.jpg`) when there is no cover or the stored key is not valid.
+   */
+  imagePath: string;
   imageAlt: string;
 }
 
@@ -28,8 +33,8 @@ export const MAX_TITLE = 120;
 export const MAX_DESCRIPTION = 200;
 export const MAX_ALT = 200;
 
-/** Same shape the build writes and the contract expects (B10). */
-export const OG_KEY_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*\.[0-9a-f]{8}\.jpg$/;
+/** Same shape the cover upload writes (slice 14): `covers/{eventId}/{hex32}-og.jpg`. */
+export const OG_KEY_REGEX = /^covers\/[a-z0-9_-]{1,64}\/[0-9a-f]{32}-og\.jpg$/;
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
 const EN_DASH = String.fromCharCode(0x2013);
@@ -105,11 +110,12 @@ export function buildEventPreview(event: StoredEventPreview): EventPreview {
     // Malformed stored dates: still give the event a preview, without the date part.
   }
   const description = cleanText(when ? `${when} ${MIDDLE_DOT} ${place}` : place, MAX_DESCRIPTION);
-  const hasImage = event.ogKey !== null && OG_KEY_REGEX.test(event.ogKey);
+  // The key must be well formed AND belong to this very event; anything else falls back to the tone image.
+  const hasImage = event.ogKey !== null && OG_KEY_REGEX.test(event.ogKey) && event.ogKey.startsWith(`covers/${event.id}/`);
   return {
     title,
     description,
-    imagePath: hasImage ? `/og/${event.ogKey}` : null,
-    imageAlt: cleanText(`Cover illustration for ${event.name}`, MAX_ALT),
+    imagePath: hasImage ? `/media/${event.ogKey}` : `/tone-og/${toneOf(event.id)}.jpg`,
+    imageAlt: cleanText(`Cover image for ${event.name}`, MAX_ALT),
   };
 }

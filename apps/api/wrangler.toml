@@ -5,7 +5,7 @@ workers_dev = true
 
 # One Worker serves the SPA (static assets) and the API.
 # Only /api/*, /e/* and /media/* invoke the Worker code (ADR 0009: /e/{slug} gets per-event link-preview meta
-# injected into the shell; slice 08a: /media/* serves uploaded map images from R2 with draft gating). Everything else (Home, JS/CSS, /maps, /covers, /og) is served as static
+# injected into the shell; slice 08a and 14: /media/* serves uploaded map and cover images from R2 with draft gating). Everything else (Home, JS/CSS, /maps, /og, /tone-og) is served as static
 # assets, which are free and do not count towards the request cap. Keep this list exact: no "/*", no "/".
 [assets]
 directory = "../web/dist"

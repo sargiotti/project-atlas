@@ -1,10 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { I18nProvider } from "../src/i18n/I18nProvider";
 import { Routes } from "../src/App";
 import { sortEvents } from "../src/lib/events";
 import { errorBody, goTo, json } from "./fixtures";
+
+const COVER = {
+  url: "/media/covers/evt_now/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-full.webp",
+  url800: "/media/covers/evt_now/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-800.webp",
+  width: 1600,
+  height: 1000,
+  focal: { x: 0.3, y: 0.6 },
+};
 
 const ev = (slug: string, startDate: string, endDate: string, extra: any = {}) => ({
   slug,
@@ -14,6 +22,7 @@ const ev = (slug: string, startDate: string, endDate: string, extra: any = {}) =
   city: "Valencia",
   country: "ES",
   cover: null,
+  tone: 0,
   nearby: false,
   ...extra,
 });
@@ -107,7 +116,7 @@ describe("home", () => {
           name: "Run Today",
           city: "København",
           country: "DK",
-          cover: { url: "/covers/now.abcd1234.webp", width: 960, height: 640 },
+          cover: COVER,
         }),
       ]),
     );
@@ -119,9 +128,12 @@ describe("home", () => {
     expect(within(today).getByText("Nov 13, 2026")).toBeInTheDocument();
     expect(within(today).queryByText("Ended")).not.toBeInTheDocument();
     const img = today.querySelector("img")!;
-    expect(img).toHaveAttribute("src", "/covers/now.abcd1234.webp");
+    // Home cards use only the 800 px file, lazily, with the focal point as object-position.
+    expect(img).toHaveAttribute("src", COVER.url800);
     expect(img).toHaveAttribute("alt", "");
-    expect(img).toHaveAttribute("width", "960");
+    expect(img).toHaveAttribute("loading", "lazy");
+    expect(img).toHaveAttribute("decoding", "async");
+    expect(img).toHaveStyle({ objectPosition: "30% 60%" });
 
     // Screen readers get the name first and the Ended state last; the visual badge is aria-hidden.
     expect(within(links[1]).getAllByText("Ended").filter((el) => !el.closest("[aria-hidden]"))).toHaveLength(1);
@@ -129,11 +141,20 @@ describe("home", () => {
     expect(within(links[1]).getByText("Galway, Ireland")).toBeInTheDocument();
   });
 
-  it("shows a fallback tile instead of an image when the event has no cover", async () => {
-    openHome(() => json([ev("nocover", "2026-12-01", "2026-12-02", { name: "No Cover Fest" })]));
+  it("shows the colour cover of the event tone instead of an image when the event has no cover", async () => {
+    openHome(() => json([ev("nocover", "2026-12-01", "2026-12-02", { name: "No Cover Fest", tone: 3 })]));
     const link = await screen.findByRole("link", { name: /No Cover Fest/ });
     expect(link.querySelector("img")).toBeNull();
-    expect(link.querySelector(".cover-fallback")).not.toBeNull();
+    const svg = link.querySelector("svg.cv-fb")!;
+    expect(svg.querySelector("rect")).toHaveAttribute("fill", "#FBD3B0"); // tone 3, a light tone
+  });
+
+  it("falls back to the colour cover when the cover image fails to load (e.g. replaced meanwhile)", async () => {
+    openHome(() => json([ev("broken", "2026-12-01", "2026-12-02", { name: "Broken Cover Fest", tone: 5, cover: COVER })]));
+    const link = await screen.findByRole("link", { name: /Broken Cover Fest/ });
+    fireEvent.error(link.querySelector("img")!);
+    expect(link.querySelector("img")).toBeNull();
+    expect(link.querySelector("svg.cv-fb rect")).toHaveAttribute("fill", "#C6EEF2"); // tone 5
   });
 
   it("event names are plain text, never HTML", async () => {

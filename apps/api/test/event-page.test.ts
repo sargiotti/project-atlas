@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import app from "../src/index";
+import { toneOf } from "@atlas/contract";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import shellSource from "../../web/index.html?raw";
 import headersFile from "../../web/public/_headers?raw";
@@ -24,11 +25,23 @@ const testEnv = (over: Record<string, unknown> = {}) => ({ DB: env.DB, ASSETS, P
 const get = (path: string, init: RequestInit & { cf?: unknown } = {}, over: Record<string, unknown> = {}) =>
   app.fetch(new Request(`http://elsewhere.test${path}`, init as RequestInit), testEnv(over) as never);
 
-const insert = (slug: string, name: string, opts: { ogKey?: string | null } = {}) =>
+const HEX = "0123abcd".repeat(4);
+/** The event, plus a cover row (slice 14) when `ogKey` is given. Any stored key shape goes in, to prove the Worker re-validates it. */
+const insert = (slug: string, name: string, opts: { ogKey?: string | null } = {}) => [
   env.DB.prepare(
-    `INSERT INTO events (id, slug, name, start_date, end_date, city, country, og_key, language, publish_state, created_at, updated_at)
-     VALUES (?1, ?2, ?3, '2026-11-10', '2026-11-22', 'København', 'DK', ?4, 'en', 'published', 0, 0)`,
-  ).bind(`evt_${slug}`, slug, name, opts.ogKey ?? null);
+    `INSERT INTO events (id, slug, name, start_date, end_date, city, country, language, publish_state, created_at, updated_at)
+     VALUES (?1, ?2, ?3, '2026-11-10', '2026-11-22', 'København', 'DK', 'en', 'published', 0, 0)`,
+  ).bind(`evt_${slug}`, slug, name),
+  ...(opts.ogKey
+    ? [
+        env.DB.prepare(
+          `INSERT INTO event_covers (event_id, full_key, full_width, full_height, small_key, small_width, small_height, og_key, created_at, updated_at)
+           VALUES (?1, ?2, 960, 640, ?3, 800, 533, ?4, 0, 0)`,
+        ).bind(`evt_${slug}`, `covers/evt_${slug}/${HEX}-full.webp`, `covers/evt_${slug}/${HEX}-800.webp`, opts.ogKey),
+      ]
+    : []),
+];
+const coverOg = (slug: string) => `covers/evt_${slug}/${HEX}-og.jpg`;
 
 const metaContent = (html: string, selector: string) => {
   return new RegExp(`<meta ${selector} content="([^"]*)"`).exec(html)?.[1];
@@ -42,7 +55,7 @@ beforeEach(async () => {
 
 describe("GET /e/{slug}", () => {
   it("serves the shell with the event's meta, headers and cache policy (T2)", async () => {
-    await env.DB.batch([insert("havnelobet", "Havneløbet 2026", { ogKey: "havnelobet.0123abcd.jpg" })]);
+    await env.DB.batch(insert("havnelobet", "Havneløbet 2026", { ogKey: coverOg("havnelobet") }));
     const res = await get("/e/havnelobet");
     const html = await res.text();
 
@@ -60,32 +73,40 @@ describe("GET /e/{slug}", () => {
     expect(metaContent(html, 'name="description"')).toBe("10–22 Nov 2026 · København, Denmark");
     expect(metaContent(html, 'property="og:url"')).toBe(`${ORIGIN}/e/havnelobet`);
     expect(metaContent(html, 'property="og:title"')).toBe("Havneløbet 2026");
-    expect(metaContent(html, 'property="og:image"')).toBe(`${ORIGIN}/og/havnelobet.0123abcd.jpg`);
-    expect(metaContent(html, 'name="twitter:image"')).toBe(`${ORIGIN}/og/havnelobet.0123abcd.jpg`);
-    expect(metaContent(html, 'property="og:image:alt"')).toBe("Cover illustration for Havneløbet 2026");
+    expect(metaContent(html, 'property="og:image"')).toBe(`${ORIGIN}/media/${coverOg("havnelobet")}`);
+    expect(metaContent(html, 'name="twitter:image"')).toBe(`${ORIGIN}/media/${coverOg("havnelobet")}`);
+    expect(metaContent(html, 'property="og:image:alt"')).toBe("Cover image for Havneløbet 2026");
     expect(metaContent(html, 'name="twitter:card"')).toBe("summary_large_image");
     expect(metaContent(html, 'property="og:site_name"')).toBe("Atlas");
     expect(metaContent(html, 'property="og:image:width"')).toBe("1200");
   });
 
-  it("an event without an OG image keeps the brand card tags", async () => {
-    await env.DB.batch([insert("fiesta", "Fiestas del Barrio", { ogKey: null })]);
+  it("an event without a cover uses the static image of its tone (not the brand card)", async () => {
+    await env.DB.batch(insert("fiesta", "Fiestas del Barrio", { ogKey: null }));
     const html = await (await get("/e/fiesta")).text();
+    const tone = toneOf("evt_fiesta");
     expect(metaContent(html, 'property="og:title"')).toBe("Fiestas del Barrio");
-    expect(metaContent(html, 'property="og:image"')).toBe(BRAND_CARD);
-    expect(metaContent(html, 'name="twitter:image"')).toBe(BRAND_CARD);
-    expect(metaContent(html, 'property="og:image:alt"')).toContain("Atlas logo and the tagline Find your way");
+    expect(metaContent(html, 'property="og:image"')).toBe(`${ORIGIN}/tone-og/${tone}.jpg`);
+    expect(metaContent(html, 'name="twitter:image"')).toBe(`${ORIGIN}/tone-og/${tone}.jpg`);
+    expect(metaContent(html, 'property="og:image:alt"')).toBe("Cover image for Fiestas del Barrio");
+    expect(metaContent(html, 'property="og:image:width"')).toBe("1200");
+    expect(metaContent(html, 'property="og:image:height"')).toBe("630");
   });
 
-  it("a stored image key with an unexpected shape is ignored (brand card)", async () => {
-    await env.DB.batch([insert("odd", "Odd", { ogKey: "../../evil.jpg" })]);
+  it.each([
+    ["a malformed key", "../../evil.jpg"],
+    ["the key of another event", `covers/evt_other/${HEX}-og.jpg`],
+    ["the full file instead of the og file", `covers/evt_odd/${HEX}-full.webp`],
+    ["the legacy static shape", "odd.0123abcd.jpg"],
+  ])("a stored og key that is %s is ignored: the tone image is used", async (_what, ogKey) => {
+    await env.DB.batch(insert("odd", "Odd", { ogKey }));
     const html = await (await get("/e/odd")).text();
-    expect(metaContent(html, 'property="og:image"')).toBe(BRAND_CARD);
+    expect(metaContent(html, 'property="og:image"')).toBe(`${ORIGIN}/tone-og/${toneOf("evt_odd")}.jpg`);
   });
 
   it("escapes hostile event names in every injected attribute and in <title> (T1)", async () => {
     const name = `"><script>alert(1)</script>&'<${BIDI}`;
-    await env.DB.batch([insert("evil", name, { ogKey: "evil.0123abcd.jpg" })]);
+    await env.DB.batch(insert("evil", name, { ogKey: coverOg("evil") }));
     const html = await (await get("/e/evil")).text();
 
     const scripts = (s: string) => s.match(/<script\b/g)?.length ?? 0;
@@ -123,7 +144,7 @@ describe("GET /e/{slug}", () => {
   });
 
   it("collapses newlines and caps long text", async () => {
-    await env.DB.batch([insert("long", `Line one\r\nline\ttwo ${"x".repeat(300)}`)]);
+    await env.DB.batch(insert("long", `Line one\r\nline\ttwo ${"x".repeat(300)}`));
     const html = await (await get("/e/long")).text();
     const title = metaContent(html, 'property="og:title"')!;
     expect(title).not.toMatch(/[\r\n\t]/);
@@ -132,7 +153,7 @@ describe("GET /e/{slug}", () => {
   });
 
   it("is byte-identical whatever the requester sends (T3) and ignores the query", async () => {
-    await env.DB.batch([insert("havnelobet", "Havneløbet 2026", { ogKey: "havnelobet.0123abcd.jpg" })]);
+    await env.DB.batch(insert("havnelobet", "Havneløbet 2026", { ogKey: coverOg("havnelobet") }));
     const variants: Array<[string, RequestInit & { cf?: unknown }]> = [
       ["/e/havnelobet", {}],
       ["/e/havnelobet?near=IE&utm=x", { cf: { country: "IE", city: "Galway", latitude: "53.27", longitude: "-9.05" } }],
@@ -150,7 +171,7 @@ describe("GET /e/{slug}", () => {
   });
 
   it("fetches the shell cleanly: client headers are not forwarded to ASSETS (B3)", async () => {
-    await env.DB.batch([insert("havnelobet", "Havneløbet 2026")]);
+    await env.DB.batch(insert("havnelobet", "Havneløbet 2026"));
     await get("/e/havnelobet", {
       headers: { "if-none-match": '"x"', range: "bytes=0-10", "if-modified-since": "Wed, 01 Jan 2020 00:00:00 GMT" },
     });
@@ -164,7 +185,7 @@ describe("GET /e/{slug}", () => {
   });
 
   it("answers 304 on a matching If-None-Match and HEAD with the same headers and no body (R6)", async () => {
-    await env.DB.batch([insert("havnelobet", "Havneløbet 2026")]);
+    await env.DB.batch(insert("havnelobet", "Havneløbet 2026"));
     const first = await get("/e/havnelobet");
     const etag = first.headers.get("etag")!;
 
@@ -181,7 +202,7 @@ describe("GET /e/{slug}", () => {
   });
 
   it("changes the ETag when the event's text changes", async () => {
-    await env.DB.batch([insert("havnelobet", "Havneløbet 2026")]);
+    await env.DB.batch(insert("havnelobet", "Havneløbet 2026"));
     const a = (await get("/e/havnelobet")).headers.get("etag");
     await env.DB.prepare("UPDATE events SET name = 'Havneløbet 2027' WHERE slug = 'havnelobet'").run();
     clearEventPreviewCache();
@@ -217,7 +238,7 @@ describe("unknown and invalid paths", () => {
   });
 
   it("valid unknown slugs are answered from one bounded query, not one per slug", async () => {
-    await env.DB.batch([insert("havnelobet", "Havneløbet 2026")]);
+    await env.DB.batch(insert("havnelobet", "Havneløbet 2026"));
     const prepare = vi.fn((sql: string) => env.DB.prepare(sql));
     for (const slug of ["a-1", "a-2", "a-3", "havnelobet"]) await get(`/e/${slug}`, {}, { DB: { prepare } });
     expect(prepare).toHaveBeenCalledTimes(1);
@@ -251,7 +272,7 @@ describe("failure handling", () => {
 
   it("fails open when PUBLIC_ORIGIN is misconfigured, and when the shell lost a placeholder", async () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
-    await env.DB.batch([insert("havnelobet", "Havneløbet 2026")]);
+    await env.DB.batch(insert("havnelobet", "Havneløbet 2026"));
     const badOrigin = await get("/e/havnelobet", {}, { PUBLIC_ORIGIN: "http://insecure.example/path" });
     expect(badOrigin.status).toBe(200);
     expect(await badOrigin.text()).toBe(SHELL);

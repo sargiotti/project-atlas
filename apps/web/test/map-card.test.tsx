@@ -21,7 +21,7 @@ const MAP = {
 const NEW_MAP = { ...MAP, small: { ...MAP.small, url: "/media/maps/e1/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb-small.webp" } };
 const EV = {
   id: ID, slug: "fiesta-x7k2q9", status: "draft", statusReason: null, requestedAt: null, approvedAt: null, name: "Fiesta de mi barrio", startDate: "2026-12-12", endDate: "2026-12-13",
-  timeZone: "America/Buenos_Aires", city: "Rosario", country: "AR", language: "es", description: null, website: null, venueAddress: null, map: null,
+  timeZone: "America/Buenos_Aires", city: "Rosario", country: "AR", language: "es", description: null, website: null, venueAddress: null, map: null, cover: null,
   createdAt: "2026-11-14T10:00:00.000Z", updatedAt: "2026-11-14T10:00:00.000Z",
 };
 const me = { organizer: { id: "o1", displayName: "Ada", email: "s@example.com", role: "organizer" } };

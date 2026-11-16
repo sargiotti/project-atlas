@@ -7,7 +7,7 @@ import { matchesQuery, normalize, queryWords } from "../src/lib/search";
 import { goTo, json } from "./fixtures";
 
 const ev = (slug: string, name: string, city: string, country: string, startDate: string, endDate: string, nearby = false) => ({
-  slug, name, city, country, startDate, endDate, cover: null, nearby,
+  slug, name, city, country, startDate, endDate, cover: null, tone: 0, nearby,
 });
 const EVENTS = [
   ev("havnelobet", "Havneløbet 2026", "København", "DK", "2026-11-13", "2026-11-13"),

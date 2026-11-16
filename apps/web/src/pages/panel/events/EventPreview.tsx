@@ -5,6 +5,7 @@ import { useI18n } from "../../../i18n/I18nProvider";
 import { Link, navigate } from "../../../lib/router";
 import { LogoMark } from "../../../markers/Pixel";
 import PointSheet from "../../../components/PointSheet";
+import { AboutCover } from "../../../components/CoverMedia";
 import { AboutRows } from "./About";
 import { Ic, LoadError, Loading, PanelNotFound, dateRange, useDocTitle } from "./common";
 import type { EventPreviewResponse } from "@atlas/contract";
@@ -142,6 +143,7 @@ export function PreviewStage({ data, canShare = false }: { data: EventPreviewRes
         )}
         {open && (
           <section className="pe-about" id={`${uid}-about`} role="dialog" aria-label={t("pePvAbout")}>
+            <AboutCover cover={e.cover} tone={e.tone} />
             <div className="pe-ahead">
               <span className="pe-eyebrow">{t("pePvAbout")}</span>
               <button type="button" className="icon-btn" aria-label={t("close")} onClick={() => { setOpen(false); infoBtn.current?.focus(); }}>

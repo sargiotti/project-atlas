@@ -3,6 +3,7 @@ import { EVENT_INPUT_FIELDS, FIELD_ERROR_CODES, type EventInputField, type Field
 import { EVENT_TIME_ZONES } from "./time-zones.ts";
 import { FORBIDDEN_MULTI_LINE, FORBIDDEN_SINGLE_LINE } from "./text-rules.ts";
 import { eventStatusSchema } from "./event-status.ts";
+import { panelCoverSchema } from "./cover.ts";
 import { MAX_POINTS_PER_MAP, MAX_SESSIONS_PER_EVENT, eventAboutSchema, eventMapSchema, eventSchema, mapThemeSchema, pointSchema, sessionSchema, slugSchema } from "./map-bundle.ts";
 
 const FIELD_CODE_SET: ReadonlySet<string> = new Set(FIELD_ERROR_CODES);
@@ -267,6 +268,8 @@ export const panelEventSchema = z.object({
   website: z.string().nullable(),
   venueAddress: z.string().nullable(),
   map: panelMapSchema.nullable(),
+  /** Slice 14. Null: none (the colour cover shows). */
+  cover: panelCoverSchema.nullable(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });

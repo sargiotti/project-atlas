@@ -41,11 +41,21 @@ export function sniffMapImage(b: Uint8Array): MapImageFormat | null {
 }
 
 /** Magic bytes first (415), then structure, dimensions and metadata (400 invalid_upload). */
-export function inspectMapImage(b: Uint8Array): MapImageResult {
+export function inspectMapImage(b: Uint8Array, opts: InspectOptions = {}): MapImageResult {
   const format = sniffMapImage(b);
-  if (format === "webp") return inspectWebp(b);
-  if (format === "jpeg") return inspectJpeg(b);
+  if (format === "webp") return inspectWebp(b, opts);
+  if (format === "jpeg") return inspectJpeg(b, opts);
   return UNSUPPORTED;
+}
+
+/**
+ * Slice 14 generalisation. Defaults are the 08a map rules. `animatedReason`: what an animated WebP is reported as
+ * (maps: corrupt_image; covers: animated_image). `baselineOnly`: the JPEG must be baseline (SOF0, 8-bit) with only
+ * JFIF/ICC application segments (link-preview images: crawlers must be able to read them).
+ */
+export interface InspectOptions {
+  animatedReason?: InvalidUploadReason;
+  baselineOnly?: boolean;
 }
 
 // --- JPEG ------------------------------------------------------------------------------------
@@ -57,7 +67,10 @@ const SOF_OK = new Set([0xc0, 0xc1, 0xc2]); // baseline, extended sequential, pr
 // SOF0-2, DHT, DQT, DRI, SOS, DNL, APP0, APP2, APP14
 const MARKER_OK = new Set([0xc0, 0xc1, 0xc2, 0xc4, 0xdb, 0xdd, 0xda, 0xdc, 0xe0, 0xe2, 0xee]);
 
-function inspectJpeg(b: Uint8Array): MapImageResult {
+// Baseline-only mode: SOF0, DHT, DQT, DRI, SOS, APP0, APP2.
+const MARKER_OK_BASELINE = new Set([0xc0, 0xc4, 0xdb, 0xdd, 0xda, 0xe0, 0xe2]);
+
+function inspectJpeg(b: Uint8Array, opts: InspectOptions): MapImageResult {
   const n = b.length;
   let i = 2; // after SOI
   let size: { width: number; height: number } | null = null;
@@ -78,9 +91,11 @@ function inspectJpeg(b: Uint8Array): MapImageResult {
     const len = (b[i]! << 8) | b[i + 1]!;
     if (len < 2 || i + len > n) return bad("corrupt_image");
     if (m === 0xe1 || m === 0xed || m === 0xfe || (m >= 0xe3 && m <= 0xec) || m === 0xef) return bad("metadata_present");
-    if (!MARKER_OK.has(m)) return bad("corrupt_image");
+    if (opts.baselineOnly && (m === 0xc1 || m === 0xc2)) return bad("og_not_baseline");
+    if (!(opts.baselineOnly ? MARKER_OK_BASELINE : MARKER_OK).has(m)) return bad("corrupt_image");
     if (SOF_OK.has(m)) {
       if (size || len < 8) return bad("corrupt_image");
+      if (opts.baselineOnly && b[i + 2] !== 8) return bad("corrupt_image"); // 8-bit samples only
       const height = (b[i + 3]! << 8) | b[i + 4]!;
       const width = (b[i + 5]! << 8) | b[i + 6]!;
       if (width === 0 || height === 0) return bad("corrupt_image");
@@ -113,8 +128,9 @@ const u32 = (b: Uint8Array, o: number) => (b[o]! | (b[o + 1]! << 8) | (b[o + 2]!
 
 const WEBP_CHUNKS_OK = new Set(["VP8X", "ICCP", "ALPH", "VP8 ", "VP8L"]);
 
-function inspectWebp(b: Uint8Array): MapImageResult {
+function inspectWebp(b: Uint8Array, opts: InspectOptions): MapImageResult {
   const n = b.length;
+  const animated = opts.animatedReason ?? "corrupt_image";
   if (u32(b, 4) + 8 !== n) return bad("corrupt_image"); // truncated, or trailing bytes after the RIFF
   let i = 12;
   let canvas: { width: number; height: number } | null = null;
@@ -126,12 +142,14 @@ function inspectWebp(b: Uint8Array): MapImageResult {
     const start = i + 8;
     if (start + len > n) return bad("corrupt_image");
     if (kind === "EXIF" || kind === "XMP ") return bad("metadata_present");
+    if (kind === "ANIM" || kind === "ANMF") return bad(animated);
+    if (i === 12 && kind !== "VP8X" && kind !== "VP8 " && kind !== "VP8L") return bad("corrupt_image"); // first chunk
     if (!WEBP_CHUNKS_OK.has(kind)) return bad("corrupt_image"); // allowlist: ANIM, ANMF and anything unknown are refused
     if (kind === "VP8X") {
       if (len < 10 || i !== 12) return bad("corrupt_image");
       const flags = b[start]!;
       if (flags & 0x08 || flags & 0x04) return bad("metadata_present"); // EXIF / XMP flags
-      if (flags & 0x02) return bad("corrupt_image"); // animation: not a map
+      if (flags & 0x02) return bad(animated); // animation flag
       canvas = { width: u24(b, start + 4) + 1, height: u24(b, start + 7) + 1 };
     } else if (kind === "VP8 " || kind === "VP8L") {
       if (stream) return bad("corrupt_image");

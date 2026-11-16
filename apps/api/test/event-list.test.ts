@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import app from "../src/index";
 import { beforeEach, describe, expect, it } from "vitest";
-import { MAX_EVENTS_IN_LIST, eventListSchema } from "@atlas/contract";
+import { MAX_EVENTS_IN_LIST, eventListSchema, toneOf } from "@atlas/contract";
 import { clearListEventsCache } from "../src/application/list-events";
 
 const get = (path: string, headers: Record<string, string> = {}, cf?: Record<string, unknown>) =>
@@ -10,16 +10,26 @@ const get = (path: string, headers: Record<string, string> = {}, cf?: Record<str
 const nearbyBySlug = async (res: Response) =>
   Object.fromEntries(eventListSchema.parse(await res.json()).map((e) => [e.slug, e.nearby]));
 
+const HEX = "0123abcd".repeat(4);
 const insert = (
   slug: string,
   start: string,
-  cover: string | null,
+  cover: boolean,
   place: { country: string; lat: number | null; lng: number | null } = { country: "IE", lat: null, lng: null },
-) =>
+) => [
   env.DB.prepare(
-    `INSERT INTO events (id, slug, name, start_date, end_date, city, country, latitude, longitude, cover_key, cover_width, cover_height, language, publish_state, created_at, updated_at)
-     VALUES (?1, ?2, ?3, ?4, ?4, 'Galway', ?8, ?9, ?10, ?5, ?6, ?7, 'en', 'published', 0, 0)`,
-  ).bind(`evt_${slug}`, slug, slug, start, cover, cover ? 960 : null, cover ? 640 : null, place.country, place.lat, place.lng);
+    `INSERT INTO events (id, slug, name, start_date, end_date, city, country, latitude, longitude, language, publish_state, created_at, updated_at)
+     VALUES (?1, ?2, ?3, ?4, ?4, 'Galway', ?5, ?6, ?7, 'en', 'published', 0, 0)`,
+  ).bind(`evt_${slug}`, slug, slug, start, place.country, place.lat, place.lng),
+  ...(cover
+    ? [
+        env.DB.prepare(
+          `INSERT INTO event_covers (event_id, full_key, full_width, full_height, small_key, small_width, small_height, og_key, focal_x, focal_y, created_at, updated_at)
+           VALUES (?1, ?2, 960, 640, ?3, 800, 533, ?4, 0.3, 0.7, 0, 0)`,
+        ).bind(`evt_${slug}`, `covers/evt_${slug}/${HEX}-full.webp`, `covers/evt_${slug}/${HEX}-800.webp`, `covers/evt_${slug}/${HEX}-og.jpg`),
+      ]
+    : []),
+];
 
 beforeEach(async () => {
   await env.DB.prepare("DELETE FROM events WHERE slug != 'tiny-fest'").run();
@@ -29,9 +39,9 @@ beforeEach(async () => {
 describe("GET /api/v1/events", () => {
   it("lists event summaries ordered by start date then slug, with cover or null", async () => {
     await env.DB.batch([
-      insert("zeta-fest", "2026-07-10", "zeta-fest.0123abcd.webp"),
-      insert("alpha-fest", "2026-07-10", null),
-      insert("early-fest", "2026-01-01", null),
+      ...insert("zeta-fest", "2026-07-10", true),
+      ...insert("alpha-fest", "2026-07-10", false),
+      ...insert("early-fest", "2026-01-01", false),
     ]);
     const res = await get("/api/v1/events?lat=1", { "cf-connecting-ip": "203.0.113.9" });
     expect(res.status).toBe(200);
@@ -49,14 +59,20 @@ describe("GET /api/v1/events", () => {
       city: "Testville",
       country: "IE",
       cover: null,
+      tone: toneOf("evt_tiny-fest"),
       nearby: false,
     });
     expect(list.find((e) => e.slug === "zeta-fest")!.cover).toEqual({
-      url: "/covers/zeta-fest.0123abcd.webp",
+      url: `/media/covers/evt_zeta-fest/${HEX}-full.webp`,
+      url800: `/media/covers/evt_zeta-fest/${HEX}-800.webp`,
       width: 960,
       height: 640,
+      focal: { x: 0.3, y: 0.7 },
     });
-    expect(Object.keys(tiny).sort()).toEqual(["city", "country", "cover", "endDate", "name", "nearby", "slug", "startDate"]);
+    // Public keys only: no id field (only the bounded tone; the id appears only inside a cover URL, as for maps), no og file.
+    expect(Object.keys(tiny).sort()).toEqual(["city", "country", "cover", "endDate", "name", "nearby", "slug", "startDate", "tone"]);
+    expect(JSON.stringify(tiny)).not.toContain("evt_");
+    expect(JSON.stringify(list)).not.toContain("-og.jpg");
   });
 
   it("answers 304 to a matching If-None-Match", async () => {
@@ -68,9 +84,9 @@ describe("GET /api/v1/events", () => {
 
   it("marks events nearby per request from request.cf, without mutating shared state", async () => {
     await env.DB.batch([
-      insert("dublin-fest", "2026-08-01", null, { country: "IE", lat: 53.35, lng: -6.26 }),
-      insert("madrid-fest", "2026-08-02", null, { country: "ES", lat: 40.42, lng: -3.7 }),
-      insert("nocoords-es", "2026-08-03", null, { country: "ES", lat: null, lng: null }),
+      ...insert("dublin-fest", "2026-08-01", false, { country: "IE", lat: 53.35, lng: -6.26 }),
+      ...insert("madrid-fest", "2026-08-02", false, { country: "ES", lat: 40.42, lng: -3.7 }),
+      ...insert("nocoords-es", "2026-08-03", false, { country: "ES", lat: null, lng: null }),
     ]);
     const inDublin = { country: "IE", latitude: "53.3", longitude: "-6.3" };
     const inMadrid = { country: "ES", latitude: "40.4", longitude: "-3.7" };
@@ -120,7 +136,7 @@ describe("GET /api/v1/events", () => {
 
   it(`never returns more than ${MAX_EVENTS_IN_LIST} events`, async () => {
     await env.DB.batch(
-      Array.from({ length: 60 }, (_, i) => insert(`bulk-${String(i).padStart(2, "0")}`, "2026-08-01", null)),
+      Array.from({ length: 60 }, (_, i) => insert(`bulk-${String(i).padStart(2, "0")}`, "2026-08-01", false)).flat(),
     );
     const list = eventListSchema.parse(await (await get("/api/v1/events")).json());
     expect(list).toHaveLength(MAX_EVENTS_IN_LIST);

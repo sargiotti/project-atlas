@@ -1,7 +1,9 @@
 import { useEffect, useRef } from "react";
+import type { CoverImage } from "@atlas/contract";
 import { useI18n } from "../i18n/I18nProvider";
 import { AboutRows } from "../pages/panel/events/About";
 import { Ic } from "../pages/panel/events/common";
+import { AboutCover } from "./CoverMedia";
 
 type AboutEvent = {
   slug: string;
@@ -15,6 +17,8 @@ type AboutEvent = {
   venueAddress?: string;
   description?: string;
   website?: string;
+  cover?: CoverImage | null;
+  tone?: number;
 };
 
 /**
@@ -41,6 +45,7 @@ export default function AboutSheet({ event, onClose }: { event: AboutEvent; onCl
 
   return (
     <section ref={ref} tabIndex={-1} className="pe-about vis" role="dialog" aria-label={t("pePvAbout")}>
+      <AboutCover cover={event.cover} tone={event.tone} />
       <div className="pe-ahead">
         <span className="pe-eyebrow">{t("pePvAbout")}</span>
         <button type="button" className="icon-btn" aria-label={t("close")} onClick={onClose}>

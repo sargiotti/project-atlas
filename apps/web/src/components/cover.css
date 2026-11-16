@@ -1,0 +1,24 @@
+/* Slice 14: covers on every surface. Light tones only (the dark tone variants are gone, also in the dark theme). */
+.cv-fb { display: block; width: 100%; height: 100%; }
+.cv-fill { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.cv-sheethd { position: relative; aspect-ratio: 8 / 3; max-height: 180px; margin: -10px -16px 8px; overflow: hidden; background: var(--surface-2, var(--bg)); }
+.cv-sheethd .cv-fb { position: absolute; inset: 0; }
+.cv-thumb { position: relative; width: 200px; max-width: 100%; aspect-ratio: 2 / 1; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: var(--surface-2); flex: none; }
+.cv-thumb > img, .cv-thumb > canvas, .cv-thumb > .cv-fb { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+
+/* Panel cards and hub hero: the picture sits behind the date tile and the status badge. */
+.pe-cover { position: relative; overflow: hidden; }
+.pe-cover.img { background: #000; }
+.pe-cover > :not(.cv-fill):not(.cv-fb) { position: relative; }
+.pe-cover.img .pe-dnum { background: rgba(255, 255, 255, 0.94); color: #1f1b33; border-radius: 12px; padding: 6px 9px; box-shadow: 0 1px 4px rgba(20, 16, 40, 0.25); }
+
+/* Hub: dashed suggestion under the numbered path. */
+.pe-sugg { margin-top: 14px; border: 2px dashed var(--line); border-radius: 18px; padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.pe-sugg .cv-thumb { width: 96px; border-radius: 9px; }
+.pe-sugg > div:nth-child(2) { flex: 1; min-width: 150px; }
+.pe-sugg b { display: block; line-height: 1.25; }
+.pe-sugg small { display: block; color: var(--ink-2); font-size: 0.86rem; }
+.pe-sugg .tag { display: inline-block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); border: 1.5px solid var(--line); border-radius: 999px; padding: 0 7px; margin-left: 6px; vertical-align: 1px; }
+.pe-sugg .btn { margin-left: auto; }
+.cv-minihd { position: relative; aspect-ratio: 8 / 3; border-radius: 12px; overflow: hidden; margin-bottom: 8px; background: var(--surface-2); }
+.cv-minihd .cv-fb { position: absolute; inset: 0; }

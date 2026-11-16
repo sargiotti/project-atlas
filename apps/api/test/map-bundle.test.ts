@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import app from "../src/index";
 import { describe, expect, it } from "vitest";
-import { mapBundleSchema, errorResponseSchema } from "@atlas/contract";
+import { mapBundleSchema, errorResponseSchema, toneOf } from "@atlas/contract";
 
 const get = (path: string, headers: Record<string, string> = {}) =>
   app.fetch(new Request(`http://atlas.test${path}`, { headers }), env);
@@ -25,6 +25,8 @@ describe("GET /api/v1/events/:slug/map-bundle", () => {
       dayStart: "06:00",
       city: "Testville",
       country: "IE",
+      cover: null,
+      tone: toneOf("evt_tiny-fest"),
     });
     expect(bundle.map.theme).toBe("dark");
     expect(bundle.map.image.variants).toEqual([

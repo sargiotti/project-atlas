@@ -26,6 +26,7 @@ const EV = {
   website: null,
   venueAddress: null,
   map: null,
+  cover: null,
   createdAt: "2026-11-14T10:00:00.000Z",
   updatedAt: "2026-11-14T10:00:00.000Z",
 };
@@ -241,6 +242,7 @@ describe("owner preview", () => {
     json({
       event: { slug: EV.slug, name: "Fiesta <b>de</b> mi barrio", startDate: "2026-12-12", endDate: "2026-12-13", language: "es", timeZone: "UTC", dayStart: "06:00", city: "Rosario", country: "AR", ...over },
       map: null,
+      cover: null,
       points: [],
       sessions: [],
     });
@@ -343,6 +345,7 @@ describe("venue address", () => {
     const pv = {
       event: { slug: EV.slug, name: "Fiesta", startDate: "2026-12-12", endDate: "2026-12-13", language: "es", timeZone: "UTC", dayStart: "06:00", city: "Rosario", country: "AR", venueAddress: "Calle Falsa 123" },
       map: null,
+      cover: null,
       points: [],
       sessions: [],
     };

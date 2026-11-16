@@ -12,6 +12,7 @@ import { mapDa, mapEn, mapEs } from "./mapMessages";
 import { pubDa, pubEn, pubEs } from "./publishMessages";
 import { pedDa, pedEn, pedEs } from "./pointsEditorMessages";
 import { sedDa, sedEn, sedEs } from "./scheduleEditorMessages";
+import { coverDa, coverEn, coverEs } from "./coverMessages";
 
 const es = {
   ...panelEs,
@@ -20,6 +21,7 @@ const es = {
   ...pubEs,
   ...pedEs,
   ...sedEs,
+  ...coverEs,
   searchLabel: "Buscar eventos",
   searchPlaceholder: "Buscar eventos, ciudades, países",
   searchClear: "Borrar búsqueda",
@@ -124,6 +126,7 @@ const en: Messages = {
   ...pubEn,
   ...pedEn,
   ...sedEn,
+  ...coverEn,
   searchLabel: "Search events",
   searchPlaceholder: "Search events, cities, countries",
   searchClear: "Clear search",
@@ -226,6 +229,7 @@ const da: Messages = {
   ...pubDa,
   ...pedDa,
   ...sedDa,
+  ...coverDa,
   searchLabel: "Søg i events",
   searchPlaceholder: "Søg efter events, byer, lande",
   searchClear: "Ryd søgning",

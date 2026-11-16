@@ -5,12 +5,13 @@ import { countryName, formatEventDates, isEnded, localToday, sortEvents } from "
 import { Link } from "../lib/router";
 import { matchesQuery, queryWords, SEARCH_MAX } from "../lib/search";
 import { useI18n } from "../i18n/I18nProvider";
+import { CoverMedia } from "../components/CoverMedia";
 import { LogoMark } from "../markers/Pixel";
 import { Shell } from "./Pages";
 
 type State = { kind: "loading" } | { kind: "error" } | { kind: "ok"; events: EventSummary[] };
 
-function EventCard({ event, index, today }: { event: EventSummary; index: number; today: string }) {
+function EventCard({ event, today }: { event: EventSummary; today: string }) {
   const { t, lang } = useI18n();
   const ended = isEnded(event, today);
   // The slug is contract-validated already; re-checking keeps the href safe even if that ever changes.
@@ -18,20 +19,8 @@ function EventCard({ event, index, today }: { event: EventSummary; index: number
   return (
     <li>
       <Link to={href} className={`ecard${ended ? " is-ended" : ""}`}>
-        <div className={`ecard-media${event.cover ? "" : " cover-fallback"}`}>
-          {event.cover ? (
-            <img
-              className="ecard-cover"
-              src={event.cover.url}
-              width={event.cover.width}
-              height={event.cover.height}
-              alt=""
-              loading={index < 2 ? "eager" : "lazy"}
-              decoding="async"
-            />
-          ) : (
-            <LogoMark size={56} />
-          )}
+        <div className="ecard-media">
+          <CoverMedia cover={event.cover} tone={event.tone} size="card" imgClassName="ecard-cover" />
           {ended && <span className="ended-badge" aria-hidden="true">{t("ended")}</span>}
         </div>
         <div className="ecard-body">
@@ -195,7 +184,7 @@ export default function Home() {
       )}
       {state.kind === "ok" && visible.length > 0 && (
         <ul className="cards">
-          {visible.map((e, i) => <EventCard key={e.slug} event={e} index={i} today={today} />)}
+          {visible.map((e) => <EventCard key={e.slug} event={e} today={today} />)}
         </ul>
       )}
     </Shell>

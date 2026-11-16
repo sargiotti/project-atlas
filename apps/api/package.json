@@ -8,6 +8,7 @@
     "db:migrate": "wrangler d1 migrations apply DB",
     "seed": "tsx scripts/seed.ts",
     "check:svg": "tsx scripts/check-svg.ts",
+    "build:tone-og": "tsx scripts/build-tone-og.ts",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json"
   },

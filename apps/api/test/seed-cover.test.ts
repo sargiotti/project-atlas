@@ -28,13 +28,20 @@ describe("loadCover", () => {
     expect(loadCover("some-event", undefined, tmpdir())).toBeNull();
   });
 
-  it("builds a content-hashed key that satisfies the contract URL regex", async () => {
-    const { COVER_URL_REGEX } = await import("@atlas/contract");
+  it("plans R2 keys that satisfy the contract URL regexes, deterministic per content", async () => {
+    const { COVER_URL_REGEX, COVER_URL800_REGEX } = await import("@atlas/contract");
+    const { planSeedCover } = await import("../scripts/seed-lib");
     const dir = mkdtempSync(join(tmpdir(), "covers-"));
     writeFileSync(join(dir, "some-event.webp"), vp8l(960, 640));
     const cover = loadCover("some-event", { width: 960, height: 640 }, dir)!;
     expect([cover.width, cover.height]).toEqual([960, 640]);
-    expect(`/covers/${cover.key}`).toMatch(COVER_URL_REGEX);
+    const og = new Uint8Array([1, 2, 3]);
+    const plan = planSeedCover("some-event", cover, og);
+    expect(`/media/${plan.fullKey}`).toMatch(COVER_URL_REGEX);
+    expect(`/media/${plan.smallKey}`).toMatch(COVER_URL800_REGEX);
+    expect(plan.ogKey).toMatch(/^covers\/evt_some-event\/[0-9a-f]{32}-og\.jpg$/);
+    expect(planSeedCover("some-event", cover, og)).toEqual(plan); // re-seeding the same art writes the same keys
+    expect(planSeedCover("some-event", cover, new Uint8Array([9])).ogKey).not.toBe(plan.ogKey);
   });
 
   it("fails the seed when the file does not match the declared dimensions", () => {

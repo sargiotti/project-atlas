@@ -44,6 +44,7 @@ const en: PrivacyNotice = {
       lines: [
         "Cloudflare hosts Atlas. Our database is stored in the EU. Some technical logs may be processed outside the EU, protected by the EU–US Data Privacy Framework and standard contractual clauses.",
         "Map images you upload are stored in Cloudflare R2, in the EU. Before they are stored, your browser resizes them and removes location and other metadata (such as GPS and camera details). We delete a map image when you replace it or when you delete the event.",
+        "Event cover images you upload are stored in Cloudflare R2, in the EU. Your browser resizes them and removes location and other metadata (such as GPS and camera details) before they are stored. A cover is public as soon as the event is published, and anyone with the link can see it, so please only use pictures you may share. We delete a cover when you replace or remove it, or when you delete the event.",
         "As our hosting provider, Cloudflare records basic data about each request (IP address, approximate country, page requested and time) in its traffic analytics. We can view it for up to about 30 days, only to diagnose problems and stop abuse. We also see overall traffic statistics, such as visits by country, which don't identify anyone.",
         "Google provides sign-in and is responsible for your Google account under its own privacy policy.",
       ],
@@ -115,6 +116,7 @@ const es: PrivacyNotice = {
       lines: [
         "Cloudflare aloja Atlas. Nuestra base de datos está en la UE. Algunos registros técnicos pueden procesarse fuera de la UE, protegidos por el Marco de Privacidad de Datos UE–EE. UU. y cláusulas contractuales tipo.",
         "Las imágenes de mapa que subís se guardan en Cloudflare R2, en la UE. Antes de guardarlas, tu navegador las achica y les quita la ubicación y otros metadatos (como el GPS y los datos de la cámara). Borramos la imagen de un mapa cuando la reemplazás o cuando eliminás el evento.",
+        "Las imágenes de portada de tus eventos se guardan en Cloudflare R2, en la UE. Tu navegador las achica y les quita la ubicación y otros metadatos (como el GPS y los datos de la cámara) antes de guardarlas. Una portada es pública apenas se publica el evento y la puede ver cualquiera que tenga el enlace, así que usá solo fotos que puedas compartir. Borramos la portada cuando la reemplazás o la quitás, o cuando eliminás el evento.",
         "Como nuestro proveedor de hosting, Cloudflare registra datos básicos de cada solicitud (dirección IP, país aproximado, página solicitada y hora) en su analítica de tráfico. Podemos verlos durante hasta unos 30 días, solo para diagnosticar problemas y frenar abusos. También vemos estadísticas generales de tráfico, como las visitas por país, que no identifican a nadie.",
         "Google ofrece el inicio de sesión y es responsable de tu cuenta de Google según su propia política de privacidad.",
       ],
@@ -186,6 +188,7 @@ const da: PrivacyNotice = {
       lines: [
         "Cloudflare hoster Atlas. Vores database er gemt i EU. Nogle tekniske logge kan blive behandlet uden for EU, beskyttet af EU–USA-rammen for databeskyttelse og standardkontraktbestemmelser.",
         "Kortbilleder, du uploader, gemmes i Cloudflare R2 i EU. Før de gemmes, gør din browser dem mindre og fjerner lokation og andre metadata (som GPS og kameraoplysninger). Vi sletter et kortbillede, når du erstatter det, eller når du sletter eventet.",
+        "Forsidebilleder til dine events gemmes i Cloudflare R2 i EU. Din browser gør dem mindre og fjerner lokation og andre metadata (som GPS og kameraoplysninger), før de gemmes. Et forsidebillede er offentligt, så snart eventet er offentliggjort, og alle med linket kan se det, så brug kun billeder, du må dele. Vi sletter et forsidebillede, når du erstatter eller fjerner det, eller når du sletter eventet.",
         "Som vores hostingudbyder registrerer Cloudflare grundlæggende data om hver forespørgsel (IP-adresse, omtrentligt land, den ønskede side og tidspunkt) i sin trafikanalyse. Vi kan se dem i op til cirka 30 dage, kun for at finde fejl og stoppe misbrug. Vi ser også samlede trafikstatistikker, f.eks. besøg fordelt på lande, som ikke identificerer nogen.",
         "Google leverer login og er ansvarlig for din Google-konto i henhold til sin egen privatlivspolitik.",
       ],

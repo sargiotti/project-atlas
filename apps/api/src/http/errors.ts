@@ -31,6 +31,8 @@ const MESSAGES: Record<ErrorCode, string> = {
   event_not_draft: "Only draft events can change their map.", // unused since slice 08b
   map_changed: "The map was changed by another request. Reload and try again.",
   map_not_found: "This event has no map.",
+  cover_not_found: "This event has no cover.",
+  cover_changed: "The cover was changed by another request. Reload and try again.",
   unsupported_image_type: "Unsupported image type.",
   invalid_upload: "The uploaded image was refused.",
   invalid_transition: "This action is not possible in the event's current state.",

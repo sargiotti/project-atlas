@@ -1,4 +1,5 @@
-import type { EventPreviewResponse, Point, Session } from "@atlas/contract";
+import { toneOf, type EventPreviewResponse, type Point, type Session } from "@atlas/contract";
+import { toPublicCover } from "../adapters/d1-cover-repository";
 import { mediaUrl } from "../adapters/d1-map-image-repository";
 import type { OwnedEvent } from "../adapters/d1-panel-event-repository";
 
@@ -22,6 +23,8 @@ export function toPreviewBody(e: OwnedEvent, points: Point[], sessions: Session[
       ...(e.description ? { description: e.description } : {}),
       ...(e.website ? { website: e.website } : {}),
       ...(e.venueAddress ? { venueAddress: e.venueAddress } : {}),
+      cover: e.storedCover ? toPublicCover(e.storedCover) : null,
+      tone: toneOf(e.id),
     },
     map: e.storedMap
       ? {

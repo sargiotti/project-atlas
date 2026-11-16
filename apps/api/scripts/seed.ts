@@ -8,6 +8,9 @@
  *   --svg-only        seed every event with its SVG map (design/assets/demo-maps) as before
  *   --dir <folder>    seed from this folder instead (repeatable; a later folder replaces earlier
  *                     events with the same slug). Overrides the default below.
+ * Slice 14: seeded event covers (and their link-preview JPEGs) are put into R2 (bucket atlas-maps, keys covers/evt_{slug}/...)
+ * and referenced from `event_covers`, exactly like an organizer's upload. --local / --remote put the objects first, then run
+ * the SQL; --remote targets the EU jurisdiction bucket. Production order: migration 0013, Worker deploy, seed --remote.
  * Default: SVG maps from design/assets/demo-maps, with the AI maps (WebP) in
  * design/assets/demo-maps-ai replacing the same-slug events (fiesta, festival).
  */
@@ -15,7 +18,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildSeedStatements, loadAllSeeds } from "./seed-lib.ts";
+import { buildSeedStatements, loadAllSeeds, planSeedCover, type SeedCoverObjects } from "./seed-lib.ts";
 import { loadBadge, loadBrandCard, renderEventOg } from "./og-image.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -51,39 +54,48 @@ for (const s of seeds) {
   writeFileSync(join(mapsDir, s.imageKey), s.bytes);
 }
 
-// 3b. Covers to apps/web/public/covers/{slug}.{hash8}.webp (gitignored, regenerated).
-const coversOut = join(repoRoot, "apps/web/public/covers");
-mkdirSync(coversOut, { recursive: true });
-for (const f of readdirSync(coversOut).filter((f) => f.endsWith(".webp"))) rmSync(join(coversOut, f));
-for (const s of seeds) {
-  if (s.cover) writeFileSync(join(coversOut, s.cover.key), s.cover.bytes);
-}
-
-// 3c. Link-preview images to apps/web/public/og/ (gitignored, regenerated): the brand card (copied,
-// content-hashed) and one 1200x630 JPEG per event that has a cover. Events without a cover use the brand card.
+// 3b. Link-preview card. Only the Home brand card is a static asset now (apps/web/public/og/, gitignored, regenerated).
+// Seeded event covers and their 1200x630 link-preview images live in R2 + `event_covers` like uploaded ones (slice 14):
+// they are written to apps/api/.seed/r2/ here and put into the bucket in step 5, before the SQL that points at them.
 const ogDir = join(repoRoot, "apps/web/public/og");
 mkdirSync(ogDir, { recursive: true });
 for (const f of readdirSync(ogDir).filter((f) => f.endsWith(".jpg"))) rmSync(join(ogDir, f));
 const ogAssets = join(repoRoot, "design/assets/og");
 const brandCard = loadBrandCard(join(ogAssets, "brand-card.jpg"));
 writeFileSync(join(ogDir, brandCard.key), brandCard.bytes);
+// Old static event images are gone (removed from the repo output): clear stale generated files so they cannot ship.
+rmSync(join(repoRoot, "apps/web/public/covers"), { recursive: true, force: true });
+
 const badge = loadBadge(join(ogAssets, "badge.png"));
-const ogKeys = new Map<string, string>();
+const seedOut = join(apiDir, ".seed");
+const r2Out = join(seedOut, "r2");
+rmSync(r2Out, { recursive: true, force: true });
+mkdirSync(r2Out, { recursive: true });
+const covers = new Map<string, SeedCoverObjects>();
+const r2Files: { key: string; file: string; contentType: string }[] = [];
 for (const s of seeds) {
   if (!s.cover) continue;
-  const og = await renderEventOg(s.seed.event.slug, s.cover.bytes, badge);
-  writeFileSync(join(ogDir, og.key), og.bytes);
-  ogKeys.set(s.seed.event.slug, og.key);
+  const slug = s.seed.event.slug;
+  const og = await renderEventOg(slug, s.cover.bytes, badge);
+  const plan = planSeedCover(slug, s.cover, og.bytes);
+  covers.set(slug, plan);
+  for (const [key, bytes, contentType] of [
+    [plan.fullKey, s.cover.bytes, "image/webp"],
+    [plan.smallKey, s.cover.bytes, "image/webp"],
+    [plan.ogKey, og.bytes, "image/jpeg"],
+  ] as const) {
+    const file = join(r2Out, key.replaceAll("/", "__"));
+    writeFileSync(file, bytes);
+    r2Files.push({ key, file, contentType });
+  }
 }
-console.log(`Wrote brand card ${brandCard.key} and ${ogKeys.size} event OG image(s) to ${ogDir}`);
+console.log(`Wrote brand card ${brandCard.key} to ${ogDir}; ${covers.size} seeded cover(s) staged in ${r2Out}`);
 
 // 4. Idempotent seed.sql.
-const seedOut = join(apiDir, ".seed");
-mkdirSync(seedOut, { recursive: true });
 const sqlPath = join(seedOut, "seed.sql");
-writeFileSync(sqlPath, buildSeedStatements(seeds, ogKeys).join(";\n") + ";\n");
+writeFileSync(sqlPath, buildSeedStatements(seeds, covers).join(";\n") + ";\n");
 console.log(`Seeded ${seeds.length} event(s): ${seeds.map((s) => s.seed.event.slug).join(", ")}`);
-console.log(`Wrote ${sqlPath} ${seeds.length} map(s) to ${mapsDir} and ${seeds.filter((s) => s.cover).length} cover(s) to ${coversOut}`);
+console.log(`Wrote ${sqlPath} and ${seeds.length} map(s) to ${mapsDir}`);
 
 // 5. wrangler d1 execute.
 if (target) {
@@ -94,5 +106,9 @@ if (target) {
     if (r.status !== 0) process.exit(r.status ?? 1);
   };
   run(["d1", "migrations", "apply", "DB", target]);
+  // R2 objects first, so a row never points at a missing object. Remote: the EU jurisdiction bucket (wrangler.toml).
+  for (const f of r2Files) {
+    run(["r2", "object", "put", `atlas-maps/${f.key}`, "--file", f.file, "--content-type", f.contentType, target, ...(target === "--remote" ? ["--jurisdiction", "eu"] : [])]);
+  }
   run(["d1", "execute", "DB", target, "--file", sqlPath]);
 }
