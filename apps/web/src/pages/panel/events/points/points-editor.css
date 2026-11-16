@@ -101,7 +101,7 @@
 @keyframes ped-wob { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-5deg); } 75% { transform: rotate(5deg); } }
 .ped .marker.stamp .marker-art { animation: ped-stamp 0.42s steps(6) both; }
 @keyframes ped-stamp { 0% { transform: translateY(-18px) scale(1.15); } 55% { transform: translateY(0) scale(1.2, 0.8); } 80% { transform: scale(0.95, 1.06); } 100% { transform: none; } }
-.marker-tip { position: absolute; left: 50%; top: 44px; transform: translateX(-50%); background: var(--ink); color: var(--bg); font-size: 0.74rem; font-weight: 700; padding: 2px 8px; border-radius: 8px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.12s; max-width: 220px; overflow: hidden; text-overflow: ellipsis; z-index: 3; }
+.marker-tip { position: absolute; left: 50%; top: 56px; transform: translateX(-50%); background: var(--ink); color: var(--bg); font-size: 0.74rem; font-weight: 700; padding: 2px 8px; border-radius: 8px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.12s; max-width: 220px; overflow: hidden; text-overflow: ellipsis; z-index: 3; }
 .marker:hover .marker-tip, .marker.selected .marker-tip, .marker.hl .marker-tip, .marker:focus-visible .marker-tip { opacity: 1; }
 
 /* drag ghost */

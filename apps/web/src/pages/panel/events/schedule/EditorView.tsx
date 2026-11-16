@@ -542,7 +542,7 @@ export default function EditorView({ event, initial, organizerId, placeParam }: 
           {places.map((p) => (
             <li key={p.id}>
               <button type="button" className={`prow${p.id === selPlace ? " on" : ""}${questOn && step === 0 ? " nudge" : ""}`} aria-pressed={p.id === selPlace} onClick={() => choosePlace(p.id)}>
-                {map && <MarkerToken category={p.category} theme={map.theme} selected={p.id === selPlace} />}
+                {map && <MarkerToken category={p.category} theme={map.theme} selected={p.id === selPlace} scale={0.55} />}
                 <span className="tx">
                   <span className="nm" dir="auto">{nameOf(p)}</span>
                   <span className="ds">{countLabel(p)}</span>

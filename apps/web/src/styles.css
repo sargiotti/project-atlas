@@ -16,14 +16,14 @@
 /* Light Map Theme (also the default look of non-map pages). */
 .app,
 .app[data-theme="light"] {
-  --pre-bg: #fdf3dc; --pre-line: #ecd391; --pre-ico-bg: #ffffff; --pre-ico: #8a5300; --pre-ink: #1f1b33; --pre-ink-2: #5a4a2e;
+  --pre-bg: #E3F1F9; --pre-line: #9FCDE6; --pre-ico-bg: #FFFFFF; --pre-ico: #1A6F99; --pre-ink: #1E2340; --pre-ink-2: #3F4A66;
   --bg: #FAF6EF;
   --surface: #FFFFFF;
   --surface-2: #EDE6DA;
   --ink: #1E2340;
   --ink-2: #5B6078;
   --line: #E6DFD2;
-  --line-input: #C9C0B0;
+  --line-input: #8C8370;
   --accent: #1E2340;
   --on-accent: #FAF6EF;
   --link: #C2410C;
@@ -40,14 +40,14 @@
 
 /* Dark Map Theme. */
 .app[data-theme="dark"] {
-  --pre-bg: #3d3642; --pre-line: #6b5a3e; --pre-ico-bg: #2c2638; --pre-ico: #ffd27a; --pre-ink: #f7f5fc; --pre-ink-2: #ecdfc2;
+  --pre-bg: #172C45; --pre-line: #2D5878; --pre-ico-bg: #141830; --pre-ico: #7FD0F5; --pre-ink: #FAF6EF; --pre-ink-2: #BCD2E4;
   --bg: #141830;
   --surface: #1E2340;
   --surface-2: #262D4D;
   --ink: #FAF6EF;
   --ink-2: #A9AEC4;
   --line: #2E3550;
-  --line-input: #3A4166;
+  --line-input: #6B7398;
   --accent: #FF6A3D;
   --on-accent: #1E2340;
   --link: #FF8A63;
@@ -65,14 +65,14 @@
 /* Non-map pages follow the system colour scheme. */
 @media (prefers-color-scheme: dark) {
   .app[data-theme="auto"] {
-    --pre-bg: #3d3642; --pre-line: #6b5a3e; --pre-ico-bg: #2c2638; --pre-ico: #ffd27a; --pre-ink: #f7f5fc; --pre-ink-2: #ecdfc2;
+    --pre-bg: #172C45; --pre-line: #2D5878; --pre-ico-bg: #141830; --pre-ico: #7FD0F5; --pre-ink: #FAF6EF; --pre-ink-2: #BCD2E4;
     --bg: #141830;
     --surface: #1E2340;
     --surface-2: #262D4D;
     --ink: #FAF6EF;
     --ink-2: #A9AEC4;
     --line: #2E3550;
-    --line-input: #3A4166;
+    --line-input: #6B7398;
     --accent: #FF6A3D;
     --on-accent: #1E2340;
     --link: #FF8A63;
@@ -133,7 +133,6 @@ button, input { font: inherit; color: inherit; }
   display: inline-flex; align-items: center; gap: 8px; padding: 3px 12px 3px 4px; border-radius: 14px;
   background: var(--chip-bg); color: var(--chip-ink); font-size: 0.85rem; font-weight: 700;
 }
-.chip svg { border-radius: 8px; }
 
 /* ---- language select (native <select> laid invisibly over a compact face) ---------------- */
 .lang-select {
@@ -221,7 +220,7 @@ button, input { font: inherit; color: inherit; }
 }
 .marker-art { position: absolute; display: block; line-height: 0; }
 .marker:focus-visible { outline: 3px solid var(--accent); outline-offset: 0; border-radius: 50%; }
-.marker-arrow { position: absolute; left: 13px; top: -14px; line-height: 0; animation: bob 1.2s steps(1) infinite; pointer-events: none; }
+.marker-arrow { position: absolute; left: 13px; top: -18px; line-height: 0; animation: bob 1.2s steps(1) infinite; pointer-events: none; }
 @keyframes bob { 0% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
 
 /* sheet */
@@ -598,17 +597,17 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
 
 /* stage colours (slice 18): constants indexed by position, never data. Card text keeps --ink (AA on both fills). */
 .gcol { --sc-card: var(--sc-l); }
-.stage-c0 { --sc: #E0A800; --sc-l: #FFE4A0; --sc-d: #55431A; --sc-tint: #E0A80014; }
-.stage-c1 { --sc: #E8684A; --sc-l: #FFD2C4; --sc-d: #5E2E26; --sc-tint: #E8684A14; }
-.stage-c2 { --sc: #2FA37C; --sc-l: #C8EEDF; --sc-d: #1E4A3D; --sc-tint: #2FA37C14; }
-.stage-c3 { --sc: #3B82E0; --sc-l: #D2E4FF; --sc-d: #1F3D63; --sc-tint: #3B82E014; }
-.stage-c4 { --sc: #7C5CDB; --sc-l: #E3DAFF; --sc-d: #3B3170; --sc-tint: #7C5CDB14; }
-.stage-c5 { --sc: #D9488F; --sc-l: #FFD4E8; --sc-d: #592545; --sc-tint: #D9488F14; }
-.stage-c6 { --sc: #7FA81F; --sc-l: #E0F1B8; --sc-d: #3A4818; --sc-tint: #7FA81F14; }
-.stage-c7 { --sc: #1B9AAA; --sc-l: #C6ECF1; --sc-d: #1A4850; --sc-tint: #1B9AAA14; }
-.app[data-theme="dark"] .gcol { --sc-card: var(--sc-d); }
+.stage-c0 { --sc: #1D90CA; --sc-l: #BAE7FD; --sc-tint: #1D90CA14; --sc-n: #1195D7; --sc-d: #254352; --sc-tint-d: #1195D717; } /* Sky */
+.stage-c1 { --sc: #AD8004; --sc-l: #FFEBB2; --sc-tint: #AD800414; --sc-n: #CC9600; --sc-d: #4A3E1B; --sc-tint-d: #CC960017; } /* Sun */
+.stage-c2 { --sc: #269973; --sc-l: #BAF7E3; --sc-tint: #26997314; --sc-n: #1FAD7E; --sc-d: #25463B; --sc-tint-d: #1FAD7E17; } /* Mint */
+.stage-c3 { --sc: #8F64D8; --sc-l: #E8DDFB; --sc-tint: #8F64D814; --sc-n: #A178E7; --sc-d: #3B2D53; --sc-tint-d: #A178E717; } /* Violet */
+.stage-c4 { --sc: #E1558F; --sc-l: #FDD7E7; --sc-tint: #E1558F14; --sc-n: #EC5695; --sc-d: #56293C; --sc-tint-d: #EC569517; } /* Rose */
+.stage-c5 { --sc: #6E9325; --sc-l: #E3F7BA; --sc-tint: #6E932514; --sc-n: #7EAD1F; --sc-d: #394324; --sc-tint-d: #7EAD1F17; } /* Olive */
+.stage-c6 { --sc: #5A7EE2; --sc-l: #D7E1FD; --sc-tint: #5A7EE214; --sc-n: #6589EE; --sc-d: #293556; --sc-tint-d: #6589EE17; } /* Cobalt */
+.stage-c7 { --sc: #C65CD0; --sc-l: #F6D7F9; --sc-tint: #C65CD014; --sc-n: #D25CDC; --sc-d: #4E2E51; --sc-tint-d: #D25CDC17; } /* Orchid */
+.app[data-theme="dark"] .gcol { --sc-card: var(--sc-d); --sc: var(--sc-n); --sc-tint: var(--sc-tint-d); }
 @media (prefers-color-scheme: dark) {
-  .app[data-theme="auto"] .gcol { --sc-card: var(--sc-d); }
+  .app[data-theme="auto"] .gcol { --sc-card: var(--sc-d); --sc: var(--sc-n); --sc-tint: var(--sc-tint-d); }
 }
 
 .gwrap { position: relative; flex: 1; min-height: 0; }
