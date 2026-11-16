@@ -563,7 +563,7 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
 .zstep .lv i:nth-child(2) { height: 10px; }
 .zstep .lv i:nth-child(3) { height: 14px; }
 
-.sched-hours { display: flex; align-items: center; gap: 6px; padding: 0 0 6px 10px; }
+.sched-hours { display: flex; align-items: center; gap: 6px; padding: 10px 0 12px 10px; }
 .hnow {
   flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: 999px;
   border: 2px solid var(--accent); background: var(--surface); color: var(--ink); font-weight: 700; font-size: 0.88rem; cursor: pointer;
@@ -573,11 +573,26 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
 .hscroll { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; padding-right: 10px; }
 .hscroll::-webkit-scrollbar { display: none; }
 .hscroll button {
-  flex: none; min-height: 40px; min-width: 52px; padding: 0 9px; border: 0; border-radius: 10px; background: transparent; color: var(--ink-2);
+  flex: none; min-height: 40px; min-width: 56px; padding: 0 14px; border: 0; border-radius: 10px; background: transparent; color: var(--ink-2);
   font-weight: 700; font-size: 0.86rem; font-variant-numeric: tabular-nums; cursor: pointer;
 }
 .hscroll button.on { color: var(--ink); background: var(--surface); box-shadow: inset 0 -3px 0 var(--accent); }
 .hscroll button small { display: block; font-size: 0.64rem; line-height: 1; margin-top: -2px; font-weight: 700; text-transform: capitalize; }
+
+/* stage colours (slice 18): constants indexed by position, never data. Card text keeps --ink (AA on both fills). */
+.gcol { --sc-card: var(--sc-l); }
+.stage-c0 { --sc: #E0A800; --sc-l: #FFE4A0; --sc-d: #55431A; --sc-tint: #E0A80014; }
+.stage-c1 { --sc: #E8684A; --sc-l: #FFD2C4; --sc-d: #5E2E26; --sc-tint: #E8684A14; }
+.stage-c2 { --sc: #2FA37C; --sc-l: #C8EEDF; --sc-d: #1E4A3D; --sc-tint: #2FA37C14; }
+.stage-c3 { --sc: #3B82E0; --sc-l: #D2E4FF; --sc-d: #1F3D63; --sc-tint: #3B82E014; }
+.stage-c4 { --sc: #7C5CDB; --sc-l: #E3DAFF; --sc-d: #3B3170; --sc-tint: #7C5CDB14; }
+.stage-c5 { --sc: #D9488F; --sc-l: #FFD4E8; --sc-d: #592545; --sc-tint: #D9488F14; }
+.stage-c6 { --sc: #7FA81F; --sc-l: #E0F1B8; --sc-d: #3A4818; --sc-tint: #7FA81F14; }
+.stage-c7 { --sc: #1B9AAA; --sc-l: #C6ECF1; --sc-d: #1A4850; --sc-tint: #1B9AAA14; }
+.app[data-theme="dark"] .gcol { --sc-card: var(--sc-d); }
+@media (prefers-color-scheme: dark) {
+  .app[data-theme="auto"] .gcol { --sc-card: var(--sc-d); }
+}
 
 .gwrap { position: relative; flex: 1; min-height: 0; }
 .scroll { position: absolute; inset: 0; overflow: auto; overscroll-behavior: contain; touch-action: pan-x pan-y; scrollbar-width: thin; background: var(--bg); }
@@ -601,10 +616,10 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
   position: sticky; top: 0; z-index: 8; display: flex; align-items: center; margin: 0; padding: 5px 6px 3px 8px; border-bottom: 1px solid var(--line);
   background: var(--surface); font-size: 0.8rem; font-weight: 700; line-height: 1.15; overflow: hidden;
 }
-.gch::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--cat, var(--accent)); }
+.gch::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--sc, var(--accent)); }
 .gch span { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 .gcells {
-  position: relative; list-style: none; margin: 0; padding: 0;
+  position: relative; list-style: none; margin: 0; padding: 0; background-color: var(--sc-tint, transparent);
   background-image: repeating-linear-gradient(180deg, var(--hour) 0 1px, transparent 1px var(--hh)); background-position: 0 var(--pt);
 }
 .gcells.halfs {
@@ -619,8 +634,8 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
 .gnow { position: absolute; right: 0; height: 0; border-top: 2px solid var(--accent); z-index: 3; pointer-events: none; }
 .gnow::before { content: ""; position: absolute; left: -5px; top: -6px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
 .blk {
-  display: flex; flex-direction: column; gap: 1px; width: 100%; height: 100%; padding: 5px 7px; border-radius: 10px; background: var(--blk);
-  border: 1px solid var(--blk-line); text-align: left; cursor: pointer; overflow: hidden; color: var(--ink);
+  display: flex; flex-direction: column; gap: 1px; width: 100%; height: 100%; padding: 5px 7px; border-radius: 10px; background: var(--sc-card, var(--blk));
+  border: 1px solid var(--sc, var(--blk-line)); text-align: left; cursor: pointer; overflow: hidden; color: var(--ink);
 }
 .blk .bt { font-weight: 700; font-size: 0.86rem; line-height: 1.18; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 .blk .bm { font-size: 0.74rem; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -628,7 +643,7 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
 .blk.c .bt { font-size: 0.8rem; line-height: 1.15; }
 .blk.past { background: var(--past) repeating-linear-gradient(135deg, transparent 0 7px, var(--stripe) 7px 9px); border-color: var(--line); }
 .blk.past .bt { color: var(--ink-2); }
-.blk.now { background: var(--now-bg); border: 2px solid var(--accent); }
+.blk.now { border: 2px solid var(--accent); }
 .blk.sel { outline: 3px solid var(--ink); outline-offset: 1px; }
 .blk .ndot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-right: 5px; vertical-align: 1px; }
 .blk .pill { align-self: flex-start; }
