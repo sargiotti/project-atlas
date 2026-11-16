@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ICONS, LOGO_MARK, QUEST_ARROW, TOKENS, TOKENS_SELECTED, type Layer } from "./pixelArt";
+import { ICONS, QUEST_ARROW, TOKENS, TOKENS_SELECTED, type Layer } from "./pixelArt";
 import { CATEGORY_INFO } from "./categories";
 
 export type MapTheme = "light" | "dark";
@@ -44,10 +44,17 @@ export function QuestArrow({ theme }: { theme: MapTheme }) {
   );
 }
 
-export function LogoMark({ size = 28 }: { size?: number }) {
+// Brand mark (handoff 2.1): a 10x10 pixel pin, tangerine with an "inner window" that follows the text colour
+// (ink on light backgrounds, paper on dark ones). `mono` paints the whole pin in the text colour.
+const MARK_ROWS = ["..XXXXXX..", ".XXXXXXXX.", "XXXXXXXXXX", "XXXOOOOXXX", "XXXOOOOXXX", "XXXXXXXXXX", ".XXXXXXXX.", "..XXXXXX..", "...XXXX...", "....XX...."];
+export function LogoMark({ size = 28, mono = false }: { size?: number; mono?: boolean }) {
   return (
-    <svg className="px" width={size} height={size} viewBox={`0 0 ${LOGO_MARK.w} ${LOGO_MARK.h}`} shapeRendering="crispEdges" aria-hidden="true" focusable="false">
-      {layers(LOGO_MARK.paths)}
+    <svg className="px" width={size} height={size} viewBox="0 0 80 80" shapeRendering="crispEdges" aria-hidden="true" focusable="false">
+      {MARK_ROWS.flatMap((row, y) =>
+        [...row].map((c, x) =>
+          c === "." ? null : <rect key={`${x}-${y}`} x={x * 8} y={y * 8} width="8" height="8" fill={c === "O" ? "var(--ink)" : mono ? "var(--ink)" : "#FF6A3D"} />,
+        ),
+      )}
     </svg>
   );
 }

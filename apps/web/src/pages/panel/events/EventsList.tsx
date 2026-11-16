@@ -10,7 +10,7 @@ import { DayTile, Ic, LoadError, Loading, StatusBadge, Toast, dateRange, pastel,
 function QuestArt() {
   const W = 24, H = 17;
   const g: string[][] = Array.from({ length: H }, () => Array(W).fill(""));
-  const C: Record<string, string> = { k: "#3A2C78", y: "#F4F0CC", F: "#A39C3E", Y: "#DCD58A", D: "#6f55c8", L: "#b5db7a", l: "#7fae45" };
+  const C: Record<string, string> = { k: "#1E2340", y: "#F3ECDF", F: "#C9C0B0", Y: "#E6DFD2", D: "#FF6A3D", L: "#3FBF9B", l: "#2F9A7C" };
   for (let r = 5; r < H; r++)
     for (let c = 0; c < W; c++) g[r][c] = r === 5 || r === H - 1 || c === 0 || c === W - 1 ? "k" : c === 8 || c === 16 ? "F" : c > 8 && c < 16 ? "Y" : "y";
   for (const [c, r] of [[2, 14], [3, 14], [5, 13], [6, 13], [7, 12], [9, 12], [10, 12], [11, 11], [12, 11], [13, 11]]) g[r][c] = "D";

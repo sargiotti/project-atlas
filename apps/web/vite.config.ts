@@ -43,11 +43,30 @@ function linkPreviewMeta(): Plugin {
   };
 }
 
+/** Preloads the three fonts every page needs (Bricolage 800, Figtree 400 and 700, latin subset) with their hashed URLs. */
+function fontPreload(): Plugin {
+  const wanted = [/bricolage-grotesque-latin-800-normal.*\.woff2$/, /figtree-latin-400-normal.*\.woff2$/, /figtree-latin-700-normal.*\.woff2$/];
+  return {
+    name: "atlas-font-preload",
+    transformIndexHtml: {
+      order: "post",
+      handler(_html, ctx) {
+        const names = Object.keys(ctx.bundle ?? {});
+        return wanted.flatMap((re) => names.filter((n) => re.test(n))).map((n) => ({
+          tag: "link",
+          attrs: { rel: "preload", as: "font", type: "font/woff2", href: `/${n}`, crossorigin: "" },
+          injectTo: "head" as const,
+        }));
+      },
+    },
+  };
+}
+
 // In dev the Worker (wrangler, :8787) serves the API, the seeded map SVGs and the uploaded images (/media/*).
 const worker = process.env.ATLAS_WORKER ?? "http://localhost:8787";
 
 export default defineConfig({
-  plugins: [react(), linkPreviewMeta(), beaconTag()],
+  plugins: [react(), linkPreviewMeta(), fontPreload(), beaconTag()],
   // Slice 09: the same origin is baked into the calendar link-back (https://<origin>/e/<slug>).
   define: { __PUBLIC_ORIGIN__: JSON.stringify(readPublicOrigin()) },
   server: {

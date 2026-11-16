@@ -17,7 +17,7 @@
 .cv-alert span { font-size: 0.92rem; color: var(--ink-2); overflow-wrap: anywhere; }
 .cv-alert.warn { background: var(--warn-bg, #fff4d6); border-color: var(--warn-line, #e7c15a); }
 .cv-alert.warn > svg { color: var(--warn, #6b4a00); }
-.cv-alert.ok { background: var(--ok-bg, #efebfb); border-color: var(--accent); }
+.cv-alert.ok { background: var(--ok-bg, #FDEBE2); border-color: var(--accent); }
 .cv-alert.ok > svg { color: var(--accent); }
 .cv-alert .acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 
@@ -41,13 +41,13 @@
 .cv-frame.f-card { border-style: solid; }
 .cv-frame.f-og { border-style: dashed; }
 .cv-frame.f-sheet { border-style: dotted; border-width: 3px; }
-.cv-frame em { position: absolute; left: 4px; top: 4px; font: 700 0.7rem/1 var(--ui); font-style: normal; background: rgba(20, 16, 40, 0.82); color: #fff; padding: 3px 6px; border-radius: 6px; white-space: nowrap; }
+.cv-frame em { position: absolute; left: 4px; top: 4px; font: 700 0.7rem/1 var(--ui); font-style: normal; background: rgba(30, 35, 64, 0.82); color: #fff; padding: 3px 6px; border-radius: 6px; white-space: nowrap; }
 .cv-frame.f-og em { top: auto; bottom: 4px; }
 .cv-frame.f-sheet em { left: auto; right: 4px; }
-.cv-frame.hot { border-color: #b5db7a; z-index: 2; }
-.cv-keep { position: absolute; box-shadow: 0 0 0 9999px rgba(20, 16, 40, 0.42); transition: all 0.12s; }
-.cv-dot { position: absolute; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px #1f1b33, 0 2px 8px rgba(0, 0, 0, 0.5); transition: left 0.12s, top 0.12s; }
-.cv-dot::after { content: ""; position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px #1f1b33; }
+.cv-frame.hot { border-color: #FF6A3D; z-index: 2; }
+.cv-keep { position: absolute; box-shadow: 0 0 0 9999px rgba(30, 35, 64, 0.42); transition: all 0.12s; }
+.cv-dot { position: absolute; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px #1E2340, 0 2px 8px rgba(0, 0, 0, 0.5); transition: left 0.12s, top 0.12s; }
+.cv-dot::after { content: ""; position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px #1E2340; }
 @media (prefers-reduced-motion: reduce) { .cv-keep, .cv-dot { transition: none; } }
 .cv-tip { display: flex; gap: 8px; align-items: flex-start; font-size: 0.88rem; color: var(--ink-2); margin: 10px 0 0; }
 .cv-tip svg { flex: none; margin-top: 2px; }

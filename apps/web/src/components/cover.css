@@ -10,7 +10,7 @@
 .pe-cover { position: relative; overflow: hidden; }
 .pe-cover.img { background: #000; }
 .pe-cover > :not(.cv-fill):not(.cv-fb) { position: relative; }
-.pe-cover.img .pe-dnum { background: rgba(255, 255, 255, 0.94); color: #1f1b33; border-radius: 12px; padding: 6px 9px; box-shadow: 0 1px 4px rgba(20, 16, 40, 0.25); }
+.pe-cover.img .pe-dnum { background: rgba(255, 255, 255, 0.94); color: #1E2340; border-radius: 12px; padding: 6px 9px; box-shadow: 0 1px 4px rgba(30, 35, 64, 0.25); }
 
 /* Hub: dashed suggestion under the numbered path. */
 .pe-sugg { margin-top: 14px; border: 2px dashed var(--line); border-radius: 18px; padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
