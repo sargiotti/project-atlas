@@ -76,7 +76,8 @@ describe("schedule grid", () => {
 
   it("says when the event starts, from the first Session, and hides the Now chip", async () => {
     await openSchedule("2026-07-01T12:00");
-    expect(screen.getByRole("status")).toHaveTextContent("Starts Friday 10 Jul · 19:00");
+    expect(screen.getByText("Starts in 9 days")).toBeInTheDocument();
+    expect(screen.getByText("Fri 10 Jul · 19:00")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Fri 10" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByRole("button", { name: /^Now/ })).not.toBeInTheDocument();
     expect(block("EARLY").getAttribute("aria-label")).not.toContain("Ended");

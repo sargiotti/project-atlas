@@ -16,6 +16,7 @@
 /* Light Map Theme (also the default look of non-map pages). */
 .app,
 .app[data-theme="light"] {
+  --pre-bg: #fdf3dc; --pre-line: #ecd391; --pre-ico-bg: #ffffff; --pre-ico: #8a5300; --pre-ink: #1f1b33; --pre-ink-2: #5a4a2e;
   --bg: #f6f4fa;
   --surface: #ffffff;
   --surface-2: #f6f4fa;
@@ -34,6 +35,7 @@
 
 /* Dark Map Theme. */
 .app[data-theme="dark"] {
+  --pre-bg: #3d3642; --pre-line: #6b5a3e; --pre-ico-bg: #2c2638; --pre-ico: #ffd27a; --pre-ink: #f7f5fc; --pre-ink-2: #ecdfc2;
   --bg: #221e3b;
   --surface: #2f2a4f;
   --surface-2: #221e3b;
@@ -53,6 +55,7 @@
 /* Non-map pages follow the system colour scheme. */
 @media (prefers-color-scheme: dark) {
   .app[data-theme="auto"] {
+    --pre-bg: #3d3642; --pre-line: #6b5a3e; --pre-ico-bg: #2c2638; --pre-ico: #ffd27a; --pre-ink: #f7f5fc; --pre-ink-2: #ecdfc2;
     --bg: #1a1730;
     --surface: #24203f;
     --surface-2: #2f2a4f;
@@ -538,6 +541,15 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
   border: 1px solid var(--line); font-size: 0.86rem; font-weight: 700; line-height: 1.25;
 }
 .sched-status svg { color: var(--accent); }
+.sched-status.pre {
+  gap: 12px; margin: 0 10px 8px; padding: 10px 14px 10px 10px; border-radius: 14px; border-color: var(--pre-line); background: var(--pre-bg);
+  font-weight: 400;
+}
+.sched-status.pre .ico { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--pre-ico-bg); color: var(--pre-ico); }
+.sched-status.pre svg { color: var(--pre-ico); }
+.sched-status.pre .t { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.sched-status.pre .rel { font-size: 1rem; font-weight: 700; line-height: 1.25; color: var(--pre-ink); }
+.sched-status.pre .abs { font-size: 0.84rem; font-weight: 400; line-height: 1.3; color: var(--pre-ink-2); text-transform: capitalize; }
 .sched-tools { display: flex; align-items: center; gap: 8px; padding: 0 10px 6px; }
 .sched-tools .days { flex: 1; min-width: 0; padding: 0; }
 .sched-tools .days .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: currentColor; margin-left: 6px; vertical-align: middle; }
