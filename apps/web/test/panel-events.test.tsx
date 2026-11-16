@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { I18nProvider } from "../src/i18n/I18nProvider";
 import { pickPanelLang } from "../src/i18n/detect";
@@ -250,6 +250,7 @@ describe("owner preview", () => {
   it("shows the draft band and Map coming soon, and links only an https website", async () => {
     mockApi({
       ...base,
+      [`GET /panel/events/${ID}`]: () => json({ event: { ...EV, status: "draft" } }),
       [`GET /panel/events/${ID}/preview`]: () => preview({ description: "Mirá https://evil.example y <script>x</script>", website: "https://fiesta.com.ar/info" }),
     });
     renderAt(`/panel/events/${ID}/preview`);
@@ -391,6 +392,25 @@ describe("owner preview status bar", () => {
     open("published");
     expect(await screen.findByRole("region", { name: "Published: this is how visitors see it" })).toBeInTheDocument();
     expect(screen.queryByText(/Draft: only you can see this/)).not.toBeInTheDocument();
+  });
+
+  it("shows status-specific notices for in review and rejected", async () => {
+    open("in_review");
+    expect(await screen.findByRole("region", { name: "In review: only you and the Admin can see this" })).toBeInTheDocument();
+    cleanup();
+    open("rejected");
+    expect(await screen.findByRole("region", { name: "Not approved: only you can see this" })).toBeInTheDocument();
+  });
+
+  it("shows no draft notice while the status is still loading", async () => {
+    mockApi({
+      ...base,
+      [`GET /panel/events/${ID}`]: () => new Promise(() => {}),
+      [`GET /panel/events/${ID}/preview`]: () => json(pv),
+    });
+    renderAt(`/panel/events/${ID}/preview`);
+    expect(await screen.findByRole("link", { name: "Edit" })).toBeInTheDocument();
+    expect(screen.queryByText(/Draft/)).not.toBeInTheDocument();
   });
 
   it("keeps the draft notice for a draft", async () => {
