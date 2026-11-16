@@ -28,8 +28,8 @@ export function CategoryIcon({ category, size = 32 }: { category: string; size?:
 }
 
 export const SELECTED_SCALE = 1.1; // same bump the old token had (40 -> 44 px)
-// Head centre of the pin in CSS px at scale 1 (viewBox origin is -2,-2). The map point sits on the head centre, as before.
-export const PIN_ANCHOR = { x: 24, y: 23 };
+// Tip (bottom point) of the pin in CSS px at scale 1 (tail ends at viewBox 22,50; origin is -2,-2). The map point sits on the tip.
+export const PIN_ANCHOR = { x: 24, y: 52 };
 
 /**
  * Map pin (handoff 3.2): ring layer under the body, slim point, 8x8 glyph. Round head = thing to do, square = service.

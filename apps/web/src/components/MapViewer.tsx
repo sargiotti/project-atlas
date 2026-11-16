@@ -435,8 +435,9 @@ const DRAG_SLOP = 5;
 
 const Marker = memo(function Marker({ point, theme, selected, label, onSelect, onFocusPoint, stage, onDrag, pending, highlighted, stamped, tip }: MarkerProps) {
   const k = selected ? SELECTED_SCALE : 1;
-  const offX = 22 - PIN_ANCHOR.x * k; // centre the pin's head in the 44x44 hit box
-  const offY = 22 - PIN_ANCHOR.y * k;
+  // The 48x56 button has its tip at (24,52); a selected pin grows from the tip, not the centre.
+  const offX = PIN_ANCHOR.x * (1 - k);
+  const offY = PIN_ANCHOR.y * (1 - k);
   // Editor: drag a pin with Pointer Events. Below the slop it stays a click (select).
   const drag = useRef<{ id: number; sx: number; sy: number; dx: number; dy: number; active: boolean } | null>(null);
   const swallowClick = useRef(false);
