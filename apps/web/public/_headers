@@ -36,3 +36,7 @@
   Referrer-Policy: no-referrer
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store
+
+/panel/invite/*
+  ! Referrer-Policy
+  Referrer-Policy: no-referrer
