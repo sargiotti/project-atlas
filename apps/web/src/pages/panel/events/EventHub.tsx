@@ -173,15 +173,6 @@ export default function EventHub({ id }: { id: string }) {
           </div>
         </section>
 
-        <section className="pe-hcardw pe-haddr">
-          <h2 className="pe-ctitle"><Ic n="lock" size={16} />{t("peAddress")}</h2>
-          <div className="pe-slugbox">
-            <Ic n="lock" size={16} />
-            <span>{window.location.host}/e/<b>{e.slug}</b></span>
-          </div>
-          <p className="pe-sub">{t("peAddressHint")}</p>
-        </section>
-
         <div className="pe-dz">
           <span><Ic n="trash" size={18} />{t("peDangerShort")}</span>
           <button type="button" className="btn danger sm" onClick={() => setDeleting(true)}>{t("peDelOpen")}</button>
