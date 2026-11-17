@@ -42,7 +42,7 @@ export function initialLang(): Lang {
 }
 
 /**
- * Organizer panel default (slice 07): the first browser language whose language part is en, es or da,
+ * Organizer panel default (slice 07): the first browser language whose language part is en, es, da or ca,
  * otherwise English (the visitor default stays Spanish). An explicit stored choice wins.
  */
 export function pickPanelLang(browserLangs: readonly string[] | undefined | null): Lang {

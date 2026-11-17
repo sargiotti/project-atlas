@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { pickLang } from "../src/i18n/detect";
+import { pickLang, pickPanelLang } from "../src/i18n/detect";
 
 describe("pickLang (browser language -> UI language)", () => {
   it("uses Spanish, English or Danish when the browser asks for them, including regional variants", () => {
     expect(pickLang(["da-DK"])).toBe("da");
     expect(pickLang(["en-GB", "es"])).toBe("en");
     expect(pickLang(["es-AR"])).toBe("es");
+  });
+
+  it("uses Catalan for ca and regional variants, and the panel default follows", () => {
+    expect(pickLang(["ca"])).toBe("ca");
+    expect(pickLang(["ca-ES", "es"])).toBe("ca");
+    expect(pickLang(["ca-valencia"])).toBe("ca");
+    expect(pickPanelLang(["ca-ES"])).toBe("ca");
   });
 
   it("skips unsupported languages in favour of the next supported one", () => {

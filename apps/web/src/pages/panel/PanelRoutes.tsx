@@ -18,7 +18,7 @@ import EventsList from "./events/EventsList";
 
 /**
  * Everything under /panel. Loaded lazily so visitors never download it. The panel has its own default
- * language: the browser's if it is en, es or da, otherwise English (the visitor default stays Spanish).
+ * language: the browser's if it is en, es, da or ca, otherwise English (the visitor default stays Spanish).
  */
 export default function PanelRoutes() {
   const initial = useMemo(initialPanelLang, []);

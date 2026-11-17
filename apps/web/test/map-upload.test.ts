@@ -100,7 +100,7 @@ describe("upload error mapping", () => {
     expect(mapFailure(409, { error: { code: "map_changed" } }, null)).toMatchObject({ status: "error", key: "peMapChanged", code: "map_changed", retryable: true });
   });
 
-  const known = (k: string) => (["es", "en", "da"] as const).every((l) => (MESSAGES[l] as any)[k]);
+  const known = (k: string) => (["es", "en", "da", "ca"] as const).every((l) => (MESSAGES[l] as any)[k]);
   it("every message key it can return exists in en, es and da", () => {
     const outcomes = [
       mapFailure(409, { error: { code: "event_not_draft" } }, null),

@@ -1,10 +1,10 @@
 // All UI strings live here (ADR 0004). Event content (names, descriptions) is never translated.
-export const LANGS = ["es", "en", "da"] as const;
+export const LANGS = ["es", "en", "da", "ca"] as const;
 export type Lang = (typeof LANGS)[number];
 // Brand line: intentionally not translated, shown in English in every UI language.
 export const BRAND_TAGLINE = "Find your way";
 export const DEFAULT_LANG: Lang = "es";
-export const LANG_NAMES: Record<Lang, string> = { es: "Español", en: "English", da: "Dansk" };
+export const LANG_NAMES: Record<Lang, string> = { es: "Español", en: "English", da: "Dansk", ca: "Català" };
 
 import { panelDa, panelEn, panelEs } from "./panelMessages";
 import { eventDa, eventEn, eventEs } from "./eventMessages";
@@ -13,6 +13,14 @@ import { pubDa, pubEn, pubEs } from "./publishMessages";
 import { pedDa, pedEn, pedEs } from "./pointsEditorMessages";
 import { sedDa, sedEn, sedEs } from "./scheduleEditorMessages";
 import { coverDa, coverEn, coverEs } from "./coverMessages";
+import { mainCa } from "./ca/main";
+import { panelCa } from "./ca/panel";
+import { eventCa } from "./ca/event";
+import { mapCa } from "./ca/map";
+import { pubCa } from "./ca/publish";
+import { pedCa } from "./ca/pointsEditor";
+import { sedCa } from "./ca/scheduleEditor";
+import { coverCa } from "./ca/cover";
 
 const es = {
   ...panelEs,
@@ -346,5 +354,16 @@ const da: Messages = {
   seeOnMap: "Se på kortet",
 };
 
+const ca: Messages = {
+  ...panelCa,
+  ...eventCa,
+  ...mapCa,
+  ...pubCa,
+  ...pedCa,
+  ...sedCa,
+  ...coverCa,
+  ...mainCa,
+};
+
 export type MessageKey = keyof Messages;
-export const MESSAGES: Record<Lang, Messages> = { es, en, da };
+export const MESSAGES: Record<Lang, Messages> = { es, en, da, ca };

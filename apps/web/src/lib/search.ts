@@ -24,10 +24,10 @@ export function queryWords(query: string): string[] {
   return normalize(query.trim().slice(0, SEARCH_MAX)).split(/\s+/).filter(Boolean);
 }
 
-const SEARCH_LANGS = ["en", "es", "da"];
+const SEARCH_LANGS = ["en", "es", "da", "ca"];
 const regionCache = new Map<string, string>();
 
-/** Country name in all app languages (en, es, da), joined, whatever the UI language. */
+/** Country name in all app languages (en, es, da, ca), joined, whatever the UI language. */
 function countryNames(code: string): string {
   let hit = regionCache.get(code);
   if (hit === undefined) {

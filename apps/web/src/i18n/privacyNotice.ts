@@ -1,6 +1,7 @@
 // Slice 12: the privacy notice text. Plain strings rendered by React (never as HTML).
 // English is the canonical source; es and da follow it.
 import type { Lang } from "./messages";
+import { privacyCa } from "./ca/privacy";
 
 /** Date shown as "Last updated". Change this single value when the text changes (and at merge time). */
 export const PRIVACY_LAST_UPDATED = "2026-11-16";
@@ -227,4 +228,4 @@ const da: PrivacyNotice = {
   ],
 };
 
-export const PRIVACY_NOTICE: Record<Lang, PrivacyNotice> = { es, en, da };
+export const PRIVACY_NOTICE: Record<Lang, PrivacyNotice> = { es, en, da, ca: privacyCa };
