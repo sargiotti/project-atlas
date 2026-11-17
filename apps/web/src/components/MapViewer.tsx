@@ -197,7 +197,7 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
   useEffect(() => {
     if (!clustersOn || view.k === settledK) return;
     const id = window.setTimeout(() => {
-      if (pointers.current.size >= 2) return; // fingers still down: endPointer settles
+      if (pointers.current.size > 0) return; // fingers still down: endPointer settles when the last one lifts
       setSettledK(viewRef.current.k);
     }, animate ? 380 : 150);
     return () => window.clearTimeout(id);
@@ -305,6 +305,7 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef<{ mode: "pan" | "pinch"; start: View; sx: number; sy: number; dist: number; mx: number; my: number } | null>(null);
   const moved = useRef(false);
+  const pinched = useRef(false);
 
   const local = (e: { clientX: number; clientY: number }) => {
     const r = box.current!.getBoundingClientRect();
@@ -324,8 +325,9 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
+    if (e.isPrimary) pointers.current.clear(); // a primary pointerdown means no other finger is active: drop ghost ids
+    if (pointers.current.size === 0) { moved.current = false; pinched.current = false; }
     pointers.current.set(e.pointerId, local(e));
-    if (pointers.current.size === 1) moved.current = false;
     beginGesture();
   };
 
@@ -354,18 +356,33 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
       const wx = (g.mx - g.start.x) / g.start.k;
       const wy = (g.my - g.start.y) / g.start.k;
       moved.current = true;
+      pinched.current = true;
       touched.current = true;
       apply({ x: mx - wx * k, y: my - wy * k, k });
     }
   };
 
-  const endPointer = (e: React.PointerEvent) => {
-    const wasPinch = pointers.current.size >= 2;
+  // Idempotent: also called from the window listeners below, so a pointerup that lands outside the viewer (or on an unmounted target) still ends the pointer.
+  const endPointer = (e: { pointerId: number }) => {
+    if (!pointers.current.has(e.pointerId)) return;
     pointers.current.delete(e.pointerId);
-    if (wasPinch && clustersOn) setSettledK(viewRef.current.k);
+    // Regroup only when ALL fingers are up, so no marker under a finger unmounts mid-gesture.
+    if (pointers.current.size === 0 && pinched.current && clustersOn) setSettledK(viewRef.current.k);
+    if (pointers.current.size === 0) pinched.current = false;
     box.current?.hasPointerCapture?.(e.pointerId) && box.current.releasePointerCapture(e.pointerId);
     beginGesture(); // continue as a pan with the remaining finger, if any
   };
+  const endPointerRef = useRef(endPointer);
+  endPointerRef.current = endPointer;
+  useEffect(() => {
+    const end = (e: PointerEvent) => endPointerRef.current(e);
+    window.addEventListener("pointerup", end, true);
+    window.addEventListener("pointercancel", end, true);
+    return () => {
+      window.removeEventListener("pointerup", end, true);
+      window.removeEventListener("pointercancel", end, true);
+    };
+  }, []);
 
   // A drag must not count as a tap on a marker or on the empty map.
   const onClickCapture = (e: React.MouseEvent) => {
