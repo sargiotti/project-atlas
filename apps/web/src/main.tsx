@@ -14,9 +14,20 @@ import "@fontsource/bricolage-grotesque/latin-ext-500.css";
 import "@fontsource/bricolage-grotesque/latin-ext-800.css";
 import "./styles.css";
 import App from "./App";
+import { fetchGeoLang, shouldAskGeo } from "./i18n/geoLang";
+import { loadStoredLang } from "./i18n/detect";
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+// Slice 21b: with no stored language and a Madrid-timezone device, give the geo-lang answer up to 300 ms
+// before the first render so a Catalan visitor usually never sees the Spanish flash. After that the page renders
+// and switches to Catalan when the answer lands (the request itself is aborted at 1.5 s).
+async function start() {
+  if (loadStoredLang() === null && shouldAskGeo()) {
+    await Promise.race([fetchGeoLang(), new Promise((r) => setTimeout(r, 300))]);
+  }
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}
+start();

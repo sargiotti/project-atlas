@@ -63,6 +63,9 @@ function fontPreload(): Plugin {
 }
 
 // In dev the Worker (wrangler, :8787) serves the API, the seeded map SVGs and the uploaded images (/media/*).
+// Tests must not depend on the developer's timezone (the geo-lang call only fires for Europe/Madrid).
+process.env.TZ = "UTC";
+
 const worker = process.env.ATLAS_WORKER ?? "http://localhost:8787";
 
 export default defineConfig({

@@ -22,7 +22,7 @@ const en: PrivacyNotice = {
       lines: [
         "You don't need an account. We don't use advertising or tracking cookies, and we don't build profiles of visitors. To see how many people use Atlas, we use Cloudflare Web Analytics. It sets no cookies and keeps only aggregate counts of the page visited, the page you came from (referrer), your browser and device type, your country and page load performance. It doesn't identify you or follow you across sites.",
         "Your browser only remembers your language and schedule zoom if you change them. That stays on your device.",
-        "Your IP address is used for about one minute to protect the service from abuse (rate limiting), and to show events near you first (approximate location from your IP). Atlas itself doesn't store it.",
+        "Your IP address is used for about one minute to protect the service from abuse (rate limiting), to show events near you first, and to pick a default language (Catalan if you're in Catalonia) (approximate location from your IP). Atlas itself doesn't store it.",
         'If you tap "Add to Google Calendar", Google receives that event\'s details.',
       ],
     },
@@ -95,7 +95,7 @@ const es: PrivacyNotice = {
       lines: [
         "No necesitás cuenta. No usamos publicidad ni cookies de seguimiento, y no armamos perfiles de quienes nos visitan. Para saber cuánta gente usa Atlas, usamos Cloudflare Web Analytics. No usa cookies y solo guarda conteos agregados de la página visitada, la página de la que venís (referente), tu navegador y tipo de dispositivo, tu país y el rendimiento de carga. No te identifica ni te sigue entre sitios.",
         "Tu navegador solo recuerda tu idioma y el zoom del programa si los cambiás. Eso queda en tu dispositivo.",
-        "Tu dirección IP se usa durante aproximadamente un minuto para proteger el servicio de abusos (límite de peticiones) y para mostrarte primero los eventos cercanos (ubicación aproximada a partir de la IP). Atlas en sí no la almacena.",
+        "Tu dirección IP se usa durante aproximadamente un minuto para proteger el servicio de abusos (límite de peticiones), para mostrarte primero los eventos cercanos y para elegir un idioma por defecto (catalán si estás en Cataluña) (ubicación aproximada a partir de la IP). Atlas en sí no la almacena.",
         'Si tocás "Agregar a Google Calendar", Google recibe los datos de ese evento.',
       ],
     },
@@ -168,7 +168,7 @@ const da: PrivacyNotice = {
       lines: [
         "Du behøver ikke en konto. Vi bruger ikke reklamer eller sporingscookies, og vi opbygger ikke profiler af besøgende. For at se, hvor mange der bruger Atlas, bruger vi Cloudflare Web Analytics. Det sætter ingen cookies og gemmer kun samlede tal for den besøgte side, siden du kom fra (henvisning), din browser og enhedstype, dit land og sidens indlæsningshastighed. Det identificerer dig ikke og følger dig ikke på tværs af websteder.",
         "Din browser husker kun dit sprog og zoom i programmet, hvis du ændrer dem. Det bliver på din enhed.",
-        "Din IP-adresse bruges i cirka et minut for at beskytte tjenesten mod misbrug (begrænsning af antal forespørgsler) og for at vise begivenheder tæt på dig først (omtrentlig placering ud fra din IP). Atlas gemmer den ikke selv.",
+        "Din IP-adresse bruges i cirka et minut for at beskytte tjenesten mod misbrug (begrænsning af antal forespørgsler), for at vise begivenheder tæt på dig først og for at vælge et standardsprog (catalansk, hvis du er i Catalonien) (omtrentlig placering ud fra din IP). Atlas gemmer den ikke selv.",
         'Hvis du trykker på "Føj til Google Kalender", modtager Google oplysningerne om den begivenhed.',
       ],
     },

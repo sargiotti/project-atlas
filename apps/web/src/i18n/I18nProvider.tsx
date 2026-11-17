@@ -1,5 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { initialLang, isLang, storeLang } from "./detect";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { initialLang, isLang, loadStoredLang, storeLang } from "./detect";
+import { fetchGeoLang, knownGeoLang, shouldAskGeo } from "./geoLang";
 import { MESSAGES, type Lang, type MessageKey } from "./messages";
 
 type Ctx = {
@@ -10,7 +11,22 @@ type Ctx = {
 const I18nContext = createContext<Ctx | null>(null);
 
 export function I18nProvider({ children, initial }: { children: ReactNode; initial?: Lang }) {
-  const [lang, setLangState] = useState<Lang>(() => initial ?? initialLang());
+  // Precedence: stored manual choice > Catalonia geo default (slice 21b) > browser language > Spanish.
+  // The geo answer lives in memory only; just an explicit pick (setLang) writes atlas.lang.
+  const [askGeo] = useState(() => loadStoredLang() === null && shouldAskGeo());
+  const [lang, setLangState] = useState<Lang>(() => (askGeo ? knownGeoLang() : null) ?? initial ?? initialLang());
+  const picked = useRef(false);
+
+  useEffect(() => {
+    if (!askGeo) return;
+    let live = true;
+    fetchGeoLang().then((g) => {
+      if (live && g && !picked.current) setLangState(g);
+    });
+    return () => {
+      live = false;
+    };
+  }, [askGeo]);
 
   useEffect(() => {
     document.documentElement.lang = lang; // allowlisted value, never user text
@@ -18,6 +34,7 @@ export function I18nProvider({ children, initial }: { children: ReactNode; initi
 
   const setLang = useCallback((l: string) => {
     if (!isLang(l)) return;
+    picked.current = true;
     setLangState(l);
     storeLang(l);
   }, []);

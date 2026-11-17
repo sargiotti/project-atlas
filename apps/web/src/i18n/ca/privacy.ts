@@ -14,7 +14,7 @@ export const privacyCa: PrivacyNotice = {
       lines: [
         "No cal que tinguis compte. No fem servir publicitat ni galetes de seguiment, i no elaborem perfils de les persones que ens visiten. Per saber quanta gent fa servir Atlas, fem servir Cloudflare Web Analytics. No fa servir galetes i només desa recomptes agregats de la pàgina visitada, la pàgina d'on vens (referent), el teu navegador i tipus de dispositiu, el teu país i el rendiment de càrrega. No t'identifica ni et segueix entre llocs web.",
         "El teu navegador només recorda el teu idioma i el zoom del programa si els canvies. Això es queda al teu dispositiu.",
-        "La teva adreça IP es fa servir durant aproximadament un minut per protegir el servei d'abusos (límit de peticions) i per mostrar-te primer els esdeveniments propers (ubicació aproximada a partir de la IP). Atlas en si no la desa.",
+        "La teva adreça IP es fa servir durant aproximadament un minut per protegir el servei d'abusos (límit de peticions), per mostrar-te primer els esdeveniments propers i per triar un idioma per defecte (català si ets a Catalunya) (ubicació aproximada a partir de la IP). Atlas en si no la desa.",
         "Si toques \"Afegeix a Google Calendar\", Google rep les dades d'aquest esdeveniment.",
       ],
     },
