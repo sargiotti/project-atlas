@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { I18nProvider } from "../src/i18n/I18nProvider";
 import { Routes } from "../src/App";
@@ -129,9 +129,106 @@ describe("language", () => {
     open("/e/test-fest", "es");
     expect(await screen.findByRole("button", { name: "Lista" })).toBeInTheDocument();
 
-    await user.selectOptions(screen.getByRole("combobox", { name: "Idioma" }), "da");
+    await user.click(screen.getByRole("button", { name: /Idioma/ }));
+    await user.click(screen.getByRole("menuitemradio", { name: "Dansk" }));
     expect(screen.getByRole("button", { name: "Liste" })).toBeInTheDocument();
     expect(document.documentElement.lang).toBe("da");
+    expect(localStorage.getItem("atlas.lang")).toBe("da");
     expect(screen.getByRole("heading", { level: 1, name: "Test Fest" })).toBeInTheDocument();
+  });
+});
+
+describe("language menu", () => {
+  it("opens in A-Z order with the current one checked, moves with the keyboard and a pick changes and stores the language", async () => {
+    mockFetch(() => json(bundle));
+    const user = userEvent.setup();
+    open("/e/test-fest", "es");
+    await screen.findByRole("button", { name: "Lista" });
+    const trigger = screen.getByRole("button", { name: "Idioma: Español" });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    const rows = screen.getAllByRole("menuitemradio");
+    expect(rows.map((r) => r.textContent)).toEqual(["Català", "Dansk", "English", "Español"]);
+    expect(screen.getByRole("menuitemradio", { name: "Español" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("menuitemradio", { name: "Español" })).toHaveFocus();
+
+    await user.keyboard("{ArrowDown}"); // wraps to the first row
+    expect(screen.getByRole("menuitemradio", { name: "Català" })).toHaveFocus();
+    await user.keyboard("{ArrowDown}{ArrowDown}");
+    expect(screen.getByRole("menuitemradio", { name: "English" })).toHaveFocus();
+    await user.keyboard("{Enter}");
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "List" })).toBeInTheDocument();
+    expect(document.documentElement.lang).toBe("en");
+    expect(localStorage.getItem("atlas.lang")).toBe("en");
+    expect(screen.getByRole("button", { name: "Language: English" })).toHaveFocus();
+  });
+
+  it("Escape closes it without changing the language", async () => {
+    mockFetch(() => json(bundle));
+    const user = userEvent.setup();
+    open("/e/test-fest", "es");
+    await screen.findByRole("button", { name: "Lista" });
+    await user.click(screen.getByRole("button", { name: /Idioma/ }));
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(localStorage.getItem("atlas.lang")).toBeNull();
+  });
+});
+
+describe("map intro hint", () => {
+  const loadMap = (container: HTMLElement) => fireEvent.load(container.querySelector("img.map-image")!);
+
+  it("shows once the map has loaded, follows the language, and a tap dismisses it for good (also after a reload)", async () => {
+    mockFetch(() => json(bundle));
+    const user = userEvent.setup();
+    const first = open("/e/test-fest", "es");
+    const img = await waitFor(() => {
+      const el = first.container.querySelector("img.map-image");
+      expect(el).not.toBeNull();
+      return el as HTMLElement;
+    });
+    fireEvent.load(img);
+    expect(await screen.findByText(/^Explora a tu manera: mapa/)).toBeInTheDocument();
+    expect(localStorage.getItem("atlas.mapIntro.v1")).toBeNull(); // written on dismissal, not on show
+
+    // Keyboard only: any pointerdown would (by design) dismiss the hint.
+    screen.getByRole("button", { name: /Idioma/ }).focus();
+    await user.keyboard("{Enter}");
+    await user.keyboard("{ArrowDown}{ArrowDown}{Enter}"); // opens on Español; Down wraps to Català, then Dansk
+    expect(screen.getByText(/^Udforsk på din måde: kort/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Liste" })); // the tap still works and dismisses
+    expect(screen.queryByText(/^Udforsk/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Liste" })).toHaveAttribute("aria-pressed", "true");
+    expect(localStorage.getItem("atlas.mapIntro.v1")).toBe("1");
+
+    first.unmount();
+    const again = open("/e/test-fest", "en");
+    await screen.findByRole("button", { name: "Main Stage, Stage" });
+    loadMap(again.container);
+    expect(screen.queryByText(/^Udforsk/)).not.toBeInTheDocument();
+  });
+
+  it("does not show when the marker is already set, and the close button dismisses it", async () => {
+    mockFetch(() => json(bundle));
+    const user = userEvent.setup();
+    localStorage.setItem("atlas.mapIntro.v1", "1");
+    const seen = open("/e/test-fest", "en");
+    await screen.findByRole("button", { name: "Main Stage, Stage" });
+    loadMap(seen.container);
+    expect(screen.queryByText(/^Udforsk/)).not.toBeInTheDocument();
+    seen.unmount();
+
+    localStorage.clear();
+    const fresh = open("/e/test-fest", "en");
+    await screen.findByRole("button", { name: "Main Stage, Stage" });
+    loadMap(fresh.container);
+    await user.click(await screen.findByRole("button", { name: "Close hint" }));
+    expect(screen.queryByText(/^Udforsk/)).not.toBeInTheDocument();
+    expect(localStorage.getItem("atlas.mapIntro.v1")).toBe("1");
   });
 });

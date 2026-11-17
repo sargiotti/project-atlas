@@ -18,6 +18,7 @@
 .app[data-theme="light"] {
   --pre-bg: #E3F1F9; --pre-line: #9FCDE6; --pre-ico-bg: #FFFFFF; --pre-ico: #1A6F99; --pre-ink: #1E2340; --pre-ink-2: #3F4A66;
   --bg: #FAF6EF;
+  --flag-line: rgba(30, 35, 64, 0.22); --px-frame: #1E2340;
   --surface: #FFFFFF;
   --surface-2: #EDE6DA;
   --ink: #1E2340;
@@ -44,6 +45,7 @@
 .app[data-theme="dark"] {
   --pre-bg: #172C45; --pre-line: #2D5878; --pre-ico-bg: #141830; --pre-ico: #7FD0F5; --pre-ink: #FAF6EF; --pre-ink-2: #BCD2E4;
   --bg: #141830;
+  --flag-line: rgba(250, 246, 239, 0.3); --px-frame: #FF6A3D;
   --surface: #1E2340;
   --surface-2: #262D4D;
   --ink: #FAF6EF;
@@ -71,6 +73,7 @@
   .app[data-theme="auto"] {
     --pre-bg: #172C45; --pre-line: #2D5878; --pre-ico-bg: #141830; --pre-ico: #7FD0F5; --pre-ink: #FAF6EF; --pre-ink-2: #BCD2E4;
     --bg: #141830;
+  --flag-line: rgba(250, 246, 239, 0.3); --px-frame: #FF6A3D;
     --surface: #1E2340;
     --surface-2: #262D4D;
     --ink: #FAF6EF;
@@ -140,16 +143,21 @@ button, input { font: inherit; color: inherit; }
   background: var(--chip-bg); color: var(--chip-ink); font-size: 0.85rem; font-weight: 700;
 }
 
-/* ---- language select (native <select> laid invisibly over a compact face) ---------------- */
-.lang-select {
-  position: relative; display: inline-flex; align-items: center; gap: 5px; flex: none;
-  min-width: 64px; height: 44px; padding: 0 10px; border: 1.5px solid var(--line); border-radius: 999px;
-  color: var(--ink-2); font-size: 0.78rem; font-weight: 700; cursor: pointer;
+/* ---- language menu (flag + code + chevron, opens .menu) ---------------------------------- */
+.lang-wrap { flex: none; }
+.lang-btn {
+  display: inline-flex; align-items: center; gap: 5px; height: 44px; min-width: 58px; padding: 0 8px; border: 1px solid var(--line);
+  border-radius: 999px; background: transparent; color: var(--ink-2); font: inherit; font-size: 0.78rem; font-weight: 700; cursor: pointer;
 }
-.lang-select svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
-.lang-select select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 16px; }
-.lang-select:hover { border-color: var(--accent); }
-.lang-select:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+.lang-btn:hover { border-color: var(--accent); }
+.lang-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.lang-btn svg.chev { width: 12px; height: 12px; }
+.flag { display: inline-block; width: 21px; height: 14px; border-radius: 2px; overflow: hidden; box-shadow: 0 0 0 1px var(--flag-line); flex: none; line-height: 0; }
+.flag svg { display: block; width: 100%; height: 100%; }
+.menu.lang-menu { right: 0; top: calc(100% + 4px); min-width: 0; width: 216px; z-index: 40; }
+.lang-menu [aria-checked="true"] { background: var(--surface-2); }
+.lang-menu .lang-name { flex: 1; }
+.topbar:has(.lang-menu) { z-index: 40; }
 
 /* ---- non-map pages ----------------------------------------------------------------------- */
 .shell-header {
@@ -191,7 +199,6 @@ button, input { font: inherit; color: inherit; }
   display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .topbar-title small { display: block; font-size: 0.75rem; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.topbar .lang-select { min-width: 58px; padding: 0 8px; border-width: 1px; }
 
 .view-switch {
   position: absolute; z-index: 20; bottom: calc(22px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
@@ -712,3 +719,29 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
   padding: 4px 8px; font-size: 0.75rem; color: var(--ink-2); background: var(--surface); border-radius: 999px; opacity: 0.9;
 }
 @media (min-width: 768px) { .event-privacy { bottom: calc(8px + env(safe-area-inset-bottom)); } }
+
+/* ---- one-off map hint: pixel dialog box above the view switch (slice 22) ----------------- */
+.map-hint { display: flex; flex-direction: column; align-items: center; margin-bottom: 4px; max-width: calc(100% - 32px); pointer-events: none; }
+.map-hint .pb {
+  padding: 3px; background: var(--px-frame); max-width: 320px;
+  clip-path: polygon(0 6px, 3px 6px, 3px 3px, 6px 3px, 6px 0, calc(100% - 6px) 0, calc(100% - 6px) 3px, calc(100% - 3px) 3px, calc(100% - 3px) 6px, 100% 6px, 100% calc(100% - 6px), calc(100% - 3px) calc(100% - 6px), calc(100% - 3px) calc(100% - 3px), calc(100% - 6px) calc(100% - 3px), calc(100% - 6px) 100%, 6px 100%, 6px calc(100% - 3px), 3px calc(100% - 3px), 3px calc(100% - 6px), 0 calc(100% - 6px));
+}
+.map-hint .pbi {
+  display: flex; align-items: center; gap: 8px; padding: 3px 2px 3px 10px; background: var(--surface); color: var(--ink);
+  clip-path: polygon(0 3px, 3px 3px, 3px 0, calc(100% - 3px) 0, calc(100% - 3px) 3px, 100% 3px, 100% calc(100% - 3px), calc(100% - 3px) calc(100% - 3px), calc(100% - 3px) 100%, 3px 100%, 3px calc(100% - 3px), 0 calc(100% - 3px));
+}
+.map-hint .pbi svg.px { flex: none; }
+.map-hint p { margin: 0; padding: 6px 0; text-wrap: balance; font: 600 15px/1.35 var(--ui); }
+.map-hint .hx {
+  display: grid; place-items: center; width: 44px; height: 44px; flex: none; border: 0; border-radius: 12px; background: transparent;
+  color: inherit; cursor: pointer; pointer-events: auto;
+}
+.map-hint .hx:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+.map-hint .ptail { display: block; margin-top: -1px; margin-bottom: 2px; }
+.map-hint .ptail path { fill: var(--px-frame); }
+@media (max-width: 767.98px) {
+  .bottom-dock > .map-hint { pointer-events: none; }
+}
+@media (min-width: 768px) {
+  .map-hint { position: absolute; z-index: 25; left: 50%; transform: translateX(-50%); bottom: calc(22px + 52px + env(safe-area-inset-bottom)); width: max-content; margin-bottom: 0; }
+}

@@ -29,6 +29,8 @@ type Props = {
   categoryLabel: (category: string) => string;
   /** The map image could not be loaded (the page may refetch the bundle once: the organizer may have replaced the map). */
   onImageError?: () => void;
+  /** The map image finished loading (the visitor page uses it to time the one-off view hint). */
+  onImageLoaded?: () => void;
   /** Space the page keeps free at the top / bottom (the visitor page floats a top bar and a switch over the map). */
   safe?: { top: number; bottom: number };
   /** Slice 08c: the organizer's editor. Absent on the visitor page, where nothing below changes. */
@@ -55,7 +57,7 @@ export type MapEdit = {
   tipOf?: (p: Point) => string;
 };
 
-export default function MapViewer({ imageUrl, variants, width: W, height: H, points, theme, selectedId, onSelect, focusRequest, categoryLabel, onImageError, safe, edit }: Props) {
+export default function MapViewer({ imageUrl, variants, width: W, height: H, points, theme, selectedId, onSelect, focusRequest, categoryLabel, onImageError, onImageLoaded, safe, edit }: Props) {
   const safeTop = safe?.top ?? SAFE_TOP;
   const safeBottom = safe?.bottom ?? SAFE_BOTTOM;
   const { t } = useI18n();
@@ -372,7 +374,10 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
           height={H}
           draggable={false}
           decoding="async"
-          onLoad={() => setImgState("ok")}
+          onLoad={() => {
+            setImgState("ok");
+            onImageLoaded?.();
+          }}
           onError={() => {
             setImgState("error");
             onImageError?.();

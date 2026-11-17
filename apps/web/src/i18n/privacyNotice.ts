@@ -4,7 +4,7 @@ import type { Lang } from "./messages";
 import { privacyCa } from "./ca/privacy";
 
 /** Date shown as "Last updated". Change this single value when the text changes (and at merge time). */
-export const PRIVACY_LAST_UPDATED = "2026-11-16";
+export const PRIVACY_LAST_UPDATED = "2026-11-17";
 
 export type PrivacySection = { heading: string; lines: string[] };
 export type PrivacyNotice = { title: string; updatedLabel: string; sections: PrivacySection[] };
@@ -75,6 +75,7 @@ const en: PrivacyNotice = {
         "__Host-atlas_oauth: used only while you sign in (10 minutes).",
         "__Host-atlas_session: keeps you signed in (7 days).",
         "atlas.lang and atlas.schedule.zoom: your language and zoom choices, stored in your browser.",
+        "atlas.mapIntro.v1: remembers that you have seen the map tip, so it is not shown again.",
         "All of them are strictly necessary or saved only when you choose, so we don't ask for consent.",
       ],
     },
@@ -148,6 +149,7 @@ const es: PrivacyNotice = {
         "__Host-atlas_oauth: solo mientras iniciás sesión (10 minutos).",
         "__Host-atlas_session: te mantiene conectado (7 días).",
         "atlas.lang y atlas.schedule.zoom: tus elecciones de idioma y zoom, guardadas en tu navegador.",
+        "atlas.mapIntro.v1: recuerda que ya viste la pista del mapa, para no mostrártela otra vez.",
         "Todas son estrictamente necesarias o se guardan solo cuando vos elegís, por eso no pedimos consentimiento.",
       ],
     },
@@ -221,6 +223,7 @@ const da: PrivacyNotice = {
         "__Host-atlas_oauth: bruges kun, mens du logger ind (10 minutter).",
         "__Host-atlas_session: holder dig logget ind (7 dage).",
         "atlas.lang og atlas.schedule.zoom: dine valg af sprog og zoom, gemt i din browser.",
+        "atlas.mapIntro.v1: husker, at du har set kortets tip, så det ikke vises igen.",
         "Alle er strengt nødvendige eller gemmes kun, når du vælger det, så vi beder ikke om samtykke.",
       ],
     },

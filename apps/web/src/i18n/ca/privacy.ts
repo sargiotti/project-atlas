@@ -67,6 +67,7 @@ export const privacyCa: PrivacyNotice = {
         "__Host-atlas_oauth: només mentre inicies la sessió (10 minuts).",
         "__Host-atlas_session: et manté connectat (7 dies).",
         "atlas.lang i atlas.schedule.zoom: les teves eleccions d'idioma i de zoom, desades al teu navegador.",
+        "atlas.mapIntro.v1: recorda que ja has vist la pista del mapa, perquè no es torni a mostrar.",
         "Totes són estrictament necessàries o només es desen quan tu ho tries, per això no demanem consentiment.",
       ],
     },

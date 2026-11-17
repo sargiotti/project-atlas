@@ -12,6 +12,7 @@ import { Link } from "../lib/router";
 import { parseAt, withTimes, type TimedSession } from "../lib/schedule";
 import { EventGone, Loading, Unavailable } from "./Pages";
 import { EventPrivacyLink } from "../components/PrivacyLink";
+import MapIntroHint from "../components/MapIntroHint";
 
 // The map viewer (gestures + marker art) is the heavy part: load it only on event pages.
 const MapViewer = lazy(() => import("../components/MapViewer"));
@@ -78,6 +79,7 @@ function EventView({ bundle, imageUrl, onImageError }: { bundle: MapBundle; imag
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [focusRequest, setFocusRequest] = useState<{ id: string; nonce: number } | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const infoBtn = useRef<HTMLButtonElement>(null);
   const closeAbout = () => {
@@ -151,6 +153,7 @@ function EventView({ bundle, imageUrl, onImageError }: { bundle: MapBundle; imag
               focusRequest={focusRequest}
               categoryLabel={categoryLabel}
               onImageError={onImageError}
+              onImageLoaded={() => setMapLoaded(true)}
             />
           </Suspense>
         </div>
@@ -208,6 +211,7 @@ function EventView({ bundle, imageUrl, onImageError }: { bundle: MapBundle; imag
 
       {/* On phones the switch and the sheet stack in this dock, so the switch rides above the sheet. */}
       <div className="bottom-dock">
+        <MapIntroHint view={view} mapLoaded={mapLoaded} sheetOpen={!!selected} hasSchedule={hasSchedule} />
         <div className="view-switch" role="group" aria-label={t("viewSwitch")}>
           <button type="button" className={view === "map" ? "on" : ""} aria-pressed={view === "map"} onClick={() => showView("map")}>
             {t("map")}
