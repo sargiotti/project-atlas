@@ -170,6 +170,15 @@ describe("GET /e/{slug}", () => {
     expect(bodies[0]).not.toContain("elsewhere.test");
   });
 
+  it("is region-independent: same body and ETag for a Catalan visitor and one with no cf (slice 21b)", async () => {
+    await env.DB.batch(insert("havnelobet", "Havneløbet 2026"));
+    const ct = await get("/e/havnelobet", { cf: { country: "ES", regionCode: "CT" } });
+    const none = await get("/e/havnelobet");
+    expect(await ct.text()).toBe(await none.text());
+    expect(ct.headers.get("etag")).toBe(none.headers.get("etag"));
+    expect(ct.headers.get("cache-control")).toBe(none.headers.get("cache-control"));
+  });
+
   it("fetches the shell cleanly: client headers are not forwarded to ASSETS (B3)", async () => {
     await env.DB.batch(insert("havnelobet", "Havneløbet 2026"));
     await get("/e/havnelobet", {

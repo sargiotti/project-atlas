@@ -1,7 +1,8 @@
 import { Hono } from "hono";
-import { slugSchema } from "@atlas/contract";
+import { slugSchema, geoLangSchema } from "@atlas/contract";
 import { getMapBundle } from "../application/get-map-bundle";
 import { listEvents } from "../application/list-events";
+import { applyGeoOverride, geoLang } from "../domain/geo-lang";
 import { applyNearOverride, parseVisitorLocation } from "../domain/nearby";
 import { D1EventMapRepository } from "../adapters/d1-event-map-repository";
 import { D1EventListRepository } from "../adapters/d1-event-list-repository";
@@ -102,6 +103,22 @@ export function createApp() {
       });
     }
     return cachedJson(c, body, "private, max-age=300");
+  });
+
+  // Default-language hint (slice 21b). Public, read-only, no DB. `request.cf` country + regionCode are read once
+  // by geoLang and dropped: never stored, logged or used as a cache key. The answer varies per visitor, so it is
+  // `private` (browser cache only), never `public`, and never goes through the Cache API. Any `geo` param, valid
+  // or not, switches to `no-store` (the override is never cached or echoed). No ETag: the body is tiny.
+  app.get("/api/v1/geo-lang", (c) => {
+    const geo = new URL(c.req.url).searchParams.get("geo");
+    const lang = applyGeoOverride(geoLang((c.req.raw as { cf?: unknown }).cf), geo);
+    return new Response(JSON.stringify(geoLangSchema.parse({ lang })), {
+      status: 200,
+      headers: {
+        "Cache-Control": geo !== null ? "no-store" : "private, max-age=600",
+        "Content-Type": "application/json; charset=utf-8",
+      },
+    });
   });
 
   // Link previews: the SPA shell with per-event meta. No rate limit here (R5): crawler bursts share IPs
