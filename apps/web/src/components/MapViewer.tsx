@@ -1,8 +1,10 @@
-import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Point } from "@atlas/contract";
 import { MarkerToken, QuestArrow, PIN_ANCHOR, SELECTED_SCALE, type MapTheme } from "../markers/Pixel";
 import { useI18n } from "../i18n/I18nProvider";
 import { pointAriaLabel } from "../lib/pointLabel";
+import { allSamePlace, CLUSTER_HEAD_RISE, FAN_MAX, fitRing, groupPins, ringOffsets, ZOOM_PADDING } from "../lib/clusters";
+import { ClusterFan, ClusterList, ClusterMarker, useClusterLabel, type FanState } from "./ClusterParts";
 
 // Space taken by the floating top bar and the Map/List switch (design deliverable 02).
 const SAFE_TOP = 82;
@@ -33,6 +35,8 @@ type Props = {
   onImageLoaded?: () => void;
   /** Space the page keeps free at the top / bottom (the visitor page floats a top bar and a switch over the map). */
   safe?: { top: number; bottom: number };
+  /** Slice 23: merge overlapping pins into clusters. Only the visitor map turns it on; the Points editor keeps every pin. */
+  clusters?: boolean;
   /** Slice 08c: the organizer's editor. Absent on the visitor page, where nothing below changes. */
   edit?: MapEdit;
 };
@@ -57,7 +61,7 @@ export type MapEdit = {
   tipOf?: (p: Point) => string;
 };
 
-export default function MapViewer({ imageUrl, variants, width: W, height: H, points, theme, selectedId, onSelect, focusRequest, categoryLabel, onImageError, onImageLoaded, safe, edit }: Props) {
+export default function MapViewer({ imageUrl, variants, width: W, height: H, points, theme, selectedId, onSelect, focusRequest, categoryLabel, onImageError, onImageLoaded, safe, edit, clusters: clustersOn = false }: Props) {
   const safeTop = safe?.top ?? SAFE_TOP;
   const safeBottom = safe?.bottom ?? SAFE_BOTTOM;
   const { t } = useI18n();
@@ -70,6 +74,19 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
   const [level, setLevel] = useState(0);
   const touched = useRef(false);
   const animTimer = useRef<number | undefined>(undefined);
+
+  // ---- slice 23: clusters. Groups follow the zoom that has settled (never mid-pinch) and the selection; panning never changes them.
+  const [settledK, setSettledK] = useState(1);
+  const [fan, setFan] = useState<FanState | null>(null);
+  const [list, setList] = useState<{ key: string; members: Point[]; at: { x: number; y: number } } | null>(null);
+  const [live, setLive] = useState("");
+  const fanOpen = useRef(false);
+  const listOpen = useRef(false);
+  const refocusKey = useRef<string | null>(null);
+  const focusAfterZoom = useRef<string | null>(null);
+  const closeTimer = useRef<number | undefined>(undefined);
+  fanOpen.current = !!fan;
+  listOpen.current = !!list;
 
   // ---- geometry -------------------------------------------------------------------------
   const availW = Math.max(1, size.w - SIDE_MARGIN * 2);
@@ -97,6 +114,12 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
   const apply = useCallback(
     (v: View, animated = false) => {
       const c = clamp(v);
+      if (fanOpen.current || listOpen.current) {
+        // Any zoom or pan closes the split / the list at once.
+        window.clearTimeout(closeTimer.current);
+        setFan(null);
+        setList(null);
+      }
       viewRef.current = c;
       window.clearTimeout(animTimer.current);
       setAnimate(animated);
@@ -162,7 +185,83 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
     else apply(viewRef.current);
   }, [size.w, size.h, fitK, W, H]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => () => window.clearTimeout(animTimer.current), []);
+  useEffect(() => () => {
+    window.clearTimeout(animTimer.current);
+    window.clearTimeout(closeTimer.current);
+  }, []);
+
+  // The first fit (before the visitor moves the map) settles at once, so there is no pop-in; later zooms settle when they end.
+  useLayoutEffect(() => {
+    if (size.w && !touched.current) setSettledK(fitK);
+  }, [size.w, size.h, fitK]);
+  useEffect(() => {
+    if (!clustersOn || view.k === settledK) return;
+    const id = window.setTimeout(() => {
+      if (pointers.current.size >= 2) return; // fingers still down: endPointer settles
+      setSettledK(viewRef.current.k);
+    }, animate ? 380 : 150);
+    return () => window.clearTimeout(id);
+  }, [clustersOn, view.k, settledK, animate]);
+
+  const grouped = useMemo(
+    () => (clustersOn ? groupPins(points.map((p) => ({ id: p.id, x: p.x * W * settledK, y: p.y * H * settledK })), selectedId) : null),
+    [clustersOn, points, W, H, settledK, selectedId],
+  );
+  const byId = useMemo(() => new Map(points.map((p) => [p.id, p])), [points]);
+  const clusterList = useMemo(
+    () => (grouped ? grouped.clusters.map((c) => ({ key: c.key, anchor: byId.get(c.anchor.id)!, members: c.members.map((m) => byId.get(m.id)!) })) : []),
+    [grouped, byId],
+  );
+  const clustered = useMemo(() => new Set(clusterList.flatMap((c) => c.members.map((m) => m.id))), [clusterList]);
+  const clusterLabel = useClusterLabel();
+  // A new grouping (zoom end, selection change) closes whatever was open on the old one.
+  useEffect(() => {
+    setFan(null);
+    setList(null);
+  }, [grouped]);
+  // After a zoom a keyboard user lands on the first member (as a pin or inside a smaller cluster).
+  useEffect(() => {
+    const id = focusAfterZoom.current;
+    if (!id || !box.current) return;
+    focusAfterZoom.current = null;
+    const el = [...box.current.querySelectorAll<HTMLElement>("[data-point-id], [data-cluster]")].find((n) => n.dataset.pointId === id || n.dataset.cluster?.split("|").includes(id));
+    el?.focus({ preventScroll: true });
+  }, [grouped]);
+  // Closing the split or the list gives focus back to the cluster that opened it.
+  useEffect(() => {
+    if (fan || list || !refocusKey.current || !box.current) return;
+    const key = refocusKey.current;
+    refocusKey.current = null;
+    [...box.current.querySelectorAll<HTMLElement>("[data-cluster]")].find((n) => n.dataset.cluster === key)?.focus({ preventScroll: true });
+  }, [fan, list]);
+
+  const reduced = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const closeFan = () => {
+    if (!fan || fan.closing) return;
+    refocusKey.current = fan.key;
+    if (reduced()) return setFan(null);
+    setFan({ ...fan, closing: true });
+    window.clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => setFan(null), 170);
+  };
+  const closeList = () => {
+    if (list) refocusKey.current = list.key;
+    setList(null);
+  };
+  // Escape closes the split or the list wherever focus is (after a tap it can be on the body).
+  const escRef = useRef<() => void>(() => {});
+  escRef.current = () => (fan ? closeFan() : closeList());
+  const isOpen = !!fan || !!list;
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      escRef.current();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [isOpen]);
 
   // ---- focus a point (from the list or a keyboard-focused marker) -----------------------
   const centreOn = useCallback(
@@ -261,7 +360,9 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
   };
 
   const endPointer = (e: React.PointerEvent) => {
+    const wasPinch = pointers.current.size >= 2;
     pointers.current.delete(e.pointerId);
+    if (wasPinch && clustersOn) setSettledK(viewRef.current.k);
     box.current?.hasPointerCapture?.(e.pointerId) && box.current.releasePointerCapture(e.pointerId);
     beginGesture(); // continue as a pan with the remaining finger, if any
   };
@@ -323,6 +424,53 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
     [edit?.stageRef],
   );
 
+  // Tap on a cluster: split in place (8 or fewer), zoom to its members (more), or list them when zooming cannot separate them.
+  const onClusterTap = (key: string, byKeyboard: boolean) => {
+    const c = clusterList.find((x) => x.key === key);
+    if (!c) return;
+    window.clearTimeout(closeTimer.current);
+    const v = viewRef.current;
+    const n = c.members.length;
+    const tip = { x: v.x + c.anchor.x * W * v.k, y: v.y + c.anchor.y * H * v.k };
+    if (n <= FAN_MAX) {
+      const offs = ringOffsets(n);
+      const centre = fitRing({ x: tip.x, y: tip.y - CLUSTER_HEAD_RISE }, offs, { left: 8, top: safeTop, right: size.w - 8, bottom: size.h - safeBottom });
+      setList(null);
+      setFan({
+        key,
+        members: c.members,
+        cx: centre.x,
+        cy: centre.y,
+        offs,
+        spots: c.members.map((m) => ({ x: v.x + m.x * W * v.k, y: v.y + m.y * H * v.k })),
+        closing: false,
+      });
+      return;
+    }
+    // Rule 1: zoom to fit the members (72 px padding, capped by the viewer's max zoom).
+    const same = allSamePlace(c.members);
+    const xs = c.members.map((m) => m.x * W);
+    const ys = c.members.map((m) => m.y * H);
+    const bb = { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
+    const target = same ? 0 : Math.min(maxK, (availW - 2 * ZOOM_PADDING) / Math.max(bb.x1 - bb.x0, 1), (availH - 2 * ZOOM_PADDING) / Math.max(bb.y1 - bb.y0, 1));
+    if (!same && target > v.k * 1.05) {
+      touched.current = true;
+      if (byKeyboard) focusAfterZoom.current = c.members[0]!.id;
+      apply({ x: size.w / 2 - ((bb.x0 + bb.x1) / 2) * target, y: safeTop + availH / 2 - ((bb.y0 + bb.y1) / 2) * target, k: target }, true);
+      setLive(t("clusterZoomed" as any, { n }));
+      window.setTimeout(() => setLive(""), 3000);
+      return;
+    }
+    // Rule 2: nothing left to zoom into (identical spot, or already at the max zoom): a plain list.
+    setFan(null);
+    setList({ key, members: c.members, at: tip });
+  };
+  const pickFromCluster = (id: string) => {
+    setFan(null);
+    setList(null);
+    onSelect(id);
+  };
+
   const inv = 1 / view.k;
   const stageStyle = {
     width: W,
@@ -383,7 +531,7 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
             onImageError?.();
           }}
         />
-        {points.map((p) => (
+        {points.map((p) => clustered.has(p.id) ? null : (
           <Marker
             key={p.id}
             point={p}
@@ -400,7 +548,23 @@ export default function MapViewer({ imageUrl, variants, width: W, height: H, poi
             tip={edit?.tipOf?.(p)}
           />
         ))}
+        {clusterList.map((c) => (
+          <ClusterMarker
+            key={c.key}
+            clusterKey={c.key}
+            anchor={c.anchor}
+            members={c.members}
+            theme={theme}
+            open={fan?.key === c.key}
+            label={clusterLabel(c.members)}
+            onTap={onClusterTap}
+          />
+        ))}
       </div>
+
+      {fan && <ClusterFan fan={fan} theme={theme} label={clusterLabel(fan.members)} onPick={pickFromCluster} onClose={closeFan} />}
+      {list && <ClusterList members={list.members} at={list.at} wide={size.w >= 768} onPick={pickFromCluster} onClose={closeList} />}
+      {clustersOn && <div className="sr-only" role="status" aria-live="polite">{live}</div>}
 
       {imgState === "loading" && <div className="map-status" role="status">{t("loading")}</div>}
       {imgState === "error" && <div className="map-status error" role="alert">{t("mapImageFailed")}</div>}

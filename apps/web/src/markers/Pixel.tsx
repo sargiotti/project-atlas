@@ -57,6 +57,66 @@ export function MarkerToken({ category, theme, selected, scale = 1 }: { category
   );
 }
 
+// ---- slice 23: cluster marker ---------------------------------------------------------------
+// 3x5 pixel digits for the count.
+const DIGITS: Record<string, string[]> = {
+  "0": ["XXX", "X.X", "X.X", "X.X", "XXX"], "1": [".X.", "XX.", ".X.", ".X.", "XXX"], "2": ["XXX", "..X", "XXX", "X..", "XXX"],
+  "3": ["XXX", "..X", ".XX", "..X", "XXX"], "4": ["X.X", "X.X", "XXX", "..X", "..X"], "5": ["XXX", "X..", "XXX", "..X", "XXX"],
+  "6": ["XXX", "X..", "XXX", "X.X", "XXX"], "7": ["XXX", "..X", ".X.", ".X.", ".X."], "8": ["XXX", "X.X", "XXX", "X.X", "XXX"],
+  "9": ["XXX", "X.X", "XXX", "..X", "XXX"],
+};
+function countRects(n: number, cx: number, cy: number): ReactNode[] {
+  const s = String(Math.min(n, 999));
+  const c = s.length > 2 ? 3 : 4; // cell size: three digits need smaller cells to fit the head
+  const w = s.length * 3 * c + (s.length - 1) * c;
+  const x0 = cx - w / 2;
+  return [...s].flatMap((d, i) =>
+    DIGITS[d]!.flatMap((row, y) => [...row].map((ch, x) => (ch === "X" ? <rect key={`${i}-${x}-${y}`} x={x0 + i * 4 * c + x * c} y={cy - 2.5 * c + y * c} width={c} height={c} /> : null))),
+  );
+}
+
+/**
+ * Cluster marker (slice 23): a pin whose front head shows the count, with up to two heads stacked behind in the 2nd and 3rd
+ * member's category colour. 64x66 CSS px, tip at (28,60). Ink head on a light map, paper head on a dark one, white ring.
+ * Colours come from the --cluster-* tokens, so the theme needs no props.
+ */
+export function ClusterToken({ count, colors }: { count: number; colors: string[] }) {
+  const tail = "M15 38 L22 50 L29 38 Z";
+  const ghost = (cx: number, cy: number, fill: string, key: string) => <circle key={key} cx={cx} cy={cy} r="17" fill={fill} stroke="#FFFFFF" strokeWidth="3" />;
+  return (
+    <svg className="px" width="64" height="66" viewBox="-6 -10 64 66" aria-hidden="true" focusable="false" overflow="visible">
+      {colors[1] && ghost(39, 11, colors[1], "g3")}
+      {colors[0] && ghost(31, 17, colors[0], "g2")}
+      <g className="cluster-ring" strokeWidth="3" strokeLinejoin="round">
+        <path d={tail} />
+        <circle cx="22" cy="24" r="17" />
+      </g>
+      <g className="cluster-body">
+        <path d={tail} />
+        <circle cx="22" cy="24" r="17" />
+      </g>
+      <g className="cluster-ink" shapeRendering="crispEdges">{countRects(count, 22, 24)}</g>
+    </svg>
+  );
+}
+
+/** The close "x" at the centre of an open cluster (48x48). */
+export function ClusterCloseToken() {
+  return (
+    <svg className="px" width="48" height="48" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+      <circle className="cluster-ring" cx="24" cy="24" r="19" strokeWidth="3" />
+      <circle className="cluster-body" cx="24" cy="24" r="19" />
+      <g className="cluster-ink" shapeRendering="crispEdges">
+        {[[15, 15], [18, 18], [21, 21], [24, 24], [27, 27], [30, 30], [30, 15], [27, 18], [18, 27], [15, 30]].map(([x, y]) => <rect key={`${x}-${y}`} x={x} y={y} width="3" height="3" />)}
+        <rect x="21" y="21" width="6" height="6" />
+      </g>
+    </svg>
+  );
+}
+
+/** Body colour of a category's pin on the given map theme (used for the stacked heads of a cluster). */
+export const pinBody = (category: string, theme: MapTheme): string => PINS[category]?.[theme].body ?? "#1E2340";
+
 /** The small bobbing quest arrow above the selected marker (animation lives in CSS). */
 export function QuestArrow({ theme }: { theme: MapTheme }) {
   const a = QUEST_ARROW[theme];

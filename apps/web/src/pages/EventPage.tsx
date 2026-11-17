@@ -152,6 +152,7 @@ function EventView({ bundle, imageUrl, onImageError }: { bundle: MapBundle; imag
               onSelect={selectPoint}
               focusRequest={focusRequest}
               categoryLabel={categoryLabel}
+              clusters
               onImageError={onImageError}
               onImageLoaded={() => setMapLoaded(true)}
             />

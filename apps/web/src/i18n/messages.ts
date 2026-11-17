@@ -13,6 +13,7 @@ import { pubDa, pubEn, pubEs } from "./publishMessages";
 import { pedDa, pedEn, pedEs } from "./pointsEditorMessages";
 import { sedDa, sedEn, sedEs } from "./scheduleEditorMessages";
 import { coverDa, coverEn, coverEs } from "./coverMessages";
+import { clusterDa, clusterEn, clusterEs } from "./clusterMessages";
 import { mainCa } from "./ca/main";
 import { panelCa } from "./ca/panel";
 import { eventCa } from "./ca/event";
@@ -21,11 +22,13 @@ import { pubCa } from "./ca/publish";
 import { pedCa } from "./ca/pointsEditor";
 import { sedCa } from "./ca/scheduleEditor";
 import { coverCa } from "./ca/cover";
+import { clusterCa } from "./ca/cluster";
 
 const es = {
   ...panelEs,
   ...eventEs,
   ...mapEs,
+  ...clusterEs,
   ...pubEs,
   ...pedEs,
   ...sedEs,
@@ -141,6 +144,7 @@ const en: Messages = {
   ...panelEn,
   ...eventEn,
   ...mapEn,
+  ...clusterEn,
   ...pubEn,
   ...pedEn,
   ...sedEn,
@@ -254,6 +258,7 @@ const da: Messages = {
   ...panelDa,
   ...eventDa,
   ...mapDa,
+  ...clusterDa,
   ...pubDa,
   ...pedDa,
   ...sedDa,
@@ -367,6 +372,7 @@ const ca: Messages = {
   ...panelCa,
   ...eventCa,
   ...mapCa,
+  ...clusterCa,
   ...pubCa,
   ...pedCa,
   ...sedCa,
