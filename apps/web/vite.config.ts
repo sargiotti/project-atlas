@@ -19,6 +19,10 @@ function readPublicOrigin(): string {
   if (!origin || !/^https:\/\/[a-z0-9.-]+(:\d+)?$/.test(origin)) {
     throw new Error("PUBLIC_ORIGIN in apps/api/wrangler.toml must be a bare https origin");
   }
+  // Production build (main branch or no CI branch): the origin must be the real domain.
+  if (!preview && origin !== "https://leyenda.ink") {
+    throw new Error(`Production build requires PUBLIC_ORIGIN = https://leyenda.ink, got ${origin}`);
+  }
   return origin;
 }
 
