@@ -486,12 +486,15 @@ textarea.pe-inp { height: auto; min-height: 112px; padding: 11px 14px; resize: v
   .pe-mdrop { padding: 34px 28px 26px; }
   .pe-mdrop .s { display: block; }
   .pe-mhint { max-width: none; }
-  .pe-mdone { grid-template-columns: 220px 1fr; align-items: start; gap: 20px; }
+  .pe-mdone { grid-template-columns: 220px minmax(0, 1fr); align-items: start; gap: 20px; }
   .pe-mthumb { max-width: none; }
 }
 @media (min-width: 1024px) {
   .pe-hubgrid.is-pub > .pe-hmap { grid-column: span 5; }
-  .pe-mdone { grid-template-columns: 240px 1fr; }
+  .pe-mdone { grid-template-columns: 240px minmax(0, 1fr); }
+  /* Narrow 5-col slot of the published hub: stack thumbnail above details. */
+  .pe-hubgrid.is-pub .pe-mdone { grid-template-columns: minmax(0, 1fr); }
+  .pe-hubgrid.is-pub .pe-mthumb { max-width: 220px; }
 }
 @media (prefers-reduced-motion: reduce) { .pe-mdrop { transition: none; } }
 .pe-pvmap { position: absolute; inset: 0; }
