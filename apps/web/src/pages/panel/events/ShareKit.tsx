@@ -6,6 +6,7 @@ import { BADGE_H, BADGE_W, canvasToPng, drawBadge, loadKitFonts } from "../../..
 import { KIT_LANGS, isKitLang, toKitLang, type KitLang } from "../../../lib/shareKit/copy";
 import { copyText, downloadBlob } from "../../../lib/shareKit/download";
 import { buildEventUrl, kitFilename, makeQr, qrSvgMarkup } from "../../../lib/shareKit/qr";
+import ShareDialog from "../../../components/ShareDialog";
 import { Ic } from "./common";
 import "./shareKit.css";
 
@@ -26,6 +27,7 @@ function Kit({ event }: { event: PanelEvent }) {
   const [copied, setCopied] = useState<"ok" | "fail" | null>(null);
   const [error, setError] = useState(false);
   const [flyer, setFlyer] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const canvas = useRef<HTMLCanvasElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const timer = useRef<number>(0);
@@ -93,6 +95,10 @@ function Kit({ event }: { event: PanelEvent }) {
           {copied === "ok" ? t("skCopied") : t("skCopy")}
         </button>
       </div>
+      <div className="sk-linkrow2">
+        <button type="button" className="btn" onClick={() => setSharing(true)}>{t("pePubShare")}</button>
+        <a className="btn" href={`/e/${event.slug}`} target="_blank" rel="noopener noreferrer" aria-label={t("pePubOpenLabel")}>{t("pePubOpen")}</a>
+      </div>
       <p className={`sk-note${copied === "fail" ? " bad" : ""}`} role="status">
         {copied === "ok" ? t("skCopiedSr") : copied === "fail" ? t("skCopyFail") : ""}
       </p>
@@ -126,6 +132,7 @@ function Kit({ event }: { event: PanelEvent }) {
         </div>
       </div>
 
+      {sharing && <ShareDialog slug={event.slug} eventName={event.name} onClose={() => setSharing(false)} />}
       {flyer && (
         <Suspense fallback={null}>
           <FlyerDialog

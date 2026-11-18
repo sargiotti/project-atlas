@@ -71,8 +71,9 @@ export default function EventHub({ id }: { id: string }) {
           <span>{t("peSavedText")}</span>
         </div>
       )}
-      <div className="pe-hubgrid">
+      <div className={`pe-hubgrid${e.status === "published" ? " is-pub" : ""}`}>
         <section className="pe-hcardw pe-hhero" aria-labelledby={`${id}-h1`}>
+          <div className="pe-hrow">
           <div className={`pe-cover${e.cover ? " img" : ""}`} style={pastel(e.id)}>
             {e.cover && <CoverMedia cover={e.cover} tone={toneOf(e.id)} size="full" imgClassName="cv-fill" />}
             <DayTile start={e.startDate} />
@@ -88,6 +89,23 @@ export default function EventHub({ id }: { id: string }) {
               <Link to={`/panel/events/${e.id}/edit`} className="btn lg"><Ic n="pencil" />{t("peEdit")}</Link>
             </div>
           </div>
+          </div>
+          <PublishStep
+            event={e}
+            onEvent={(ev) => setState(ev)}
+            onReload={() => void getEvent(id).then((r) => r.status === "ok" && setState(r.event)).catch(() => {})}
+            onNotice={setNotice}
+            extra={!e.cover && (
+              <div className="pe-sugg">
+                <div className="cv-thumb" aria-hidden="true"><FallbackCover tone={toneOf(e.id)} /></div>
+                <div>
+                  <b>{t("cvHubTitle")}<span className="tag">{t("cvOptional")}</span></b>
+                  <small>{t("cvHubText")}</small>
+                </div>
+                <Link to={`/panel/events/${e.id}/edit?focus=cover`} className="btn sm"><Ic n="plus" size={16} />{t("peAdd")}</Link>
+              </div>
+            )}
+          />
         </section>
 
         <ShareKit event={e} />
@@ -120,34 +138,6 @@ export default function EventHub({ id }: { id: string }) {
             </div>
           </section>
         )}
-
-        <section className="pe-hcardw pe-hpath">
-          <h2 className="pe-ctitle">{t("pePathTitle")}</h2>
-          <ol className="pe-trail">
-            <li className="done"><span className="node"><Ic n="check" /></span><div><b>{t("peStep1")}</b><small>{t("peStep1Done")}</small></div></li>
-            {e.map ? (
-              <li className="done"><span className="node"><Ic n="check" /></span><div><b>{t("peStep2")}</b><small>{t("peStep1Done")}</small></div></li>
-            ) : (
-              <li className="nextstep"><span className="node">2</span><div><b>{t("peStep2")}</b><small>{t("peStep2Now")}</small></div></li>
-            )}
-            <PublishStep
-              event={e}
-              onEvent={(ev) => setState(ev)}
-              onReload={() => void getEvent(id).then((r) => r.status === "ok" && setState(r.event)).catch(() => {})}
-              onNotice={setNotice}
-            />
-          </ol>
-          {!e.cover && (
-            <div className="pe-sugg">
-              <div className="cv-thumb" aria-hidden="true"><FallbackCover tone={toneOf(e.id)} /></div>
-              <div>
-                <b>{t("cvHubTitle")}<span className="tag">{t("cvOptional")}</span></b>
-                <small>{t("cvHubText")}</small>
-              </div>
-              <Link to={`/panel/events/${e.id}/edit?focus=cover`} className="btn sm"><Ic n="plus" size={16} />{t("peAdd")}</Link>
-            </div>
-          )}
-        </section>
 
         <section className="pe-hcardw pe-hwhen">
           <h2 className="pe-ctitle"><Ic n="cal" size={16} />{t("peSecWhen")}</h2>
