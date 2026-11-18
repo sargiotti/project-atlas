@@ -142,4 +142,25 @@ export function LogoMark({ size = 28, mono = false }: { size?: number; mono?: bo
   );
 }
 
+/**
+ * The "leyenda.ink" wordmark (slice 24, ADR 0014 amendment 3, option B "dropped pin"): "leyenda" + the pixel pin as the dot
+ * (ascender height, tip on the baseline) + "ink". The pin is a glyph here, so no separate mark sits beside it.
+ * Sized by the parent font-size; keep it at 16 px or more (below that use LogoMark alone). Never translated.
+ */
+export function Wordmark({ className = "" }: { className?: string }) {
+  return (
+    <span className={`wordmark ${className}`.trim()} role="img" aria-label="leyenda.ink">
+      <span aria-hidden="true">leyenda</span>
+      <svg className="wm-pin" viewBox="0 0 80 80" shapeRendering="crispEdges" aria-hidden="true" focusable="false">
+        {MARK_ROWS.flatMap((row, y) =>
+          [...row].map((c, x) =>
+            c === "." ? null : <rect key={`${x}-${y}`} x={x * 8} y={y * 8} width="8" height="8" fill={c === "O" ? "var(--ink)" : "#FF6A3D"} />,
+          ),
+        )}
+      </svg>
+      <span aria-hidden="true">ink</span>
+    </span>
+  );
+}
+
 export { CATEGORY_INFO };

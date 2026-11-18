@@ -4,7 +4,7 @@ import type { Lang } from "./messages";
 import { privacyCa } from "./ca/privacy";
 
 /** Date shown as "Last updated". Change this single value when the text changes (and at merge time). */
-export const PRIVACY_LAST_UPDATED = "2026-11-17";
+export const PRIVACY_LAST_UPDATED = "2026-11-18";
 
 export type PrivacySection = { heading: string; lines: string[] };
 export type PrivacyNotice = { title: string; updatedLabel: string; sections: PrivacySection[] };
@@ -15,14 +15,14 @@ const en: PrivacyNotice = {
   sections: [
     {
       heading: "Who is responsible",
-      lines: ["The Atlas project is responsible for your data.", "Atlas is in a closed test and not yet open to the public. A contact address for privacy requests will be published here before it opens."],
+      lines: ["leyenda.ink is responsible for your data.", "It is in a closed test and not yet open to the public. For privacy requests, write to contact@leyenda.ink."],
     },
     {
       heading: "If you visit event maps",
       lines: [
-        "You don't need an account. We don't use advertising or tracking cookies, and we don't build profiles of visitors. To see how many people use Atlas, we use Cloudflare Web Analytics. It sets no cookies and keeps only aggregate counts of the page visited, the page you came from (referrer), your browser and device type, your country and page load performance. It doesn't identify you or follow you across sites.",
+        "You don't need an account. We don't use advertising or tracking cookies, and we don't build profiles of visitors. To see how many people use leyenda.ink, we use Cloudflare Web Analytics. It sets no cookies and keeps only aggregate counts of the page visited, the page you came from (referrer), your browser and device type, your country and page load performance. It doesn't identify you or follow you across sites.",
         "Your browser only remembers your language and schedule zoom if you change them. That stays on your device.",
-        "Your IP address is used for about one minute to protect the service from abuse (rate limiting), to show events near you first, and to pick a default language (Catalan if you're in Catalonia) (approximate location from your IP). Atlas itself doesn't store it.",
+        "Your IP address is used for about one minute to protect the service from abuse (rate limiting), to show events near you first, and to pick a default language (Catalan if you're in Catalonia) (approximate location from your IP). leyenda.ink itself doesn't store it.",
         'If you tap "Add to Google Calendar", Google receives that event\'s details.',
       ],
     },
@@ -44,7 +44,7 @@ const en: PrivacyNotice = {
     {
       heading: "Who helps us",
       lines: [
-        "Cloudflare hosts Atlas. Our database is stored in the EU. Some technical logs may be processed outside the EU, protected by the EU–US Data Privacy Framework and standard contractual clauses.",
+        "Cloudflare hosts leyenda.ink. Our database is stored in the EU. Some technical logs may be processed outside the EU, protected by the EU–US Data Privacy Framework and standard contractual clauses.",
         "Map images you upload are stored in Cloudflare R2, in the EU. Before they are stored, your browser resizes them and removes location and other metadata (such as GPS and camera details). We delete a map image when you replace it or when you delete the event.",
         "Event cover images you upload are stored in Cloudflare R2, in the EU. Your browser resizes them and removes location and other metadata (such as GPS and camera details) before they are stored. A cover is public as soon as the event is published, and anyone with the link can see it, so please only use pictures you may share. We delete a cover when you replace or remove it, or when you delete the event.",
         "As our hosting provider, Cloudflare records basic data about each request (IP address, approximate country, page requested and time) in its traffic analytics. We can view it for up to about 30 days, only to diagnose problems and stop abuse. We also see overall traffic statistics, such as visits by country, which don't identify anyone.",
@@ -89,14 +89,14 @@ const es: PrivacyNotice = {
   sections: [
     {
       heading: "Quién es responsable",
-      lines: ["El proyecto Atlas es responsable de tus datos.", "Atlas está en una prueba cerrada y todavía no está abierto al público. Antes de abrirlo, vamos a publicar acá una dirección de contacto para consultas de privacidad."],
+      lines: ["leyenda.ink es responsable de tus datos.", "Está en una prueba cerrada y todavía no está abierto al público. Para consultas de privacidad, escribí a contact@leyenda.ink."],
     },
     {
       heading: "Si visitás mapas de eventos",
       lines: [
-        "No necesitás cuenta. No usamos publicidad ni cookies de seguimiento, y no armamos perfiles de quienes nos visitan. Para saber cuánta gente usa Atlas, usamos Cloudflare Web Analytics. No usa cookies y solo guarda conteos agregados de la página visitada, la página de la que venís (referente), tu navegador y tipo de dispositivo, tu país y el rendimiento de carga. No te identifica ni te sigue entre sitios.",
+        "No necesitás cuenta. No usamos publicidad ni cookies de seguimiento, y no armamos perfiles de quienes nos visitan. Para saber cuánta gente usa leyenda.ink, usamos Cloudflare Web Analytics. No usa cookies y solo guarda conteos agregados de la página visitada, la página de la que venís (referente), tu navegador y tipo de dispositivo, tu país y el rendimiento de carga. No te identifica ni te sigue entre sitios.",
         "Tu navegador solo recuerda tu idioma y el zoom del programa si los cambiás. Eso queda en tu dispositivo.",
-        "Tu dirección IP se usa durante aproximadamente un minuto para proteger el servicio de abusos (límite de peticiones), para mostrarte primero los eventos cercanos y para elegir un idioma por defecto (catalán si estás en Cataluña) (ubicación aproximada a partir de la IP). Atlas en sí no la almacena.",
+        "Tu dirección IP se usa durante aproximadamente un minuto para proteger el servicio de abusos (límite de peticiones), para mostrarte primero los eventos cercanos y para elegir un idioma por defecto (catalán si estás en Cataluña) (ubicación aproximada a partir de la IP). leyenda.ink en sí no la almacena.",
         'Si tocás "Agregar a Google Calendar", Google recibe los datos de ese evento.',
       ],
     },
@@ -118,7 +118,7 @@ const es: PrivacyNotice = {
     {
       heading: "Quién nos ayuda",
       lines: [
-        "Cloudflare aloja Atlas. Nuestra base de datos está en la UE. Algunos registros técnicos pueden procesarse fuera de la UE, protegidos por el Marco de Privacidad de Datos UE–EE. UU. y cláusulas contractuales tipo.",
+        "Cloudflare aloja leyenda.ink. Nuestra base de datos está en la UE. Algunos registros técnicos pueden procesarse fuera de la UE, protegidos por el Marco de Privacidad de Datos UE–EE. UU. y cláusulas contractuales tipo.",
         "Las imágenes de mapa que subís se guardan en Cloudflare R2, en la UE. Antes de guardarlas, tu navegador las achica y les quita la ubicación y otros metadatos (como el GPS y los datos de la cámara). Borramos la imagen de un mapa cuando la reemplazás o cuando eliminás el evento.",
         "Las imágenes de portada de tus eventos se guardan en Cloudflare R2, en la UE. Tu navegador las achica y les quita la ubicación y otros metadatos (como el GPS y los datos de la cámara) antes de guardarlas. Una portada es pública apenas se publica el evento y la puede ver cualquiera que tenga el enlace, así que usá solo fotos que puedas compartir. Borramos la portada cuando la reemplazás o la quitás, o cuando eliminás el evento.",
         "Como nuestro proveedor de hosting, Cloudflare registra datos básicos de cada solicitud (dirección IP, país aproximado, página solicitada y hora) en su analítica de tráfico. Podemos verlos durante hasta unos 30 días, solo para diagnosticar problemas y frenar abusos. También vemos estadísticas generales de tráfico, como las visitas por país, que no identifican a nadie.",
@@ -163,14 +163,14 @@ const da: PrivacyNotice = {
   sections: [
     {
       heading: "Hvem er ansvarlig",
-      lines: ["Atlas-projektet er ansvarlig for dine data.", "Atlas er i en lukket test og er endnu ikke åbent for offentligheden. En kontaktadresse til anmodninger om privatliv vil blive offentliggjort her, før det åbner."],
+      lines: ["leyenda.ink er ansvarlig for dine data.", "Det er i en lukket test og er endnu ikke åbent for offentligheden. Skriv til contact@leyenda.ink ved anmodninger om privatliv."],
     },
     {
       heading: "Hvis du besøger begivenhedskort",
       lines: [
-        "Du behøver ikke en konto. Vi bruger ikke reklamer eller sporingscookies, og vi opbygger ikke profiler af besøgende. For at se, hvor mange der bruger Atlas, bruger vi Cloudflare Web Analytics. Det sætter ingen cookies og gemmer kun samlede tal for den besøgte side, siden du kom fra (henvisning), din browser og enhedstype, dit land og sidens indlæsningshastighed. Det identificerer dig ikke og følger dig ikke på tværs af websteder.",
+        "Du behøver ikke en konto. Vi bruger ikke reklamer eller sporingscookies, og vi opbygger ikke profiler af besøgende. For at se, hvor mange der bruger leyenda.ink, bruger vi Cloudflare Web Analytics. Det sætter ingen cookies og gemmer kun samlede tal for den besøgte side, siden du kom fra (henvisning), din browser og enhedstype, dit land og sidens indlæsningshastighed. Det identificerer dig ikke og følger dig ikke på tværs af websteder.",
         "Din browser husker kun dit sprog og zoom i programmet, hvis du ændrer dem. Det bliver på din enhed.",
-        "Din IP-adresse bruges i cirka et minut for at beskytte tjenesten mod misbrug (begrænsning af antal forespørgsler), for at vise begivenheder tæt på dig først og for at vælge et standardsprog (catalansk, hvis du er i Catalonien) (omtrentlig placering ud fra din IP). Atlas gemmer den ikke selv.",
+        "Din IP-adresse bruges i cirka et minut for at beskytte tjenesten mod misbrug (begrænsning af antal forespørgsler), for at vise begivenheder tæt på dig først og for at vælge et standardsprog (catalansk, hvis du er i Catalonien) (omtrentlig placering ud fra din IP). leyenda.ink gemmer den ikke selv.",
         'Hvis du trykker på "Føj til Google Kalender", modtager Google oplysningerne om den begivenhed.',
       ],
     },
@@ -192,7 +192,7 @@ const da: PrivacyNotice = {
     {
       heading: "Hvem hjælper os",
       lines: [
-        "Cloudflare hoster Atlas. Vores database er gemt i EU. Nogle tekniske logge kan blive behandlet uden for EU, beskyttet af EU–USA-rammen for databeskyttelse og standardkontraktbestemmelser.",
+        "Cloudflare hoster leyenda.ink. Vores database er gemt i EU. Nogle tekniske logge kan blive behandlet uden for EU, beskyttet af EU–USA-rammen for databeskyttelse og standardkontraktbestemmelser.",
         "Kortbilleder, du uploader, gemmes i Cloudflare R2 i EU. Før de gemmes, gør din browser dem mindre og fjerner lokation og andre metadata (som GPS og kameraoplysninger). Vi sletter et kortbillede, når du erstatter det, eller når du sletter eventet.",
         "Forsidebilleder til dine events gemmes i Cloudflare R2 i EU. Din browser gør dem mindre og fjerner lokation og andre metadata (som GPS og kameraoplysninger), før de gemmes. Et forsidebillede er offentligt, så snart eventet er offentliggjort, og alle med linket kan se det, så brug kun billeder, du må dele. Vi sletter et forsidebillede, når du erstatter eller fjerner det, eller når du sletter eventet.",
         "Som vores hostingudbyder registrerer Cloudflare grundlæggende data om hver forespørgsel (IP-adresse, omtrentligt land, den ønskede side og tidspunkt) i sin trafikanalyse. Vi kan se dem i op til cirka 30 dage, kun for at finde fejl og stoppe misbrug. Vi ser også samlede trafikstatistikker, f.eks. besøg fordelt på lande, som ikke identificerer nogen.",

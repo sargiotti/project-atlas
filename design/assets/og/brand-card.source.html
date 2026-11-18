@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset="utf-8">
-<!-- Source for brand-card.jpg (1200x630, baseline JPEG): generic site link preview, no event content.
+<!-- Wordmark "leyenda.ink" (slice 24, option B: pin as the dot). Source for brand-card.jpg (1200x630, baseline JPEG): generic site link preview, no event content.
 Regenerate (from this folder): chrome --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=1
   --window-size=1200,630 --screenshot=brand-card.png brand-card.source.html
 then convert to baseline JPEG, e.g. python -c "from PIL import Image;Image.open('brand-card.png').convert('RGB').save('brand-card.jpg',quality=90,progressive=False)"
@@ -9,9 +9,9 @@ Fonts are the self-hosted @fontsource copies in the repo's node_modules (no fall
 html,body{margin:0;width:1200px;height:630px;overflow:hidden;background:#FAF6EF}
 body{position:relative;font-family:"Bricolage Grotesque";color:#1E2340}
 .wrap{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:44px}
-.lockup{display:flex;align-items:center;gap:28px}
-.lockup svg{display:block}
-.word{font-weight:800;font-size:176px;line-height:1;letter-spacing:-.03em;position:relative;top:-10px}
+.lockup{display:flex;align-items:center}
+.word{font-weight:800;font-size:168px;line-height:1;letter-spacing:-.03em;white-space:nowrap}
+.pin{display:inline-block;vertical-align:baseline;width:.76em;height:.76em;margin:0 .02em 0 .04em}
 .tag{font-weight:800;font-size:64px;line-height:1;letter-spacing:-.02em}
 .tag b{color:#E2532A}
 /* pixel-cell border motif in brand colours, top and bottom edges */
@@ -20,6 +20,6 @@ body{position:relative;font-family:"Bricolage Grotesque";color:#1E2340}
 .edge i{flex:1}
 </style></head><body>
 <div class="edge t"><i style="background:#FF6A3D"></i><i style="background:#1E2340"></i><i style="background:#FFC53D"></i><i style="background:#4CB8E8"></i><i style="background:#3FBF9B"></i><i style="background:#FF6A3D"></i><i style="background:#1E2340"></i><i style="background:#FFC53D"></i><i style="background:#4CB8E8"></i><i style="background:#3FBF9B"></i><i style="background:#FF6A3D"></i><i style="background:#1E2340"></i></div>
-<div class="wrap"><div class="lockup"><svg width="132" height="132" viewBox="0 0 80 80" shape-rendering="crispEdges" aria-hidden="true"><g fill="#FF6A3D"><rect x="16" y="0" width="48" height="8"/><rect x="8" y="8" width="64" height="8"/><rect x="0" y="16" width="80" height="8"/><rect x="0" y="24" width="24" height="16"/><rect x="56" y="24" width="24" height="16"/><rect x="0" y="40" width="80" height="8"/><rect x="8" y="48" width="64" height="8"/><rect x="16" y="56" width="48" height="8"/><rect x="24" y="64" width="32" height="8"/><rect x="32" y="72" width="16" height="8"/></g><rect x="24" y="24" width="32" height="16" fill="#1E2340"/></svg><span class="word">atlas</span></div><div class="tag">Find <b>YOUR</b> way</div></div>
+<div class="wrap"><div class="lockup"><span class="word">leyenda<svg class="pin" viewBox="0 0 80 80" shape-rendering="crispEdges" aria-hidden="true"><g fill="#FF6A3D"><rect x="16" y="0" width="48" height="8"/><rect x="8" y="8" width="64" height="8"/><rect x="0" y="16" width="80" height="8"/><rect x="0" y="24" width="24" height="16"/><rect x="56" y="24" width="24" height="16"/><rect x="0" y="40" width="80" height="8"/><rect x="8" y="48" width="64" height="8"/><rect x="16" y="56" width="48" height="8"/><rect x="24" y="64" width="32" height="8"/><rect x="32" y="72" width="16" height="8"/></g><rect x="24" y="24" width="32" height="16" fill="#1E2340"/></svg>ink</span></div><div class="tag">Find <b>YOUR</b> way</div></div>
 <div class="edge btm"><i style="background:#3FBF9B"></i><i style="background:#4CB8E8"></i><i style="background:#FFC53D"></i><i style="background:#1E2340"></i><i style="background:#FF6A3D"></i><i style="background:#3FBF9B"></i><i style="background:#4CB8E8"></i><i style="background:#FFC53D"></i><i style="background:#1E2340"></i><i style="background:#FF6A3D"></i><i style="background:#3FBF9B"></i><i style="background:#4CB8E8"></i></div>
 </body></html>

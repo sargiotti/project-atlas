@@ -4,7 +4,7 @@ import LangSwitch from "../../components/LangSwitch";
 import { googleStartUrl } from "../../api/auth";
 import { useI18n } from "../../i18n/I18nProvider";
 import type { MessageKey } from "../../i18n/messages";
-import { LogoMark } from "../../markers/Pixel";
+import { Wordmark } from "../../markers/Pixel";
 import { Link } from "../../lib/router";
 import { SiteFooter } from "../../components/PrivacyLink";
 
@@ -12,8 +12,7 @@ export function Brand({ to = "/panel" }: { to?: string }) {
   const { t } = useI18n();
   return (
     <Link to={to} className="brand">
-      <LogoMark size={28} />
-      <span className="wordmark">{t("appName")}</span>
+      <Wordmark />
       <span className="ptag">{t("panelTag")}</span>
     </Link>
   );
