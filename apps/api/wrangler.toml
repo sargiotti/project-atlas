@@ -1,27 +1,43 @@
 name = "atlas"
 main = "src/index.ts"
 compatibility_date = "2026-11-01"
-workers_dev = true
+workers_dev = true  # kept on purpose: the old host answers with a redirect to https://leyenda.ink (slice 24)
+
+# Slice 24: custom domains (zone leyenda.ink must be Active before deploying). Canonical host is leyenda.ink; www redirects.
+[[routes]]
+pattern = "leyenda.ink"
+custom_domain = true
+
+[[routes]]
+pattern = "www.leyenda.ink"
+custom_domain = true
 
 # One Worker serves the SPA (static assets) and the API.
-# Only /api/*, /e/* and /media/* invoke the Worker code (ADR 0009: /e/{slug} gets per-event link-preview meta
-# injected into the shell; slice 08a and 14: /media/* serves uploaded map and cover images from R2 with draft gating). Everything else (Home, JS/CSS, /maps, /og, /tone-og) is served as static
-# assets, which are free and do not count towards the request cap. Keep this list exact: no "/*", no "/".
+# Slice 24: navigations must reach the Worker so non-canonical hosts (www, old workers.dev) can be redirected (the Worker
+# falls through to ASSETS for everything that is not an API path, keeping `_headers`). Hashed and static files are excluded
+# with negative patterns so they stay free and do not count towards the 100k/day request cap. When adding a new top-level
+# static folder or root file under apps/web/public, add it here too. /e/*, /media/* and /api/* are matched by "/*".
 [assets]
 directory = "../web/dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
-run_worker_first = ["/api/*", "/e/*", "/media/*"]
+run_worker_first = [
+  "/*",
+  "!/assets/*", "!/maps/*", "!/og/*", "!/tone-og/*",
+  "!/favicon.ico", "!/favicon.svg", "!/favicon-32.png", "!/apple-touch-icon.png",
+  "!/icon-192.png", "!/icon-512.png", "!/icon-maskable-512.png", "!/cover-badge.png",
+  "!/google-g.svg", "!/beacon-loader.js", "!/manifest.webmanifest",
+]
 
 # Single source of truth for the public origin. The Worker builds og:url / og:image from it, and the web
 # build (vite.config.ts) reads this same line to bake the absolute Home og:image. Bare https origin,
 # no trailing slash. Changing it later leaves already-shared links on the old address.
 [vars]
-PUBLIC_ORIGIN = "https://atlas.sargiotti67.workers.dev"
+PUBLIC_ORIGIN = "https://leyenda.ink"
 # Slice 06: Google redirect URI, exact (only this one is registered on the OAuth client). Top-level only on purpose:
 # previews and local dev do not set it, so sign-in there reports `not_configured` instead of sending a code to prod.
 # Secrets (wrangler secret put, never in this file): GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, ADMIN_EMAIL.
-OAUTH_REDIRECT_URI = "https://atlas.sargiotti67.workers.dev/api/v1/auth/google/callback"
+OAUTH_REDIRECT_URI = "https://leyenda.ink/api/v1/auth/google/callback"
 
 # Privacy (GDPR): invocation logs (automatic per-request logs that can include IP and request.cf geo)
 # are OFF. Our own console.* logs still go to Workers Logs. Metrics stay on.
