@@ -327,7 +327,7 @@ export default function MapCard({ eventId, map, onMap, onUnauthenticated, onNotF
             </Msg>
           )}
           {note && <p className="pe-mnote" role="status">{note}</p>}
-          <div>
+          <div className="pe-mtitle">
             <p className="pe-big">{t("peMapDone")}</p>
             <p className="pe-mmeta">
               <span><b>{map.full.width} × {map.full.height} px</b></span>
