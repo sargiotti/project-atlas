@@ -14,6 +14,7 @@ import { pedDa, pedEn, pedEs } from "./pointsEditorMessages";
 import { sedDa, sedEn, sedEs } from "./scheduleEditorMessages";
 import { coverDa, coverEn, coverEs } from "./coverMessages";
 import { clusterDa, clusterEn, clusterEs } from "./clusterMessages";
+import { skCa, skDa, skEn, skEs } from "./shareKitMessages";
 import { mainCa } from "./ca/main";
 import { panelCa } from "./ca/panel";
 import { eventCa } from "./ca/event";
@@ -30,6 +31,7 @@ const es = {
   ...mapEs,
   ...clusterEs,
   ...pubEs,
+  ...skEs,
   ...pedEs,
   ...sedEs,
   ...coverEs,
@@ -146,6 +148,7 @@ const en: Messages = {
   ...mapEn,
   ...clusterEn,
   ...pubEn,
+  ...skEn,
   ...pedEn,
   ...sedEn,
   ...coverEn,
@@ -260,6 +263,7 @@ const da: Messages = {
   ...mapDa,
   ...clusterDa,
   ...pubDa,
+  ...skDa,
   ...pedDa,
   ...sedDa,
   ...coverDa,
@@ -374,6 +378,7 @@ const ca: Messages = {
   ...mapCa,
   ...clusterCa,
   ...pubCa,
+  ...skCa,
   ...pedCa,
   ...sedCa,
   ...coverCa,
