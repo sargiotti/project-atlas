@@ -233,7 +233,7 @@ describe("unknown and invalid paths", () => {
       expect(res.headers.get("etag")).toBeNull();
       const html = await res.text();
       expect(html).toBe(SHELL.replace("</head>", '<meta name="robots" content="noindex"></head>'));
-      expect(metaContent(html, 'property="og:title"')).toBe("leyenda.ink — Find YOUR way");
+      expect(metaContent(html, 'property="og:title"')).toBe("leyenda.ink · Encuentra tu camino con mapas interactivos");
       expect(metaContent(html, 'property="og:image"')).toBe(BRAND_CARD);
     },
   );
