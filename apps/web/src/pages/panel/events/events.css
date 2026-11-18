@@ -492,9 +492,17 @@ textarea.pe-inp { height: auto; min-height: 112px; padding: 11px 14px; resize: v
 @media (min-width: 1024px) {
   .pe-hubgrid.is-pub > .pe-hmap { grid-column: span 5; }
   .pe-mdone { grid-template-columns: 240px minmax(0, 1fr); }
-  /* Narrow 5-col slot of the published hub: stack thumbnail above details. */
-  .pe-hubgrid.is-pub .pe-mdone { grid-template-columns: minmax(0, 1fr); }
-  .pe-hubgrid.is-pub .pe-mthumb { max-width: 220px; }
+  /* Narrow 5-col slot of the published hub: row 1 = thumbnail + title/actions, row 2 = theme tiles full width. */
+  .pe-hubgrid.is-pub { align-items: stretch; }
+  .pe-hubgrid.is-pub > .pe-hcardw { height: 100%; }
+  .pe-hubgrid.is-pub .pe-mdone { grid-template-columns: 140px minmax(0, 1fr); gap: 12px 16px; align-items: start; }
+  .pe-hubgrid.is-pub .pe-mthumb { max-width: none; width: 140px; grid-column: 1; grid-row: 1 / span 2; }
+  .pe-hubgrid.is-pub .pe-minfo { display: contents; }
+  .pe-hubgrid.is-pub .pe-minfo > * { grid-column: 1 / -1; }
+  .pe-hubgrid.is-pub .pe-minfo > .pe-mtitle { grid-column: 2; grid-row: 1; min-width: 0; align-self: end; }
+  .pe-hubgrid.is-pub .pe-minfo > .pe-mrow { grid-column: 2; grid-row: 2; align-self: start; min-width: 0; }
+  .pe-hubgrid.is-pub .pe-minfo > p.pe-mnote:not([role]) { display: none; }
+  .pe-hubgrid.is-pub .pe-mtheme .help { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .pe-mdrop { transition: none; } }
 .pe-pvmap { position: absolute; inset: 0; }
