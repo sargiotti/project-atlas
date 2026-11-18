@@ -8,6 +8,8 @@ import { D1EventMapRepository } from "../adapters/d1-event-map-repository";
 import { D1EventListRepository } from "../adapters/d1-event-list-repository";
 import { etagMatches, etagOf } from "./etag";
 import { handleEventPage } from "./event-page";
+import { handleSitemap } from "./sitemap";
+import { classifyPath, serveSpaRoute } from "./spa-pages";
 import { API_CSP, HTML_CSP, MEDIA_CSP } from "./security-headers";
 import { errorResponse } from "./errors";
 import { decideHost, REDIRECT_STATUS } from "./canonical-host";
@@ -20,6 +22,7 @@ import type { AppContext, AppEnv } from "./types";
 
 export type { Env } from "./types";
 
+const PREVIEW_HOST_SUFFIX = "-atlas.sargiotti67.workers.dev";
 const COVER_OG_PATH = /^\/media\/covers\/[a-z0-9_-]{1,64}\/[0-9a-f]{32}-og\.jpg$/;
 
 /** 200 JSON with weak ETag and the given Cache-Control, or 304 when If-None-Match matches. */
@@ -43,6 +46,11 @@ export function createApp() {
   app.use("*", async (c, next) => {
     c.set("requestId", c.req.header("cf-ray") ?? crypto.randomUUID());
     await next();
+    // Slice 25: preview hosts are never indexed.
+    if (new URL(c.req.url).hostname.endsWith(PREVIEW_HOST_SUFFIX)) {
+      c.res = new Response(c.res.body, c.res);
+      c.res.headers.set("X-Robots-Tag", "noindex");
+    }
     // Navigations served from static assets (slice 24) keep the headers from apps/web/public/_headers untouched.
     if (c.get("passthroughAsset")) return;
     c.res.headers.set("X-Content-Type-Options", "nosniff");
@@ -138,14 +146,18 @@ export function createApp() {
   // isolate cache. HEAD is answered by Hono from this GET handler (same headers, no body).
   app.get("/e/*", handleEventPage);
 
+  // Slice 25: sitemap. GET and HEAD only.
+  app.on(["GET", "HEAD"], "/sitemap.xml", handleSitemap);
+  app.all("/sitemap.xml", () => new Response("Method Not Allowed", { status: 405, headers: { Allow: "GET, HEAD", "Cache-Control": "no-store" } }));
+
   // Slice 24: navigations (Home, /panel, SPA routes) reach the Worker so the host check above can redirect them.
   // Anything that is not an API path goes to the static assets unchanged, which apply `_headers` and the SPA fallback.
   app.notFound((c) => {
     const p = c.req.path;
     const isGetLike = c.req.method === "GET" || c.req.method === "HEAD";
     if (isGetLike && p !== "/api" && !p.startsWith("/api/") && !p.startsWith("/media/")) {
-      c.set("passthroughAsset", true);
-      return c.env.ASSETS.fetch(c.req.raw);
+      // Slice 25: explicit allowlist of SPA routes; everything else is the noindex 404 shell.
+      return serveSpaRoute(c, classifyPath(p));
     }
     return errorResponse(c, 404, "not_found", "no-store");
   });

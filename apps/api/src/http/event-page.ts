@@ -59,7 +59,7 @@ export function parsePublicOrigin(raw: string | undefined): string {
   return u.origin;
 }
 
-async function loadShell(assets: Fetcher): Promise<string> {
+export async function loadShell(assets: Fetcher): Promise<string> {
   // Fresh GET for "/": no client headers forwarded (no If-None-Match, Range, ...), so the answer is
   // always a full 200 body.
   const res = await assets.fetch(new Request("https://assets.invalid/", { method: "GET" }));
@@ -68,6 +68,15 @@ async function loadShell(assets: Fetcher): Promise<string> {
     throw new Error(`shell fetch failed: status=${res.status}`);
   }
   return res.text();
+}
+
+/** Appends <link rel=canonical> to the head. href is always PUBLIC_ORIGIN + a fixed path or a validated slug. */
+export function canonicalLink(href: string) {
+  return {
+    element(el: Element) {
+      el.append(`<link rel="canonical" href="${href.replaceAll("&", "&amp;").replaceAll("\"", "&quot;").replaceAll("<", "&lt;")}">`, { html: true });
+    },
+  };
 }
 
 async function rewriteShell(shell: string, meta: MetaValues): Promise<string> {
@@ -81,6 +90,7 @@ async function rewriteShell(shell: string, meta: MetaValues): Promise<string> {
     },
   });
   const rw = new HTMLRewriter();
+  rw.on("head", canonicalLink(meta.url));
   rw.on(SEL.title, {
       element(el) {
         seen.set(SEL.title, (seen.get(SEL.title) ?? 0) + 1);
@@ -109,7 +119,7 @@ async function rewriteShell(shell: string, meta: MetaValues): Promise<string> {
   return out;
 }
 
-function htmlHeaders(cacheControl: string, etag?: string): Headers {
+export function htmlHeaders(cacheControl: string, etag?: string): Headers {
   const h = new Headers({
     "Content-Type": "text/html; charset=utf-8",
     "Cache-Control": cacheControl,
@@ -122,11 +132,11 @@ function htmlHeaders(cacheControl: string, etag?: string): Headers {
   return h;
 }
 
-const html = (body: string, status: number, cacheControl: string, etag?: string) =>
+export const html = (body: string, status: number, cacheControl: string, etag?: string) =>
   new Response(body, { status, headers: htmlHeaders(cacheControl, etag) });
 
 /** The shell with generic brand meta (no event title or description) and a robots noindex tag. */
-async function goneResponse(shell: string): Promise<Response> {
+export async function goneResponse(shell: string, cacheControl = GONE_CACHE): Promise<Response> {
   const body = await new HTMLRewriter()
     .on("head", {
       element(el) {
@@ -135,7 +145,7 @@ async function goneResponse(shell: string): Promise<Response> {
     })
     .transform(new Response(shell))
     .text();
-  const res = html(body, 404, GONE_CACHE);
+  const res = html(body, 404, cacheControl);
   res.headers.set("X-Robots-Tag", "noindex");
   return res;
 }
