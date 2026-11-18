@@ -120,7 +120,7 @@ describe("GET /e/{slug}", () => {
     expect(html).not.toContain("&amp;amp;");
 
     // No raw angle brackets are injected anywhere (the rewriter would leave them raw inside attributes).
-    expect(html.match(/</g)!.length).toBe(SHELL.match(/</g)!.length);
+    expect(html.match(/</g)!.length).toBe(SHELL.match(/</g)!.length + 1); // +1: the canonical link (slice 25)
     // Attributes: the quote is an entity, so every value stays inside its quotes. The regex used by
     // metaContent stops at the first raw quote, so a leak would show up as a truncated value.
     for (const sel of ['property="og:title"', 'name="twitter:title"', 'property="og:image:alt"', 'name="twitter:image:alt"']) {
@@ -135,6 +135,7 @@ describe("GET /e/{slug}", () => {
     // Everything outside the rewritten tags is byte-identical to the shell.
     const strip = (s: string) =>
       s
+        .replace(/<link rel="canonical" href="[^"]*">/, "")
         .replace(/<title>[\s\S]*?<\/title>/, "")
         .replace(
           /<meta (?:name|property)="(?:description|og:url|og:title|og:description|og:image|og:image:alt|twitter:title|twitter:description|twitter:image|twitter:image:alt)" content="[^"]*" \/>/g,

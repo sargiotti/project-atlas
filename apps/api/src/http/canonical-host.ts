@@ -7,8 +7,8 @@
  */
 export const PUBLIC_ORIGIN = "https://leyenda.ink";
 
-/** Single place to switch the redirect from temporary to permanent: change 302 to 301 (after the post-deploy smoke test). */
-export const REDIRECT_STATUS = 302;
+/** Permanent since slice 25 (the slice 24 smoke test passed on both old hosts). */
+export const REDIRECT_STATUS = 301;
 
 const REDIRECT_HOSTS: ReadonlySet<string> = new Set(["www.leyenda.ink", "atlas.sargiotti67.workers.dev"]);
 

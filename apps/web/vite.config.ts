@@ -12,9 +12,16 @@ import { beaconTag } from "./beaconTag";
 const here = import.meta.dirname;
 function readPublicOrigin(): string {
   const toml = readFileSync(resolve(here, "../api/wrangler.toml"), "utf8");
-  const origin = /^PUBLIC_ORIGIN\s*=\s*"([^"]+)"\s*$/m.exec(toml)?.[1];
+  // Workers Builds previews (non-main branch) use [previews.vars], the last PUBLIC_ORIGIN line; production the first.
+  const preview = !!process.env.WORKERS_CI_BRANCH && process.env.WORKERS_CI_BRANCH !== "main";
+  const all = [...toml.matchAll(/^PUBLIC_ORIGIN\s*=\s*"([^"]+)"\s*$/gm)].map((m) => m[1]);
+  const origin = preview ? all[all.length - 1] : all[0];
   if (!origin || !/^https:\/\/[a-z0-9.-]+(:\d+)?$/.test(origin)) {
     throw new Error("PUBLIC_ORIGIN in apps/api/wrangler.toml must be a bare https origin");
+  }
+  // Production build (main branch or no CI branch): the origin must be the real domain.
+  if (!preview && origin !== "https://leyenda.ink") {
+    throw new Error(`Production build requires PUBLIC_ORIGIN = https://leyenda.ink, got ${origin}`);
   }
   return origin;
 }
