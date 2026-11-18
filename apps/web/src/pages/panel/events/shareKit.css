@@ -1,0 +1,75 @@
+/* Slice 28: "Compartir tu mapa" card, A4 flyer dialog and print rules. */
+.pe-hshare { display: grid; gap: 4px; align-content: start; }
+.sk-linkrow { display: flex; gap: 10px; margin-top: 10px; }
+.sk-linkrow .pe-inp { flex: 1; min-width: 0; text-overflow: ellipsis; }
+.sk-linkrow .btn { flex: none; }
+.sk-note { min-height: 1.3em; margin: 6px 2px 0; font-size: 0.88rem; color: var(--ink-2); }
+.sk-note.bad { color: var(--danger); font-weight: 700; }
+.sk-kit { display: grid; grid-template-columns: 132px 1fr; gap: 18px; align-items: start; margin-top: 10px; }
+.sk-thumb { width: 132px; height: auto; aspect-ratio: 4 / 5; border-radius: 12px; box-shadow: var(--card-sh); background: #1E2340; display: block; }
+.sk-side { display: grid; gap: 12px; min-width: 0; }
+.sk-lang { display: grid; gap: 4px; font-size: 0.82rem; font-weight: 700; color: var(--ink-2); max-width: 260px; }
+.sk-lang .pe-inp { height: 44px; font-weight: 600; }
+.sk-btns { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.sk-btns .btn small { font-weight: 600; color: var(--ink-2); }
+.sk-link { background: none; border: 0; padding: 8px 4px; min-height: 44px; font: inherit; font-weight: 700; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.sk-link:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+@media (max-width: 1023px) {
+  .pe-hshare { grid-column: span 12; }
+}
+@media (max-width: 479px) {
+  .sk-kit { grid-template-columns: 1fr; }
+  .sk-thumb { display: none; }
+  .sk-linkrow { flex-direction: column; }
+  .sk-btns { flex-direction: column; align-items: stretch; }
+  .sk-btns .btn { width: 100%; }
+  .sk-lang { max-width: none; }
+}
+@media (min-width: 1024px) {
+  .pe-hshare { grid-column: 5 / span 8; grid-row: 2; }
+  .pe-hubgrid:has(.pe-hshare) .pe-hpath { grid-row: 1 / span 3; }
+  .pe-hshare ~ .pe-hmap { grid-row: 3; }
+}
+
+/* ---- flyer dialog (portal into body) ---- */
+/* The dialog lives in <body> (so printing can hide #root); this wrapper only carries the panel theme tokens. */
+.sk-host { display: contents; }
+.sk-ovl { position: fixed; inset: 0; z-index: 60; background: var(--scrim); display: flex; justify-content: center; overflow: auto; padding: 0; }
+.sk-fdlg { background: var(--surface); color: var(--ink); width: 100%; max-width: 640px; margin: auto; min-height: 100%; padding: 16px; display: grid; gap: 14px; align-content: start; }
+.sk-chrome { display: grid; gap: 8px; }
+.sk-chrome h2 { font-size: 1.25rem; }
+.sk-chrome-acts { display: flex; gap: 10px; flex-wrap: wrap; }
+.sk-chrome .pe-sub { margin: 0; }
+.sk-fit { container-type: inline-size; width: min(100%, calc((100dvh - 200px) * 0.707)); min-width: min(100%, 260px); margin: 0 auto; }
+.sk-sheet { --mm: calc(100cqw / 210); width: 100%; aspect-ratio: 210 / 297; background: #fff; color: #1E2340; box-shadow: 0 6px 24px rgba(30, 35, 64, 0.22); border: 1px solid var(--line); overflow: hidden; }
+@media (min-width: 720px) {
+  .sk-ovl { padding: 24px; }
+  .sk-fdlg { min-height: 0; border-radius: 24px; padding: 22px; max-width: 700px; }
+}
+
+/* ---- A4 flyer 2A: every length is N mm = calc(var(--mm) * N) ---- */
+.fl { width: 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; text-align: center; overflow: hidden; background: #fff; color: #1E2340; font-family: Figtree, system-ui, sans-serif; padding: calc(var(--mm) * 14) calc(var(--mm) * 16); }
+.fl-name { margin: 0; max-width: 100%; font-family: "Bricolage Grotesque", Figtree, sans-serif; font-weight: 800; letter-spacing: -0.025em; font-size: calc(var(--mm) * var(--fs, 21)); line-height: 1.04; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.fl-meta { margin: calc(var(--mm) * 4) 0 0; font-weight: 700; font-size: calc(var(--mm) * 8); }
+.fl-qr { width: calc(var(--mm) * 140); margin-top: calc(var(--mm) * 8); }
+.fl-qr svg { display: block; width: 100%; height: auto; }
+.fl-cta { margin: calc(var(--mm) * 6) 0 0; max-width: calc(var(--mm) * 170); font-family: "Bricolage Grotesque", Figtree, sans-serif; font-weight: 800; font-size: calc(var(--mm) * 11); line-height: 1.08; letter-spacing: -0.015em; }
+.fl-cta u { text-decoration-color: #FF6A3D; text-decoration-thickness: calc(var(--mm) * 1.6); text-underline-offset: calc(var(--mm) * 1.6); }
+.fl-sub { margin: calc(var(--mm) * 3) 0 0; font-weight: 600; font-size: calc(var(--mm) * 5.2); color: #3F4A66; }
+.fl-foot { margin-top: auto; width: 100%; display: flex; justify-content: space-between; align-items: baseline; gap: calc(var(--mm) * 4); border-top: calc(var(--mm) * 0.5) solid #1E2340; padding-top: calc(var(--mm) * 4); }
+.fl-url { font-weight: 700; font-size: calc(var(--mm) * 5); overflow-wrap: anywhere; text-align: left; }
+.fl-wm { font-family: "Bricolage Grotesque", Figtree, sans-serif; font-weight: 800; letter-spacing: -0.03em; line-height: 1; white-space: nowrap; font-size: calc(var(--mm) * 9); }
+.fl-wm svg { display: inline-block; vertical-align: baseline; height: 0.76em; width: 0.76em; margin: 0 0.02em 0 0.04em; }
+
+@page { size: A4 portrait; margin: 0; }
+@media print {
+  body.sk-printing > #root { display: none !important; }
+  body.sk-printing { background: #fff !important; }
+  .sk-ovl { position: static; display: block; padding: 0; background: none; overflow: visible; }
+  .sk-fdlg { display: block; margin: 0; max-width: none; width: 210mm; min-height: 0; padding: 0; border-radius: 0; background: #fff; }
+  .sk-chrome { display: none; }
+  .sk-fit { container-type: normal; width: 210mm; min-width: 0; margin: 0; }
+  .sk-sheet { --mm: 1mm; width: 210mm; height: 297mm; aspect-ratio: auto; box-shadow: none; border: 0; border-radius: 0; break-inside: avoid; page-break-after: avoid; }
+  .sk-sheet, .sk-sheet * { filter: none !important; box-shadow: none !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}

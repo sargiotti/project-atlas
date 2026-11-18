@@ -10,6 +10,7 @@ import { zoneLabel, zoneOffset } from "../../../lib/timeZones";
 import { WebsiteLink } from "./About";
 import MapCard from "./MapCard";
 import PublishStep from "./PublishStep";
+import ShareKit from "./ShareKit";
 import { Dialog, DayTile, Ic, LoadError, Loading, PanelNotFound, StatusBadge, Toast, dateRange, pastel, setFlash, useDocTitle, useFlashToast } from "./common";
 
 /** /panel/events/:id after a save: what the event looks like, how to publish it, and (quietly) delete. */
@@ -88,6 +89,8 @@ export default function EventHub({ id }: { id: string }) {
             </div>
           </div>
         </section>
+
+        <ShareKit event={e} />
 
         <MapCard
           eventId={e.id}
