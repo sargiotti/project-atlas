@@ -32,5 +32,5 @@ export interface Env {
   OAUTH_REDIRECT_URI?: string;
 }
 
-export type AppEnv = { Bindings: Env; Variables: { requestId: string; user: SessionUser } };
+export type AppEnv = { Bindings: Env; Variables: { requestId: string; passthroughAsset?: boolean; user: SessionUser } };
 export type AppContext = Context<AppEnv>;

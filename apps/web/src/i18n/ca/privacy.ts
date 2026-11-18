@@ -7,14 +7,14 @@ export const privacyCa: PrivacyNotice = {
   sections: [
     {
       heading: "Qui n'és el responsable",
-      lines: ["El projecte Atlas és responsable de les teves dades.", "Atlas és en una prova tancada i encara no és obert al públic. Abans d'obrir-lo, publicarem aquí una adreça de contacte per a consultes de privacitat."],
+      lines: ["leyenda.ink és responsable de les teves dades.", "És en una prova tancada i encara no és obert al públic. Per a consultes de privacitat, escriu a contact@leyenda.ink."],
     },
     {
       heading: "Si visites mapes d'esdeveniments",
       lines: [
-        "No cal que tinguis compte. No fem servir publicitat ni galetes de seguiment, i no elaborem perfils de les persones que ens visiten. Per saber quanta gent fa servir Atlas, fem servir Cloudflare Web Analytics. No fa servir galetes i només desa recomptes agregats de la pàgina visitada, la pàgina d'on vens (referent), el teu navegador i tipus de dispositiu, el teu país i el rendiment de càrrega. No t'identifica ni et segueix entre llocs web.",
+        "No cal que tinguis compte. No fem servir publicitat ni galetes de seguiment, i no elaborem perfils de les persones que ens visiten. Per saber quanta gent fa servir leyenda.ink, fem servir Cloudflare Web Analytics. No fa servir galetes i només desa recomptes agregats de la pàgina visitada, la pàgina d'on vens (referent), el teu navegador i tipus de dispositiu, el teu país i el rendiment de càrrega. No t'identifica ni et segueix entre llocs web.",
         "El teu navegador només recorda el teu idioma i el zoom del programa si els canvies. Això es queda al teu dispositiu.",
-        "La teva adreça IP es fa servir durant aproximadament un minut per protegir el servei d'abusos (límit de peticions), per mostrar-te primer els esdeveniments propers i per triar un idioma per defecte (català si ets a Catalunya) (ubicació aproximada a partir de la IP). Atlas en si no la desa.",
+        "La teva adreça IP es fa servir durant aproximadament un minut per protegir el servei d'abusos (límit de peticions), per mostrar-te primer els esdeveniments propers i per triar un idioma per defecte (català si ets a Catalunya) (ubicació aproximada a partir de la IP). leyenda.ink en si no la desa.",
         "Si toques \"Afegeix a Google Calendar\", Google rep les dades d'aquest esdeveniment.",
       ],
     },
@@ -36,7 +36,7 @@ export const privacyCa: PrivacyNotice = {
     {
       heading: "Qui ens ajuda",
       lines: [
-        "Cloudflare allotja Atlas. La nostra base de dades és a la UE. Alguns registres tècnics es poden processar fora de la UE, protegits pel Marc de Privacitat de Dades UE–EUA i per clàusules contractuals tipus.",
+        "Cloudflare allotja leyenda.ink. La nostra base de dades és a la UE. Alguns registres tècnics es poden processar fora de la UE, protegits pel Marc de Privacitat de Dades UE–EUA i per clàusules contractuals tipus.",
         "Les imatges de mapa que puges es desen a Cloudflare R2, a la UE. Abans de desar-les, el teu navegador les redueix i en treu la ubicació i altres metadades (com el GPS i les dades de la càmera). Esborrem la imatge d'un mapa quan la substitueixes o quan elimines l'esdeveniment.",
         "Les imatges de portada dels teus esdeveniments es desen a Cloudflare R2, a la UE. El teu navegador les redueix i en treu la ubicació i altres metadades (com el GPS i les dades de la càmera) abans de desar-les. Una portada és pública tan bon punt es publica l'esdeveniment i la pot veure qualsevol persona que tingui l'enllaç, així que fes servir només fotos que puguis compartir. Esborrem la portada quan la substitueixes o la treus, o quan elimines l'esdeveniment.",
         "Com a proveïdor d'allotjament, Cloudflare registra dades bàsiques de cada sol·licitud (adreça IP, país aproximat, pàgina sol·licitada i hora) a la seva analítica de trànsit. Les podem veure durant fins a uns 30 dies, només per diagnosticar problemes i frenar abusos. També veiem estadístiques generals de trànsit, com les visites per país, que no identifiquen ningú.",

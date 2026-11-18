@@ -168,7 +168,9 @@ button, input { font: inherit; color: inherit; }
   max-width: 720px; margin: 0 auto; padding: 16px 16px 8px;
 }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; min-height: 44px; }
-.wordmark { font: 800 1.6rem/1 var(--display); letter-spacing: -0.03em; text-transform: lowercase; }
+.wordmark { font: 800 1.65rem/1 var(--display); letter-spacing: -0.03em; text-transform: lowercase; white-space: nowrap; display: inline-block; }
+/* Pin as the dot: ascender height, tip on the baseline (design 24, option B). */
+.wordmark .wm-pin { display: inline-block; vertical-align: baseline; width: 0.76em; height: 0.76em; margin: 0 0.02em 0 0.04em; shape-rendering: crispEdges; }
 .shell-main { max-width: 720px; margin: 0 auto; padding: 24px 16px 64px; }
 .hero-title { font: 800 2rem/1.15 var(--display); margin-bottom: 12px; }
 .lead { color: var(--ink-2); font-size: 1.1rem; margin-bottom: 32px; }
@@ -500,7 +502,7 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
 }
 .auth-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 4px; max-width: 960px; margin: 0 auto; }
 .auth-head .brand, .ptop .brand { gap: 8px; }
-.auth-head .wordmark, .ptop .wordmark { font-size: 1.45rem; }
+.auth-head .wordmark, .ptop .wordmark { font-size: 1.32rem; }
 .auth { padding: 8px 16px 32px; max-width: 440px; margin: 0 auto; }
 .auth h1 { font-size: 1.55rem; line-height: 1.2; margin: 18px 0 6px; }
 .auth .lead { font-size: 1rem; margin-bottom: 20px; }

@@ -136,7 +136,7 @@ describe("sign-in links and callback errors", () => {
   it("login is a plain link to the OAuth start and maps the error code to a fixed string", async () => {
     goTo("/panel/login?error=no_access");
     render(<I18nProvider initial="en"><Routes /></I18nProvider>);
-    expect(await screen.findByRole("alert")).toHaveTextContent("This Google account doesn't have access to Atlas.");
+    expect(await screen.findByRole("alert")).toHaveTextContent("This Google account doesn't have access to leyenda.ink.");
     expect(screen.getByRole("link", { name: "Sign in with Google" })).toHaveAttribute("href", "/api/v1/auth/google/start");
   });
 
@@ -157,7 +157,7 @@ describe("invite page", () => {
     renderAt(`/panel/invite/${TOKEN}`);
     expect(await screen.findByText("ana@havnelobet.dk")).toBeInTheDocument();
     expect(screen.getByText("Ada L.")).toBeInTheDocument();
-    expect(screen.getByText(/invited you to publish event maps on Atlas/)).toBeInTheDocument();
+    expect(screen.getByText(/invited you to publish event maps on leyenda.ink/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Continue with Google" })).toHaveAttribute(
       "href",
       `/api/v1/auth/google/start?invite=${TOKEN}`,
@@ -262,7 +262,7 @@ describe("admin invites", () => {
   });
 
   it.each([
-    ["email_already_registered", "That email already has an Atlas account."],
+    ["email_already_registered", "That email already has a leyenda.ink account."],
     ["invite_already_pending", "There is already a pending invite for that email."],
     ["invite_cap_reached", "You've reached the maximum of pending invites."],
   ])("maps the 409 %s to a fixed message", async (code, text) => {

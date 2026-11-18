@@ -77,7 +77,7 @@ describe("GET /e/{slug}", () => {
     expect(metaContent(html, 'name="twitter:image"')).toBe(`${ORIGIN}/media/${coverOg("havnelobet")}`);
     expect(metaContent(html, 'property="og:image:alt"')).toBe("Cover image for Havneløbet 2026");
     expect(metaContent(html, 'name="twitter:card"')).toBe("summary_large_image");
-    expect(metaContent(html, 'property="og:site_name"')).toBe("Atlas");
+    expect(metaContent(html, 'property="og:site_name"')).toBe("leyenda.ink");
     expect(metaContent(html, 'property="og:image:width"')).toBe("1200");
   });
 
@@ -232,7 +232,7 @@ describe("unknown and invalid paths", () => {
       expect(res.headers.get("etag")).toBeNull();
       const html = await res.text();
       expect(html).toBe(SHELL.replace("</head>", '<meta name="robots" content="noindex"></head>'));
-      expect(metaContent(html, 'property="og:title"')).toBe("Atlas — Find YOUR way");
+      expect(metaContent(html, 'property="og:title"')).toBe("leyenda.ink — Find YOUR way");
       expect(metaContent(html, 'property="og:image"')).toBe(BRAND_CARD);
     },
   );

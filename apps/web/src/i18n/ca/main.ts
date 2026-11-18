@@ -19,7 +19,7 @@ export const mainCa = {
   emptyText: "Quan un esdeveniment publiqui el seu mapa, apareixerà aquí.",
   errorTitle: "No hem pogut carregar els esdeveniments",
   errorText: "Revisa la connexió i torna-ho a provar.",
-  appName: "Atlas",
+  appName: "leyenda.ink",
   privacyLink: "Privacitat",
   language: "Idioma",
   loading: "Carregant el mapa…",

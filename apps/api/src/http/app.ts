@@ -10,6 +10,7 @@ import { etagMatches, etagOf } from "./etag";
 import { handleEventPage } from "./event-page";
 import { API_CSP, HTML_CSP, MEDIA_CSP } from "./security-headers";
 import { errorResponse } from "./errors";
+import { decideHost, REDIRECT_STATUS } from "./canonical-host";
 import { registerAuthRoutes } from "./auth-routes";
 import { registerPanelRoutes } from "./panel-routes";
 import { registerAdminEventRoutes } from "./admin-event-routes";
@@ -42,6 +43,8 @@ export function createApp() {
   app.use("*", async (c, next) => {
     c.set("requestId", c.req.header("cf-ray") ?? crypto.randomUUID());
     await next();
+    // Navigations served from static assets (slice 24) keep the headers from apps/web/public/_headers untouched.
+    if (c.get("passthroughAsset")) return;
     c.res.headers.set("X-Content-Type-Options", "nosniff");
     c.res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
     const path = c.req.path;
@@ -49,6 +52,15 @@ export function createApp() {
     // Link-preview crawlers embed the og image from another origin, so only `-og.jpg` of covers is cross-origin (public once
     // published; the only cost is hotlinking). Everything else under /media stays same-site.
     if (path.startsWith("/media/")) c.res.headers.set("Cross-Origin-Resource-Policy", COVER_OG_PATH.test(path) ? "cross-origin" : "same-site");
+  });
+
+  // Slice 24: non-canonical hosts (www, old workers.dev) redirect GET/HEAD to https://leyenda.ink (Location only, no body)
+  // and refuse everything else with 403, never 307/308. Runs right after the headers middleware, before the rate limiter, so no handler (or D1) is touched.
+  app.use("*", async (c, next) => {
+    const decision = decideHost(c.req.url, c.req.method);
+    if (decision.action === "serve") return next();
+    if (decision.action === "reject") return errorResponse(c, 403, "invalid_origin", "no-store");
+    return new Response(null, { status: REDIRECT_STATUS, headers: { Location: decision.location, "Cache-Control": "no-store" } });
   });
 
   // Per-IP rate limit (60 req / 60 s, configured in wrangler.toml). Fails open if the
@@ -126,7 +138,17 @@ export function createApp() {
   // isolate cache. HEAD is answered by Hono from this GET handler (same headers, no body).
   app.get("/e/*", handleEventPage);
 
-  app.notFound((c) => errorResponse(c, 404, "not_found", "no-store"));
+  // Slice 24: navigations (Home, /panel, SPA routes) reach the Worker so the host check above can redirect them.
+  // Anything that is not an API path goes to the static assets unchanged, which apply `_headers` and the SPA fallback.
+  app.notFound((c) => {
+    const p = c.req.path;
+    const isGetLike = c.req.method === "GET" || c.req.method === "HEAD";
+    if (isGetLike && p !== "/api" && !p.startsWith("/api/") && !p.startsWith("/media/")) {
+      c.set("passthroughAsset", true);
+      return c.env.ASSETS.fetch(c.req.raw);
+    }
+    return errorResponse(c, 404, "not_found", "no-store");
+  });
 
   // Generic handler: never leak internals (stack traces, SQL, D1 messages) to the client.
   // Workers invocation logs are off, so log one privacy-safe line: error name, message and request
