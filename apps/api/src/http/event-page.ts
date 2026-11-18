@@ -141,7 +141,7 @@ async function goneResponse(shell: string): Promise<Response> {
 }
 
 const UNAVAILABLE =
-  '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Atlas</title></head><body><p>Atlas is temporarily unavailable. Please try again in a moment.</p></body></html>';
+  '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>leyenda.ink</title></head><body><p>leyenda.ink is temporarily unavailable. Please try again in a moment.</p></body></html>';
 
 export async function handleEventPage(c: Context<{ Bindings: EventPageEnv; Variables: { requestId: string } }>): Promise<Response> {
   const requestId = c.get("requestId");
