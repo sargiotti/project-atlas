@@ -78,7 +78,7 @@ describe("SPA routes and 404", () => {
     const body = await (await call("/privacy")).text();
     expect(body).toContain("<title>Privacy · leyenda.ink</title>");
     expect(body).toContain('<meta property="og:url" content="https://leyenda.ink/privacy"');
-    expect(body).not.toContain("Free interactive maps");
+    expect(body).not.toContain("Mapas interactivos gratis");
   });
 
   it("returns the noindex 404 shell for unknown paths and keeps unknown /api JSON", async () => {
