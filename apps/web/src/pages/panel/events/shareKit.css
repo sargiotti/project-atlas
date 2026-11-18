@@ -3,6 +3,8 @@
 .sk-linkrow { display: flex; gap: 10px; margin-top: 10px; }
 .sk-linkrow .pe-inp { flex: 1; min-width: 0; text-overflow: ellipsis; }
 .sk-linkrow .btn { flex: none; }
+.sk-linkrow2 { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.sk-linkrow2 .btn { flex: 1 1 140px; }
 .sk-note { min-height: 1.3em; margin: 6px 2px 0; font-size: 0.88rem; color: var(--ink-2); }
 .sk-note.bad { color: var(--danger); font-weight: 700; }
 .sk-kit { display: grid; grid-template-columns: 132px 1fr; gap: 18px; align-items: start; margin-top: 10px; }
@@ -27,9 +29,7 @@
   .sk-lang { max-width: none; }
 }
 @media (min-width: 1024px) {
-  .pe-hshare { grid-column: 5 / span 8; grid-row: 2; }
-  .pe-hubgrid:has(.pe-hshare) .pe-hpath { grid-row: 1 / span 3; }
-  .pe-hshare ~ .pe-hmap { grid-row: 3; }
+  .pe-hubgrid > .pe-hshare { grid-column: span 7; }
 }
 
 /* ---- flyer dialog (portal into body) ---- */

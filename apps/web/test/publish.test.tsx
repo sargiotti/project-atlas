@@ -83,6 +83,48 @@ describe("organizer publish step", () => {
   });
 });
 
+describe("event hub status band", () => {
+  const PUB = { ...EV, map: MAP, status: "published", approvedAt: "2026-11-15T09:00:00.000Z" };
+
+  it("shows the 3-step guide while it is a draft, with the map step pending when there is no map", async () => {
+    mockApi({ "GET /auth/me": () => json({ organizer }), [`GET /panel/events/${ID}`]: () => json({ event: EV }) });
+    open(`/panel/events/${ID}`);
+    const band = await screen.findByRole("region", { name: "Path to publishing" });
+    expect(within(band).getAllByRole("listitem")).toHaveLength(3);
+    expect(within(band).getByText("Upload the map")).toBeInTheDocument();
+    expect(within(band).getByRole("button", { name: "Request publish" })).toBeDisabled();
+  });
+
+  it("hides the steps when published, says since when, and keeps Unpublish one click away with its confirmation", async () => {
+    const unpublish = vi.fn(() => json({ event: { ...PUB, status: "draft" } }));
+    mockApi({
+      "GET /auth/me": () => json({ organizer }),
+      [`GET /panel/events/${ID}`]: () => json({ event: PUB }),
+      [`POST /panel/events/${ID}/unpublish`]: unpublish,
+    });
+    const user = userEvent.setup();
+    open(`/panel/events/${ID}`);
+    const band = await screen.findByRole("region", { name: "Path to publishing" });
+    expect(within(band).queryByRole("listitem")).not.toBeInTheDocument();
+    expect(within(band).getByText(/Public since/)).toBeInTheDocument();
+    await user.click(within(band).getByRole("button", { name: "Unpublish…" }));
+    expect(unpublish).not.toHaveBeenCalled();
+    await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Unpublish" }));
+    expect(unpublish).toHaveBeenCalledOnce();
+    expect(await screen.findByRole("button", { name: "Request publish" })).toBeInTheDocument();
+  });
+
+  it("offers the event link, Copy, Share and Open only once, in Share your map", async () => {
+    mockApi({ "GET /auth/me": () => json({ organizer }), [`GET /panel/events/${ID}`]: () => json({ event: PUB }) });
+    open(`/panel/events/${ID}`);
+    await screen.findByRole("heading", { name: "Share your map" });
+    expect(screen.getAllByLabelText("Your map link")).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /copy/i })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Share" })).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: "Open the public page" })).toHaveLength(1);
+  });
+});
+
 describe("Admin review", () => {
   const review = (updatedAt: string, name = "Fiesta de mi barrio") => ({
     event: { slug: "fiesta-x7k2q9", name, startDate: "2026-12-12", endDate: "2026-12-13", language: "es", timeZone: "America/Buenos_Aires", city: "Rosario", country: "AR" },

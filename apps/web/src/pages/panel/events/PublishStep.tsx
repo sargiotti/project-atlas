@@ -1,7 +1,6 @@
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import type { PanelEvent } from "@atlas/contract";
 import { organizerTransition, type FailCode } from "../../../api/publication";
-import ShareDialog, { buildShareUrl } from "../../../components/ShareDialog";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { Link, navigate } from "../../../lib/router";
 import { Dialog, Ic, StatusBadge } from "./common";
@@ -16,7 +15,7 @@ export function shortDate(iso: string | null, lang: string) {
 }
 
 /**
- * Step 3 of the path card, in every status. The buttons only ask; the server decides which transition is legal
+ * The publishing status band inside the event card (slice 29): the 3-step guide while not published, a one-line fact once published. The buttons only ask; the server decides which transition is legal
  * and the answer (the event) replaces what the hub shows. Editing stays available in every status.
  */
 export default function PublishStep({
@@ -24,20 +23,20 @@ export default function PublishStep({
   onEvent,
   onReload,
   onNotice,
+  extra,
 }: {
   event: PanelEvent;
   onEvent: (e: PanelEvent) => void;
   onReload: () => void;
   onNotice: (text: string) => void;
+  extra?: React.ReactNode;
 }) {
   const { t, lang } = useI18n();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
-  const [sharing, setSharing] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const band = useRef<HTMLElement>(null);
   const [needPoints, setNeedPoints] = useState(false);
-  const url = buildShareUrl(e.slug);
 
   const explain = (code: FailCode | "error") => {
     if (code === "unauthenticated") return void navigate("/panel/login", true, true);
@@ -67,19 +66,10 @@ export default function PublishStep({
       setConfirming(false);
       onEvent(r.event);
       onNotice(okText);
+      requestAnimationFrame(() => band.current?.focus());
     } else {
       setConfirming(false);
       explain(r.status === "failed" ? r.code : "error");
-    }
-  };
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setSharing(true); // the dialog has a selectable field as the fallback
     }
   };
 
@@ -103,42 +93,49 @@ export default function PublishStep({
     </p>
   );
 
-  const s3 = (cls: string, node: React.ReactNode, showBadge: boolean, body: React.ReactNode) => (
-    <li className={`s3 ${cls}`}>
+  const step = (cls: string, node: React.ReactNode, title: string, sub: string) => (
+    <li className={cls}>
       <span className="node">{node}</span>
-      <div>
-        <div className="s3h">
-          <b>{t("peStep3")}</b>
-          {showBadge && <StatusBadge status={e.status} />}
-        </div>
-        {body}
-        {fail}
-      </div>
+      <div><b>{title}</b>{sub && <small>{sub}</small>}</div>
     </li>
   );
+  const stepper = (mapDone: boolean, s3Cls: string, s3Node: React.ReactNode) => (
+    <ol className="pe-stepper">
+      {step("done", <Ic n="check" size={16} />, t("peStep1"), t("peStep1Done"))}
+      {mapDone
+        ? step("done", <Ic n="check" size={16} />, t("peStep2"), t("peStep1Done"))
+        : step("now", "2", t("peStep2"), t("peStep2Now"))}
+      {step(s3Cls, s3Node, t("peStep3"), "")}
+    </ol>
+  );
 
-  if (e.status === "draft" && !e.map) {
-    return s3("", <Ic n="lock" size={18} />, false, (
-      <>
-        <p className="muted">{t("pePubNeedMapSub")}</p>
-        <p>{t("pePubNeedMap")}</p>
-        <div className="pe-brow"><button type="button" className="btn primary" disabled><Ic n="upload" size={18} />{t("pePubRequest")}</button></div>
-      </>
-    ));
-  }
+  let body: React.ReactNode;
+  let draft = false;
   if (e.status === "draft") {
-    return s3("nextstep", "3", false, (
+    draft = true;
+    body = !e.map ? (
       <>
-        <p className="muted">{t("pePubNow")}</p>
-        <p>{t("pePubExplain")}</p>
-        <div className="pe-brow">{request(t("pePubRequest"))}</div>
+        {stepper(false, "lock", <Ic n="lock" size={16} />)}
+        <div className="pe-bandmsg">
+          <p className="muted">{t("pePubNeedMapSub")}</p>
+          <p>{t("pePubNeedMap")}</p>
+        </div>
+        <div className="pe-bandact"><button type="button" className="btn primary" disabled><Ic n="upload" size={18} />{t("pePubRequest")}</button></div>
       </>
-    ));
-  }
-  if (e.status === "in_review") {
-    return s3("n-review", <Ic n="clock" size={18} />, true, (
+    ) : (
       <>
-        <p className="muted">{t("pePubRequestedAt", { date: shortDate(e.requestedAt, lang) })}</p>
+        {stepper(true, "now", "3")}
+        <div className="pe-bandmsg">
+          <p className="muted">{t("pePubNow")}</p>
+          <p>{t("pePubExplain")}</p>
+        </div>
+        <div className="pe-bandact">{request(t("pePubRequest"))}</div>
+      </>
+    );
+  } else if (e.status === "in_review") {
+    body = (
+      <div className="pe-notice">
+        <div className="s3h"><StatusBadge status={e.status} /><span className="muted">{t("pePubRequestedAt", { date: shortDate(e.requestedAt, lang) })}</span></div>
         <p><b>{t("pePubWaitingT")}</b> {t("pePubWaitingS")}</p>
         <p className="muted">{t("pePubKeepEditing")}</p>
         <div className="pe-brow">
@@ -146,55 +143,53 @@ export default function PublishStep({
             <Ic n="undo" size={18} />{t("pePubWithdraw")}
           </button>
         </div>
-      </>
-    ));
-  }
-  if (e.status === "published") {
-    return s3("n-pub", <Ic n="check" size={18} />, true, (
-      <>
-        <p className="muted">{t("pePubSince", { date: shortDate(e.approvedAt, lang) })}</p>
-        <p>{t("pePubLive")}</p>
-        <div className="pe-linkbox">
-          <code dir="ltr">{url}</code>
-          <button type="button" className="btn sm" aria-label={t("pePubCopyLabel")} onClick={() => void copy()}>
-            {copied ? <><Ic n="check" size={16} />{t("pePubCopied")}</> : t("pePubCopy")}
-          </button>
+      </div>
+    );
+  } else if (e.status === "published") {
+    body = (
+      <div className="pe-pubrow">
+        <StatusBadge status={e.status} />
+        <div className="pe-bandmsg">
+          <p><b>{t("pePubSince", { date: shortDate(e.approvedAt, lang) })}</b></p>
+          <p className="muted">{t("pePubEditsLive")}</p>
         </div>
-        <div className="pe-brow">
-          <button type="button" className="btn" onClick={() => setSharing(true)}>{t("pePubShare")}</button>
-          <a className="btn" href={`/e/${e.slug}`} target="_blank" rel="noopener noreferrer" aria-label={t("pePubOpenLabel")}>{t("pePubOpen")}</a>
-        </div>
-        <p className="muted">{t("pePubEditsLive")}</p>
-        <hr className="pe-sep" />
-        <div className="pe-brow">
-          <button type="button" className="btn danger" disabled={busy} onClick={() => setConfirming(true)}>{t("pePubUnpublish")}</button>
-        </div>
+        <button type="button" className="btn quiet" disabled={busy} onClick={() => setConfirming(true)}>{t("pePubUnpublish")}</button>
         {confirming && (
           <UnpublishDialog busy={busy} onClose={() => setConfirming(false)} onConfirm={() => void run("unpublish", t("pePubUnpublished"))} />
         )}
-        {sharing && <ShareDialog slug={e.slug} eventName={e.name} onClose={() => setSharing(false)} />}
-      </>
-    ));
-  }
-  if (e.status === "rejected") {
-    return s3("n-rej", <Ic n="warn" size={18} />, true, (
-      <>
+      </div>
+    );
+  } else if (e.status === "rejected") {
+    body = (
+      <div className="pe-notice rej">
+        <div className="s3h"><StatusBadge status={e.status} /></div>
         <p><b>{t("pePubRejT")}</b></p>
         {reason(t("pePubReasonLabel"))}
         <p>{t("pePubRejNext")}</p>
         <div className="pe-brow">{request(t("pePubRequestAgain"), t("pePubRequestAgainLabel"))}</div>
-      </>
-    ));
+      </div>
+    );
+  } else {
+    // unpublished_admin
+    body = (
+      <div className="pe-notice">
+        <div className="s3h"><StatusBadge status={e.status} /></div>
+        <p><b>{t("pePubAdminUnpubT")}</b> {t("pePubAdminUnpubS")}</p>
+        {reason(t("pePubReasonLabel"))}
+        <p>{t("pePubAdminUnpubNext")}</p>
+        <div className="pe-brow">{request(t("pePubRequestAgain"), t("pePubRequestAgainLabel"))}</div>
+      </div>
+    );
   }
-  // unpublished_admin
-  return s3("n-unpub", <Ic n="lock" size={18} />, true, (
-    <>
-      <p><b>{t("pePubAdminUnpubT")}</b> {t("pePubAdminUnpubS")}</p>
-      {reason(t("pePubReasonLabel"))}
-      <p>{t("pePubAdminUnpubNext")}</p>
-      <div className="pe-brow">{request(t("pePubRequestAgain"), t("pePubRequestAgainLabel"))}</div>
-    </>
-  ));
+
+  return (
+    <section className={`pe-band${draft ? " draft" : ""}`} aria-labelledby={`${e.id}-band`} tabIndex={-1} ref={band}>
+      <h2 id={`${e.id}-band`} className={draft ? "pe-bandtitle" : "pe-vh"}>{t("pePathTitle")}</h2>
+      {body}
+      {fail}
+      {extra}
+    </section>
+  );
 }
 
 function UnpublishDialog({ busy, onClose, onConfirm }: { busy: boolean; onClose: () => void; onConfirm: () => void }) {
