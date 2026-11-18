@@ -49,7 +49,7 @@ export function createApp() {
     // Slice 25: preview hosts are never indexed.
     if (new URL(c.req.url).hostname.endsWith(PREVIEW_HOST_SUFFIX)) {
       c.res = new Response(c.res.body, c.res);
-      c.res.headers.set("X-Robots-Tag", "noindex");
+      if (!c.res.headers.has("X-Robots-Tag")) c.res.headers.set("X-Robots-Tag", "noindex");
     }
     // Navigations served from static assets (slice 24) keep the headers from apps/web/public/_headers untouched.
     if (c.get("passthroughAsset")) return;
