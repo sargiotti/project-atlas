@@ -296,6 +296,10 @@ export const ERROR_CODES = [
   // Point that has Sessions. `sessions_outside_dates`: an event edit would leave Sessions outside the new window.
   "point_has_sessions",
   "sessions_outside_dates",
+  // Slice 30 (organizer form). submission_rejected: too fast or Turnstile refused (one generic answer). daily_cap_reached: global cap of stored requests.
+  "submission_rejected",
+  "service_unavailable",
+  "daily_cap_reached",
 ] as const;
 export const errorCodeSchema = z.enum(ERROR_CODES);
 export type ErrorCode = z.infer<typeof errorCodeSchema>;

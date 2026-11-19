@@ -13,3 +13,4 @@ export * from "./panel-sessions.ts";
 export * from "./cover.ts";
 export * from "./tone.ts";
 export * from "./geo-lang.ts";
+export * from "./organizer-request.ts";
