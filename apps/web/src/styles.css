@@ -189,9 +189,8 @@ button, input { font: inherit; color: inherit; }
 .loading { text-align: center; padding: 64px 0; color: var(--ink-2); }
 
 /* ---- event page -------------------------------------------------------------------------- */
-.event-page { --foot: calc(32px + env(safe-area-inset-bottom)); position: fixed; inset: 0; overflow: hidden; min-height: 0; }
-.event-page .stage { position: absolute; inset: 0 0 var(--foot) 0; } /* the foot strip sits below the map, never over it */
-.view-pane { position: absolute; inset: 0; }
+.event-page { position: fixed; inset: 0; overflow: hidden; min-height: 0; }
+.event-page .stage, .view-pane { position: absolute; inset: 0; }
 
 .topbar {
   position: absolute; z-index: 20; top: calc(12px + env(safe-area-inset-top)); left: 10px; right: 10px; min-height: 58px;
@@ -207,7 +206,7 @@ button, input { font: inherit; color: inherit; }
 .topbar-title small { display: block; font-size: 0.75rem; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .view-switch {
-  position: absolute; z-index: 20; bottom: calc(22px + var(--foot, 0px)); left: 50%; transform: translateX(-50%);
+  position: absolute; z-index: 20; bottom: calc(22px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
   display: flex; padding: 4px; gap: 2px; background: var(--surface); border-radius: 999px; box-shadow: var(--shadow);
 }
 .view-switch button {
@@ -371,7 +370,7 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
 .bottom-dock { display: contents; }
 @media (max-width: 767.98px) {
   .bottom-dock {
-    display: flex; flex-direction: column; align-items: center; position: absolute; z-index: 30; left: 0; right: 0; bottom: var(--foot, 0px);
+    display: flex; flex-direction: column; align-items: center; position: absolute; z-index: 30; left: 0; right: 0; bottom: 0;
     pointer-events: none;
   }
   .bottom-dock > * { pointer-events: auto; }
@@ -414,7 +413,7 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
 
 /* wide screens: the sheet becomes a side panel, lists stay readable */
 @media (min-width: 768px) {
-  .sheet { left: auto; right: 16px; bottom: calc(16px + var(--foot, 0px)); width: 380px; border-radius: var(--r-lg); padding-bottom: 24px; }
+  .sheet { left: auto; right: 16px; bottom: 16px; width: 380px; border-radius: var(--r-lg); padding-bottom: 24px; }
   .sheet-grab { display: none; }
   .topbar { left: 50%; right: auto; width: min(560px, calc(100% - 20px)); transform: translateX(-50%); }
   .zoom-controls { top: auto; bottom: 24px; }
@@ -776,14 +775,11 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
 .privacy h1 { font-size: 1.7rem; line-height: 1.2; margin-bottom: 6px; }
 .privacy h2 { font-size: 1.15rem; margin: 28px 0 8px; }
 .privacy p { margin: 0 0 10px; line-height: 1.55; max-width: 68ch; overflow-wrap: anywhere; }
-.event-foot {
-  position: absolute; z-index: 25; left: 0; right: 0; bottom: 0; height: var(--foot); padding: 0 12px env(safe-area-inset-bottom);
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  background: var(--surface); color: var(--ink-2); border-top: 1px solid var(--line); font-size: 0.75rem;
+.event-privacy {
+  position: absolute; z-index: 25; left: 8px; bottom: calc(2px + env(safe-area-inset-bottom));
+  padding: 4px 8px; font-size: 0.75rem; color: var(--ink-2); background: var(--surface); border-radius: 999px; opacity: 0.9;
 }
-.event-foot a { color: var(--ink-2); display: inline-flex; align-items: center; min-height: 28px; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
-.event-foot a:hover { color: var(--ink); }
-.event-foot .foot-org { overflow: hidden; text-overflow: ellipsis; }
+@media (min-width: 768px) { .event-privacy { bottom: calc(8px + env(safe-area-inset-bottom)); } }
 
 /* ---- one-off map hint: pixel dialog box above the view switch (slice 22) ----------------- */
 .map-hint { display: flex; flex-direction: column; align-items: center; margin-bottom: 4px; max-width: calc(100% - 32px); pointer-events: none; }
@@ -808,7 +804,7 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
   .bottom-dock > .map-hint { pointer-events: none; }
 }
 @media (min-width: 768px) {
-  .map-hint { position: absolute; z-index: 25; left: 50%; transform: translateX(-50%); bottom: calc(22px + 52px + var(--foot, 0px)); width: max-content; margin-bottom: 0; }
+  .map-hint { position: absolute; z-index: 25; left: 50%; transform: translateX(-50%); bottom: calc(22px + 52px + env(safe-area-inset-bottom)); width: max-content; margin-bottom: 0; }
 }
 
 /* ---- Home: "Do you organize an event?" banner (slice 30) ---------------------------------- */

@@ -131,7 +131,6 @@ export const orgEs = {
   orgFootHome: "Inicio",
   orgBannerT: "¿Organizas un evento?",
   orgBannerP: "Pide el mapa de tu evento, gratis.",
-  orgMapFoot: "Crea el mapa de tu evento · leyenda.ink",
   // Admin: Requests list
   reqNav: "Pedidos",
   reqTitle: "Pedidos de organizadores",
@@ -200,7 +199,6 @@ export const ES_VOS: Partial<Org> = {
   orgErrGeneric: "Algo salió mal. Probá de nuevo.",
   orgBannerT: "¿Organizás un evento?",
   orgBannerP: "Pedí el mapa de tu evento, gratis.",
-  orgMapFoot: "Creá el mapa de tu evento · leyenda.ink",
 };
 
 export const orgEn: Org = {
@@ -333,7 +331,6 @@ export const orgEn: Org = {
   orgFootHome: "Home",
   orgBannerT: "Do you organize an event?",
   orgBannerP: "Request your event's map, for free.",
-  orgMapFoot: "Create your event's map · leyenda.ink",
   reqNav: "Requests",
   reqTitle: "Organizer requests",
   reqLead: "What came in through the /organizadores form, newest first.",
@@ -485,7 +482,6 @@ export const orgCa: Org = {
   orgFootHome: "Inici",
   orgBannerT: "Organitzes un esdeveniment?",
   orgBannerP: "Demana el mapa del teu esdeveniment, gratis.",
-  orgMapFoot: "Crea el mapa del teu esdeveniment · leyenda.ink",
   reqNav: "Sol·licituds",
   reqTitle: "Sol·licituds d'organitzadors",
   reqLead: "El que ha arribat pel formulari de /organizadores, de la més nova a la més antiga.",
@@ -637,7 +633,6 @@ export const orgDa: Org = {
   orgFootHome: "Forside",
   orgBannerT: "Arrangerer du en begivenhed?",
   orgBannerP: "Bestil kortet til din begivenhed, gratis.",
-  orgMapFoot: "Lav din begivenheds kort · leyenda.ink",
   reqNav: "Forespørgsler",
   reqTitle: "Arrangørforespørgsler",
   reqLead: "Det der er kommet ind via formularen på /organizadores, nyeste først.",
