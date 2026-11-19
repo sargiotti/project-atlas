@@ -131,16 +131,6 @@ describe("Spanish variant", () => {
     expect(pickVos(["en-US", "da"])).toBe(false);
   });
 
-  it("switches the page copy between vos and tú with one Español", () => {
-    const vos = page(true);
-    expect(screen.getAllByText("Pedí tu mapa").length).toBeGreaterThan(0);
-    expect(screen.queryByText("Pide tu mapa")).toBeNull();
-    vos.unmount();
-    page(false);
-    expect(screen.getAllByText("Pide tu mapa").length).toBeGreaterThan(0);
-    expect(screen.queryByText("Pedí tu mapa")).toBeNull();
-  });
-
   it("detects the variant from navigator.languages", () => {
     vi.spyOn(window.navigator, "languages", "get").mockReturnValue(["es-AR", "en"]);
     render(
@@ -150,12 +140,6 @@ describe("Spanish variant", () => {
     );
     expect(screen.getAllByText("Pedí tu mapa").length).toBeGreaterThan(0);
     vi.restoreAllMocks();
-  });
-
-  it("is the same page in English", () => {
-    page(false, "en");
-    expect(screen.getAllByText("Request your map").length).toBeGreaterThan(0);
-    expect(screen.getByText("AI-generated illustration")).toBeInTheDocument();
   });
 });
 

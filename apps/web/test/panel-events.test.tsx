@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { I18nProvider } from "../src/i18n/I18nProvider";
-import { pickPanelLang } from "../src/i18n/detect";
 import { Routes } from "../src/App";
 import { matchZone } from "../src/lib/timeZones";
 import { errorBody, goTo, json } from "./fixtures";
@@ -231,14 +230,14 @@ describe("delete", () => {
 });
 
 describe("access", () => {
-  it("goes to the login page on 401 and shows a generic not found on 404", async () => {
+  it("goes to the login page on 401 and shows the same generic not found whether or not the event exists", async () => {
     mockApi({ ...base, [`GET /panel/events/${ID}`]: () => json(errorBody("unauthenticated"), 401) });
     renderAt(`/panel/events/${ID}`);
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
     expect(window.location.pathname).toBe("/panel/login");
-  });
+    cleanup();
+    vi.unstubAllGlobals();
 
-  it("does not say whether an event exists", async () => {
     mockApi({ ...base });
     renderAt(`/panel/events/${ID}`);
     expect(await screen.findByRole("heading", { name: "This page does not exist" })).toBeInTheDocument();
@@ -396,18 +395,15 @@ describe("owner preview status bar", () => {
     renderAt(`/panel/events/${ID}/preview`);
   };
 
-  it("says Published, not Draft, for a published event", async () => {
-    open("published");
-    expect(await screen.findByRole("region", { name: "Published: this is how visitors see it" })).toBeInTheDocument();
-    expect(screen.queryByText(/Draft: only you can see this/)).not.toBeInTheDocument();
-  });
-
-  it("shows status-specific notices for in review and rejected", async () => {
-    open("in_review");
-    expect(await screen.findByRole("region", { name: "In review: only you and the Admin can see this" })).toBeInTheDocument();
-    cleanup();
-    open("rejected");
-    expect(await screen.findByRole("region", { name: "Not approved: only you can see this" })).toBeInTheDocument();
+  it.each([
+    ["published", "Published: this is how visitors see it", /Draft: only you can see this/],
+    ["in_review", "In review: only you and the Admin can see this", /Published: this is how/],
+    ["rejected", "Not approved: only you can see this", /Draft: only you can see this/],
+    ["draft", "Draft: only you can see this", /Published: this is how/],
+  ])("shows the %s notice", async (status, region, other) => {
+    open(status);
+    expect(await screen.findByRole("region", { name: region })).toBeInTheDocument();
+    expect(screen.queryByText(other)).not.toBeInTheDocument();
   });
 
   it("shows no draft notice while the status is still loading", async () => {
@@ -419,12 +415,6 @@ describe("owner preview status bar", () => {
     renderAt(`/panel/events/${ID}/preview`);
     expect(await screen.findByRole("link", { name: "Edit" })).toBeInTheDocument();
     expect(screen.queryByText(/Draft/)).not.toBeInTheDocument();
-  });
-
-  it("keeps the draft notice for a draft", async () => {
-    open("draft");
-    expect(await screen.findByRole("region", { name: "Draft: only you can see this" })).toBeInTheDocument();
-    expect(screen.queryByText(/Published: this is how/)).not.toBeInTheDocument();
   });
 });
 
@@ -454,14 +444,5 @@ describe("time zone prefill", () => {
     mockApi({ ...base });
     renderAt("/panel/events/new");
     expect(await screen.findByRole("button", { name: /Time zone/ })).toHaveTextContent("Choose a time zone");
-  });
-});
-
-describe("panel language", () => {
-  it("uses the browser's en, es or da (language part), otherwise English", () => {
-    expect(pickPanelLang(["da-DK", "en"])).toBe("da");
-    expect(pickPanelLang(["es-AR"])).toBe("es");
-    expect(pickPanelLang(["fr-FR", "de"])).toBe("en");
-    expect(pickPanelLang([])).toBe("en");
   });
 });

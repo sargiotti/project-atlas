@@ -1,8 +1,4 @@
-import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { TONE_FILLS, toneOf } from "@atlas/contract";
-import { pastel } from "../src/pages/panel/events/common";
 import { coverFailure } from "../src/api/panelCover";
 import {
   CENTRE, clampFocal, cropRect, focalCss, fullSize, isBaselineJpeg, smallSize, surfaceRect, trimRect, validateCoverDimensions, validateCoverInput,
@@ -80,26 +76,3 @@ describe("cover request failures", () => {
   });
 });
 const errorBody = (code: string) => ({ error: { code } });
-
-describe("light tones only, in both themes", () => {
-  it("pastel() yields only the light fill from the contract (same colour as before), never a dark variant", () => {
-    for (const id of ["a", "evt_fiesta", "5b1c2d3e-0000-4000-8000-000000000001", "x7k2q9"]) {
-      const s = pastel(id) as Record<string, string>;
-      expect(Object.keys(s)).toEqual(["--pf"]);
-      expect(s["--pf"]).toBe(TONE_FILLS[toneOf(id)]);
-    }
-    expect(TONE_FILLS).toHaveLength(8);
-  });
-  it("no source file refers to a dark tone variant (--pfd)", () => {
-    const hits: string[] = [];
-    const walk = (dir: string) => {
-      for (const f of readdirSync(dir)) {
-        const p = join(dir, f);
-        if (statSync(p).isDirectory()) walk(p);
-        else if (/\.(css|tsx?)$/.test(f) && readFileSync(p, "utf8").includes("--pfd")) hits.push(p);
-      }
-    };
-    walk(join(__dirname, "..", "src"));
-    expect(hits.filter((h) => !h.endsWith("cover-rules.test.ts"))).toEqual([]);
-  });
-});

@@ -92,5 +92,7 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./test/setup.ts"],
     css: false,
+    // Cap the workers: on a many-core machine the default spawns too many jsdom workers and cold lazy-chunk imports time out.
+    maxWorkers: 8,
   },
 });

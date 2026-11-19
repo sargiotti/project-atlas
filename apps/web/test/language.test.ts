@@ -2,27 +2,29 @@ import { describe, expect, it } from "vitest";
 import { pickLang, pickPanelLang } from "../src/i18n/detect";
 
 describe("pickLang (browser language -> UI language)", () => {
-  it("uses Spanish, English or Danish when the browser asks for them, including regional variants", () => {
-    expect(pickLang(["da-DK"])).toBe("da");
-    expect(pickLang(["en-GB", "es"])).toBe("en");
-    expect(pickLang(["es-AR"])).toBe("es");
+  it.each([
+    [["da-DK"], "da"],
+    [["en-GB", "es"], "en"],
+    [["es-AR"], "es"],
+    [["ca"], "ca"],
+    [["ca-ES", "es"], "ca"],
+    [["ca-valencia"], "ca"],
+    [["fr-FR", "da"], "da"], // skips an unsupported language for the next supported one
+    [["fr-FR", "de"], "es"], // anything else falls back to Spanish
+    [["<script>", "../../x", ""], "es"],
+    [[], "es"],
+    [undefined, "es"],
+  ] as [string[] | undefined, string][])("%j -> %s", (langs, expected) => {
+    expect(pickLang(langs)).toBe(expected);
   });
+});
 
-  it("uses Catalan for ca and regional variants, and the panel default follows", () => {
-    expect(pickLang(["ca"])).toBe("ca");
-    expect(pickLang(["ca-ES", "es"])).toBe("ca");
-    expect(pickLang(["ca-valencia"])).toBe("ca");
+describe("pickPanelLang", () => {
+  it("uses the browser's en, es, da or ca, otherwise English (not Spanish)", () => {
     expect(pickPanelLang(["ca-ES"])).toBe("ca");
-  });
-
-  it("skips unsupported languages in favour of the next supported one", () => {
-    expect(pickLang(["fr-FR", "da"])).toBe("da");
-  });
-
-  it("falls back to Spanish for any other language, garbage or nothing", () => {
-    expect(pickLang(["fr-FR", "de"])).toBe("es");
-    expect(pickLang(["<script>", "../../x", ""])).toBe("es");
-    expect(pickLang([])).toBe("es");
-    expect(pickLang(undefined)).toBe("es");
+    expect(pickPanelLang(["da-DK", "en"])).toBe("da");
+    expect(pickPanelLang(["es-AR"])).toBe("es");
+    expect(pickPanelLang(["fr-FR", "de"])).toBe("en");
+    expect(pickPanelLang([])).toBe("en");
   });
 });

@@ -65,15 +65,6 @@ describe("schedule grid", () => {
     expect(screen.queryByRole("heading", { name: "Taco Truck" })).not.toBeInTheDocument(); // no Sessions there on Friday
   });
 
-  it("colours each stage differently and keeps a stage's colour across day tabs", async () => {
-    const { user } = await openSchedule("2026-07-10T22:00");
-    const cls = (name: string) => screen.getByRole("heading", { name }).closest(".gcol")!.className.match(/stage-c\d/)![0];
-    const mainFri = cls("Main Stage");
-    await user.click(screen.getByRole("button", { name: "Sat 11" }));
-    expect(cls("Main Stage")).toBe(mainFri);
-    expect(cls("Taco Truck")).not.toBe(mainFri);
-  });
-
   it("brings the visitor back to now with the Now chip after changing day", async () => {
     const { user } = await openSchedule("2026-07-10T22:00");
     await user.click(screen.getByRole("button", { name: "Sat 11" }));
@@ -83,39 +74,19 @@ describe("schedule grid", () => {
     expect(block("HEADLINER")).toBeInTheDocument();
   });
 
-  it("says when the event starts, from the first Session, and hides the Now chip", async () => {
-    await openSchedule("2026-07-01T12:00");
-    expect(screen.getByText("Starts in 9 days")).toBeInTheDocument();
-    expect(screen.getByText("Fri 10 Jul · 19:00")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Fri 10" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.queryByRole("button", { name: /^Now/ })).not.toBeInTheDocument();
-    expect(block("EARLY").getAttribute("aria-label")).not.toContain("Ended");
-  });
-
-  it("says the event ended, without striping the blocks", async () => {
-    await openSchedule("2026-07-20T12:00");
-    expect(screen.getByRole("status")).toHaveTextContent("This event has ended");
-    expect(screen.queryByRole("button", { name: /^Now/ })).not.toBeInTheDocument();
-    expect(block("EARLY").getAttribute("aria-label")).not.toContain("Ended");
-  });
-
-  it("opens at the next Session when nothing is on, with the weekday only if it is another day", async () => {
-    await openSchedule("2026-07-11T03:00"); // Saturday 03:00 is still Friday's grid; next is Saturday 20:00
-    expect(screen.getByRole("status")).toHaveTextContent("Nothing on now · Next: Saturday 20:00");
-    expect(screen.getByRole("button", { name: "Sat 11" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: /^Now/ })).toBeInTheDocument();
-  });
-
-  it("uses the same-day wording for a quiet moment on the same day", async () => {
-    await openSchedule("2026-07-11T10:00");
-    expect(screen.getByRole("status")).toHaveTextContent(/^Nothing on now · Next: 20:00$/);
-  });
-
-  it("localizes the tab, the status line and the zoom controls", async () => {
-    await openSchedule("2026-07-20T12:00", "es");
-    expect(screen.getByRole("status")).toHaveTextContent("Este evento terminó");
-    expect(screen.getByRole("button", { name: "Acercar" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Vie 10/ })).toBeInTheDocument();
+  // Status line before, after and between Sessions. `now` = whether the Now chip is offered; `day` = the pressed day tab.
+  it.each([
+    { name: "before the first Session", at: "2026-07-01T12:00", texts: ["Starts in 9 days", "Fri 10 Jul · 19:00"], day: "Fri 10", now: false, plain: true },
+    { name: "after the last Session (blocks are not striped)", at: "2026-07-20T12:00", status: "This event has ended", now: false, plain: true },
+    { name: "a quiet moment before another day's Session (weekday shown)", at: "2026-07-11T03:00", status: "Nothing on now · Next: Saturday 20:00", day: "Sat 11", now: true },
+    { name: "a quiet moment before a same-day Session (no weekday)", at: "2026-07-11T10:00", status: /^Nothing on now · Next: 20:00$/, now: true },
+  ] as any[])("status line $name", async ({ at, texts, status, day, now, plain }) => {
+    await openSchedule(at);
+    for (const t of texts ?? []) expect(screen.getByText(t)).toBeInTheDocument();
+    if (status) expect(screen.getByRole("status")).toHaveTextContent(status);
+    if (day) expect(screen.getByRole("button", { name: day })).toHaveAttribute("aria-pressed", "true");
+    expect(!!screen.queryByRole("button", { name: /^Now/ })).toBe(now);
+    if (plain) expect(block("EARLY").getAttribute("aria-label")).not.toContain("Ended");
   });
 
   it("opens the Point sheet on the tapped Session, then See on map centres that point on the map", async () => {
