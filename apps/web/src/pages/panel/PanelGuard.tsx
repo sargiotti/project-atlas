@@ -3,7 +3,7 @@ import type { Organizer } from "@atlas/contract";
 import LangSwitch from "../../components/LangSwitch";
 import { fetchMe, logout } from "../../api/auth";
 import { useI18n } from "../../i18n/I18nProvider";
-import { Link, navigate } from "../../lib/router";
+import { Link, navigate, usePath } from "../../lib/router";
 import { Brand } from "./parts";
 import { clearAllDrafts, purgeForeignDrafts } from "../../lib/draftStorage";
 import { clearCoverHandoff } from "../../lib/coverHandoff";
@@ -78,25 +78,25 @@ function UserMenu({ me }: { me: Organizer }) {
             <b>{me.displayName}</b>
             <span className="muted small">{me.email}</span>
           </div>
-          <Link to="/panel" role="menuitem" onClick={() => setOpen(false)}>{t("myEvents")}</Link>
+          <Link to="/panel" role="menuitem" className="nav-m" onClick={() => setOpen(false)}>{t("myEvents")}</Link>
           {isAdmin && (
             <>
-              <Link to="/panel/admin/pending" role="menuitem" onClick={() => setOpen(false)}>
+              <Link to="/panel/admin/pending" role="menuitem" className="nav-m" onClick={() => setOpen(false)}>
                 {t("adTabPending")}
                 {count > 0 && <span className="pa-cnt" aria-label={t("adWaitingSr", { n: count })}>{count}</span>}
               </Link>
-              <Link to="/panel/admin/published" role="menuitem" onClick={() => setOpen(false)}>{t("adTabPublished")}</Link>
-              <Link to="/panel/admin/requests" role="menuitem" onClick={() => setOpen(false)}>
+              <Link to="/panel/admin/published" role="menuitem" className="nav-m" onClick={() => setOpen(false)}>{t("adTabPublished")}</Link>
+              <Link to="/panel/admin/requests" role="menuitem" className="nav-m" onClick={() => setOpen(false)}>
                 {t("reqNav")}
                 <span className="mini">{t("adminBadge")}</span>
               </Link>
-              <Link to="/panel/admin/invites" role="menuitem" onClick={() => setOpen(false)}>
+              <Link to="/panel/admin/invites" role="menuitem" className="nav-m" onClick={() => setOpen(false)}>
                 {t("invitesNav")}
                 <span className="mini">{t("adminBadge")}</span>
               </Link>
             </>
           )}
-          <hr />
+          <hr className="nav-m" />
           <button type="button" role="menuitem" className="dd-btn" onClick={signOut}>{t("signOut")}</button>
           {failed && <p className="dd-err small" role="alert">{t("signOutFailed")}</p>}
         </div>
@@ -105,11 +105,38 @@ function UserMenu({ me }: { me: Organizer }) {
   );
 }
 
+/** Desktop tabs (1024+). Below that the same entries live in the account menu (`.nav-m`). */
+function PanelNav({ admin }: { admin: boolean }) {
+  const { t } = useI18n();
+  const { count } = usePending();
+  const path = usePath().replace(/\/+$/, "");
+  const tab = (to: string, label: string, cur: boolean, extra?: ReactNode) => (
+    <Link to={to} className={cur ? "cur" : undefined} aria-current={cur ? "page" : undefined}>{label}{extra}</Link>
+  );
+  const mine = path === "/panel" || path.startsWith("/panel/events");
+  return (
+    <nav className="pnav" aria-label={t("panelTag")}>
+      {tab("/panel", t("myEvents"), mine)}
+      {admin && (
+        <>
+          <span className="sep" aria-hidden="true" />
+          <span className="grp">{t("adminBadge")}</span>
+          {tab("/panel/admin/pending", t("adTabPending"), path === "/panel/admin/pending", count > 0 && <span className="cnt" aria-label={t("adWaitingSr", { n: count })}>{count}</span>)}
+          {tab("/panel/admin/published", t("adTabPublished"), path === "/panel/admin/published")}
+          {tab("/panel/admin/requests", t("reqNav"), path === "/panel/admin/requests")}
+          {tab("/panel/admin/invites", t("invitesNav"), path === "/panel/admin/invites")}
+        </>
+      )}
+    </nav>
+  );
+}
+
 function Frame({ me, children }: { me: Organizer; children: ReactNode }) {
   return (
     <div className="app pe" data-theme="auto">
       <header className="ptop">
         <Brand />
+        <PanelNav admin={me.role === "admin"} />
         <span className="sp" />
         <LangSwitch />
         <UserMenu me={me} />
@@ -177,7 +204,7 @@ export default function PanelGuard({ admin, bare, children }: { admin?: boolean;
     );
   }
   const ctx = { count, setCount };
-  const meCtx = { organizerId: state.me.id };
+  const meCtx = { organizerId: state.me.id, displayName: state.me.displayName };
   if (bare) return <MeContext value={meCtx}><PendingContext value={ctx}><div className="app pe" data-theme="auto">{admin && state.me.role !== "admin" ? <NoAccess /> : children}</div></PendingContext></MeContext>;
   return (
     <MeContext value={meCtx}>

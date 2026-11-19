@@ -6,5 +6,5 @@ export const PendingContext = createContext<{ count: number; setCount: (n: numbe
 export const usePending = () => useContext(PendingContext);
 
 /** The signed-in organizer's id (from /auth/me), for things scoped per account such as the Points draft key. */
-export const MeContext = createContext<{ organizerId: string | null }>({ organizerId: null });
+export const MeContext = createContext<{ organizerId: string | null; displayName?: string }>({ organizerId: null });
 export const useMe = () => useContext(MeContext);

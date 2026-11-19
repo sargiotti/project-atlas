@@ -1,3 +1,4 @@
+import type { welEs } from "./welcomeMessages";
 // Slice 30: organizer page (/organizadores), Home banner, map foot link and the admin Requests list.
 // Merged into the main catalogs in messages.ts. Base Spanish is "tú"; ES_VOS below overrides only the keys that
 // differ, and is applied when the browser's first Spanish language is es-AR or es-UY (see I18nProvider).
@@ -203,7 +204,11 @@ export const orgEs = {
 type Org = Record<keyof typeof orgEs, string>;
 
 /** Rioplatense (vos) overrides for base Spanish. Same keys, only the ones whose text changes. */
-export const ES_VOS: Partial<Org> = {
+export const ES_VOS: Partial<Org & Record<keyof typeof welEs | "peEmptyTitle" | "peEmptyText", string>> = {
+  // slice 35 (empty panel)
+  peEmptyTitle: "Creá tu primer evento",
+  peEmptyText: "Empezá con nombre, fechas y lugar. Queda como borrador hasta que lo publiques.",
+  peExampleF3: "Al publicar, compartís un link y un QR.",
   orgDocTitle: "Pedí el mapa de tu evento · leyenda.ink",
   orgCta: "Pedí tu mapa",
   orgLead: "Subí el plano, marcá los puntos y compartí un QR. Se abre en el navegador, sin descargar nada.",

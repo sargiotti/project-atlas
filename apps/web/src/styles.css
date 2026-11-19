@@ -572,6 +572,7 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
 .dd hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
 .dd-err { color: var(--danger); padding: 4px 12px 8px; }
 .mini { margin-left: auto; font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 6px; border-radius: 5px; border: 1px solid var(--line); color: var(--ink-2); }
+.pnav { display: none; }
 .pmain { padding: 20px 16px 40px; max-width: 960px; margin: 0 auto; }
 .phead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
 .phead h1 { font-size: 1.5rem; line-height: 1.2; }
@@ -604,6 +605,18 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
 .created .acts { display: flex; gap: 8px; }
 .created .acts .btn.primary { flex: 1; }
 
+@media (min-width: 1024px) {
+  /* tabs replace the navigation entries of the account menu */
+  .pnav { display: flex; align-items: stretch; align-self: stretch; margin-left: 22px; gap: 2px; }
+  .pnav a { display: flex; align-items: center; gap: 7px; padding: 0 14px; color: var(--ink-2); font-weight: 700; font-size: 0.95rem; text-decoration: none; border-bottom: 3px solid transparent; margin-bottom: -1px; }
+  .pnav a:hover { color: var(--ink); }
+  .pnav a.cur { color: var(--ink); border-bottom-color: var(--accent); }
+  .pnav .sep { width: 1px; background: var(--line); margin: 18px 10px; }
+  .pnav .grp { align-self: center; font: 700 0.66rem/1 var(--ui); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2); padding: 4px 7px; border-radius: 6px; background: var(--surface-2); margin-right: 4px; }
+  .pnav .cnt { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--accent); color: var(--on-accent); font: 800 0.72rem/20px var(--ui); text-align: center; }
+  .pnav a:focus-visible { outline-offset: -3px; }
+  .dd .nav-m { display: none; }
+}
 @media (min-width: 768px) {
   .ptop { padding: 0 20px 0 28px; }
   .uname { display: inline; }

@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { MAX_EVENTS_PER_ORGANIZER, TONE_FILLS, toneOf, type PanelEvent } from "@atlas/contract";
+import { MAX_EVENTS_PER_ORGANIZER, toneOf, type PanelEvent } from "@atlas/contract";
 import { listEvents } from "../../../api/panelEvents";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { CoverMedia } from "../../../components/CoverMedia";
 import { Link, navigate } from "../../../lib/router";
+import { EXAMPLE_EVENT_SLUG } from "../../../lib/exampleEvent";
+import { useMe } from "../pending";
 import { DayTile, Ic, LoadError, Loading, StatusBadge, Toast, dateRange, pastel, useDocTitle, useFlashToast } from "./common";
 
 /** Quest-trail art for the empty panel: a tiny pixel map, drawn as SVG rects. */
@@ -27,12 +29,32 @@ function QuestArt() {
   );
 }
 
+const PINS: [string, number, number][] = [["#FF6A3D", 48, 50], ["#FFC53D", 30, 36], ["#4CB8E8", 68, 42], ["#3FBF9B", 26, 72], ["#FFC53D", 76, 68]];
+
+/** Finished-event example inside a phone frame: decorative, so only the image carries a text alternative. */
+function ExamplePhone() {
+  const { t } = useI18n();
+  return (
+    <div className="pe-phone" role="img" aria-label={t("peExampleAlt")}>
+      <div className="s" aria-hidden="true">
+        <img src="/welcome/example-map.webp" alt="" width="700" height="1000" loading="lazy" decoding="async" />
+        <div className="bar"><b>{t("peMockTitle")}</b><small>{t("peMockMeta")}</small></div>
+        {PINS.map(([c, x, y], i) => (
+          <svg key={i} className="pin" style={{ left: `${x}%`, top: `${y}%` }} viewBox="0 0 22 28"><path d="M11 27 6 17A9 9 0 1 1 16 17Z" fill={c} stroke="#1E2340" strokeWidth="1.6" /><rect x="8" y="7" width="6" height="5" fill="#1E2340" /></svg>
+        ))}
+        <div className="tabs"><span className="on">{t("peMockMap")}</span><span>{t("peMockList")}</span><span>{t("peMockProgram")}</span></div>
+      </div>
+    </div>
+  );
+}
+
 /** /panel: the organizer's events (all drafts in this slice), or the empty "quest" state. */
 export default function EventsList() {
   const { t, lang } = useI18n();
   const [attempt, setAttempt] = useState(0);
   const [events, setEvents] = useState<PanelEvent[] | "loading" | "error">("loading");
   const { toast, clearToast } = useFlashToast();
+  const { displayName } = useMe();
   useDocTitle(`${t("myEvents")} · ${t("appName")}`);
 
   useEffect(() => {
@@ -60,6 +82,10 @@ export default function EventsList() {
   if (n === 0) {
     return (
       <div className="pe-page">
+        <p className="pe-hello">
+          {displayName ? t("peWelcome", { name: displayName.split(/\s+/)[0] }) : t("peWelcomeNoName")}
+          <small>{t("peWelcomeSub")}</small>
+        </p>
         <section className="pe-hero">
           <div className="art"><QuestArt /></div>
           <div className="txt">
@@ -70,11 +96,33 @@ export default function EventsList() {
             <span className="time"><Ic n="clock" size={16} />{t("peEmptyTime")}</span>
           </div>
         </section>
-        <ol className="pe-path3" aria-label={t("pePathTitle")}>
-          <li className="now"><span className="node">1</span><div><b>{t("peStep1")}</b><small>{t("peStep1Now")}</small></div></li>
-          <li className="tile" style={{ "--pf": TONE_FILLS[0] } as any}><span className="node">2</span><div><b>{t("peStep2")}</b><small>{t("peStep2S")}</small></div></li>
-          <li className="later"><span className="node">3</span><div><b>{t("peStep3")}</b><small>{t("peStep3S")}</small></div></li>
+        <h2 className="pe-steps-title" id="pe-path-title">{t("pePathTitle")}</h2>
+        <ol className="pe-steps" aria-labelledby="pe-path-title">
+          {(["now", "next", "last"] as const).map((k, i) => (
+            <li key={k} className={k} aria-current={k === "now" ? "step" : undefined}>
+              <span className="node" aria-hidden="true">{i + 1}</span>
+              <span className="txt"><b>{t(`peStep${i + 1}` as any)}</b><span className="sub">{t(`peStepSub${i + 1}` as any)}</span></span>
+              <span className="state">{t(k === "now" ? "peStateNow" : k === "next" ? "peStateNext" : "peStateLast")}</span>
+            </li>
+          ))}
         </ol>
+        <section className="pe-dest" aria-labelledby="pe-ex-title">
+          <div className="copy">
+            <span className="pe-extag">{t("peExampleTag")}</span>
+            <h2 id="pe-ex-title">{t("peExampleTitle")}</h2>
+            <p>{t("peExampleText")}</p>
+            <ul className="feats">
+              <li><span className="dot" style={{ background: "var(--accent)" }}>1</span>{t("peExampleF1")}</li>
+              <li><span className="dot" style={{ background: "#FFC53D" }}>2</span>{t("peExampleF2")}</li>
+              <li><span className="dot" style={{ background: "#3FBF9B" }}>3</span>{t("peExampleF3")}</li>
+            </ul>
+            <div className="links">
+              <Link to={`/e/${EXAMPLE_EVENT_SLUG}`} className="btn ghost">{t("peExampleLink")}</Link>
+              <Link to="/organizadores" className="lnk">{t("peHowLink")}</Link>
+            </div>
+          </div>
+          <ExamplePhone />
+        </section>
         {toast && <Toast text={toast} onDone={clearToast} />}
       </div>
     );

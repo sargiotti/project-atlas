@@ -2,7 +2,6 @@
 // Keys are prefixed `peMap`. `cancel` and `retry` already exist in the main catalogs and are reused.
 export const mapEs = {
   peStep2Now: "Ahora",
-  peStep3Soon: "Muy pronto",
   peMapTitle: "Mapa del evento",
   peMapUpload: "Subí tu mapa",
   peMapDrag: "Arrastrá una imagen acá, o",
@@ -76,7 +75,6 @@ export const mapEs = {
 
 export const mapEn: Record<keyof typeof mapEs, string> = {
   peStep2Now: "Now",
-  peStep3Soon: "Coming soon",
   peMapTitle: "Event map",
   peMapUpload: "Upload your map",
   peMapDrag: "Drag an image here, or",
@@ -150,7 +148,6 @@ export const mapEn: Record<keyof typeof mapEs, string> = {
 
 export const mapDa: Record<keyof typeof mapEs, string> = {
   peStep2Now: "Nu",
-  peStep3Soon: "Kommer snart",
   peMapTitle: "Eventkort",
   peMapUpload: "Upload dit kort",
   peMapDrag: "Træk et billede hertil, eller",

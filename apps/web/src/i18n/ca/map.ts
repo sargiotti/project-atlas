@@ -3,7 +3,6 @@ import type { mapEs } from "../mapMessages";
 
 export const mapCa: Record<keyof typeof mapEs, string> = {
   peStep2Now: "Ara",
-  peStep3Soon: "Molt aviat",
   peMapTitle: "Mapa de l'esdeveniment",
   peMapUpload: "Puja el teu mapa",
   peMapDrag: "Arrossega una imatge aquí, o",
