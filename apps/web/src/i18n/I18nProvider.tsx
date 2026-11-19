@@ -7,6 +7,8 @@ import { prefersVos } from "./detect";
 
 type Ctx = {
   lang: Lang;
+  /** Rioplatense variant active (only meaningful when lang is es). */
+  vos: boolean;
   setLang: (l: string) => void;
   t: (key: MessageKey, vars?: Record<string, string | number>) => string;
 };
@@ -46,6 +48,7 @@ export function I18nProvider({ children, initial, vos }: { children: ReactNode; 
   const value = useMemo<Ctx>(
     () => ({
       lang,
+      vos: lang === "es" && isVos,
       setLang,
       t: (key, vars) => {
         let s: string = (lang === "es" && isVos ? (ES_VOS as Record<string, string>)[key] : undefined) ?? MESSAGES[lang][key] ?? MESSAGES.es[key] ?? key;

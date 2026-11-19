@@ -19,6 +19,10 @@ export async function pruneModeration(db: D1Database, now: number): Promise<{ au
 export const ORGANIZER_REQUEST_RETENTION_DAYS = 365;
 
 export async function pruneOrganizerRequests(db: D1Database, now: number): Promise<number> {
-  const res = await db.prepare(`DELETE FROM organizer_requests WHERE created_at < ?1`).bind(now - ORGANIZER_REQUEST_RETENTION_DAYS * DAY_MS).run();
-  return res.meta.changes ?? 0;
+  const [res] = await db.batch([
+    db.prepare(`DELETE FROM organizer_requests WHERE created_at < ?1`).bind(now - ORGANIZER_REQUEST_RETENTION_DAYS * DAY_MS),
+    // Slice 31: the invite-email cap only needs the current UTC day.
+    db.prepare(`DELETE FROM invite_email_log WHERE created_at < ?1`).bind(now - 2 * DAY_MS),
+  ]);
+  return res?.meta.changes ?? 0;
 }

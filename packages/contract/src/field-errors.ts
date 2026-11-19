@@ -54,7 +54,7 @@ export const fieldErrorSchema = z.object({
    * item fields such as `points.3.name`.
    */
   path: z.union([
-    z.enum([...EVENT_INPUT_FIELDS, "reason", "updatedAt", "body", "baseUpdatedAt", "points", "deleteSessionsOf", "sessions", "email", "eventName", "eventDate", "role", "message", "elapsedMs", "turnstileToken"]),
+    z.enum([...EVENT_INPUT_FIELDS, "reason", "updatedAt", "body", "baseUpdatedAt", "points", "deleteSessionsOf", "sessions", "email", "eventName", "locale", "eventDate", "role", "message", "elapsedMs", "turnstileToken"]),
     z.templateLiteral(["points.", z.number().int().min(0).max(499), ".", z.enum(POINT_INPUT_FIELDS)]),
     z.templateLiteral(["sessions.", z.number().int().min(0).max(SESSION_PATH_MAX_INDEX), ".", z.enum(SESSION_INPUT_FIELDS)]),
   ]),
