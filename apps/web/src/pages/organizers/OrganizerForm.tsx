@@ -5,6 +5,7 @@ import {
   organizerRequestSchema,
   toOrganizerFieldErrors,
   type FieldError,
+  type OrganizerLocale,
 } from "@atlas/contract";
 import { submitOrganizerRequest } from "../../api/organizerRequest";
 import { useI18n } from "../../i18n/I18nProvider";
@@ -24,7 +25,7 @@ type Banner = "orgErrRejected" | "orgErrRate" | "orgErrDaily" | "orgErr503" | "o
 const SOFT: Banner[] = ["orgErrRate", "orgErrDaily", "orgErr503", "orgErrNetwork"];
 
 export default function OrganizerForm() {
-  const { t } = useI18n();
+  const { t, lang, vos } = useI18n();
   const [values, setValues] = useState(EMPTY);
   const [website, setWebsite] = useState(""); // honeypot
   const [errors, setErrors] = useState<Partial<Record<Field, MessageKey>>>({});
@@ -136,6 +137,7 @@ export default function OrganizerForm() {
     if (busy) return;
     const body = {
       ...values,
+      locale: (lang === "es" && vos ? "es-vos" : lang) as OrganizerLocale,
       website,
       elapsedMs: Math.min(Date.now() - startedAt.current, LIM.maxElapsedMs),
       turnstileToken: token.current ?? "",

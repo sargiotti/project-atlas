@@ -79,7 +79,7 @@ describe("organizer form", () => {
     const [url, init] = fetchSpy.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe("/api/v1/organizer-requests");
     const body = JSON.parse(init.body as string);
-    expect(body).toMatchObject({ name: "Marta Ferrer", email: "marta@ejemplo.com", eventName: "Fiestas de La Alameda", website: "", turnstileToken: "fake-token" });
+    expect(body).toMatchObject({ name: "Marta Ferrer", email: "marta@ejemplo.com", eventName: "Fiestas de La Alameda", website: "", turnstileToken: "fake-token", locale: "es" });
     expect(typeof body.elapsedMs).toBe("number");
     expect(form()).toBeNull(); // the form is replaced
   });
@@ -162,7 +162,7 @@ describe("Spanish variant", () => {
 describe("admin requests list", () => {
   const row = (id: string, over: any = {}) => ({
     id, name: `Name ${id}`, email: `p${id}@example.com`, eventName: `Event ${id}`, eventDate: null, city: null, role: null, message: null,
-    emailStatus: "sent", createdAt: 1763500000000, ...over,
+    emailStatus: "sent", createdAt: 1763500000000, status: "pending", locale: "es", invitedAt: null, inviteExpiresAt: null, inviteState: null, ...over,
   });
 
   it("renders every field as text, builds mailto only from a valid email and loads more with the cursor", async () => {

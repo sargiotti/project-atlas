@@ -1,5 +1,10 @@
 import {
+  inviteFromRequestResponseSchema,
+  organizerRequestActionResponseSchema,
   organizerRequestListResponseSchema,
+  type InviteFromRequestResponse,
+  type OrganizerRequestRow,
+  type RequestFilter,
   type FieldError,
   type OrganizerRequestInput,
   type OrganizerRequestListResponse,
@@ -55,16 +60,50 @@ export type ListResult =
   | { status: "unauthenticated" | "forbidden" | "error" };
 
 /** GET /api/v1/admin/organizer-requests (admin only; the server enforces it). */
-export async function listOrganizerRequests(cursor?: string | null, signal?: AbortSignal): Promise<ListResult> {
+export async function listOrganizerRequests(cursor?: string | null, signal?: AbortSignal, status: RequestFilter = "pending"): Promise<ListResult> {
   try {
-    const q = cursor ? `?cursor=${encodeURIComponent(cursor)}` : "";
-    const res = await fetch(`${BASE}/admin/organizer-requests${q}`, { signal, headers: { Accept: "application/json" } });
+    const q = new URLSearchParams({ status });
+    if (cursor) q.set("cursor", cursor);
+    const res = await fetch(`${BASE}/admin/organizer-requests?${q}`, { signal, headers: { Accept: "application/json" } });
     if (res.status === 401) return { status: "unauthenticated" };
     if (res.status === 403) return { status: "forbidden" };
     if (!res.ok) return { status: "error" };
     return { status: "ok", page: organizerRequestListResponseSchema.parse(await res.json()) };
   } catch (e: any) {
     if (e?.name === "AbortError") throw e;
+    return { status: "error" };
+  }
+}
+
+export type RequestAction = "invite" | "invite-again" | "discard" | "restore";
+export type ActionResult =
+  | { status: "ok"; request: OrganizerRequestRow; emailStatus?: InviteFromRequestResponse["emailStatus"]; inviteLink?: string }
+  | { status: "unauthenticated" | "forbidden" | "error" }
+  /** 4xx/409 with the server's error code: invalid_transition, invite_already_pending, email_already_registered, invite_cap_reached, validation_error, not_found. */
+  | { status: "failed"; code: string };
+
+/** POST /api/v1/admin/organizer-requests/:id/{invite,invite-again,discard,restore}. Discard and restore send `{}`. */
+export async function requestAction(id: string, action: RequestAction, note?: string): Promise<ActionResult> {
+  try {
+    const body = action === "invite" || action === "invite-again" ? (note ? { note } : {}) : {};
+    const res = await fetch(`${BASE}/admin/organizer-requests/${encodeURIComponent(id)}/${action}`, {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (res.status === 401) return { status: "unauthenticated" };
+    if (res.status === 403) return { status: "forbidden" };
+    if (res.ok) {
+      const j = await res.json();
+      if (action === "invite" || action === "invite-again") {
+        const r = inviteFromRequestResponseSchema.parse(j);
+        return { status: "ok", request: r.request, emailStatus: r.emailStatus, inviteLink: r.inviteLink };
+      }
+      return { status: "ok", request: organizerRequestActionResponseSchema.parse(j).request };
+    }
+    if (res.status >= 400 && res.status < 500) return { status: "failed", code: (await errorOf(res)).code };
+    return { status: "error" };
+  } catch {
     return { status: "error" };
   }
 }
