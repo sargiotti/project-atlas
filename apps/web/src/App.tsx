@@ -7,6 +7,8 @@ import { PageNotFound } from "./pages/Pages";
 import Privacy from "./pages/Privacy";
 
 const PanelRoutes = lazy(() => import("./pages/panel/PanelRoutes"));
+// Slice 30: the organizer page carries its own CSS, art and the Turnstile glue; visitors of the map never download it.
+const Organizers = lazy(() => import("./pages/Organizers"));
 
 export function Routes() {
   const path = usePath();
@@ -20,6 +22,13 @@ export function Routes() {
   const slug = matchEventSlug(path);
   if (slug !== null) return <EventPage key={slug} slug={slug} />;
   if (path === "/" || path === "") return <Home />;
+  if (path === "/organizadores" || path === "/organizadores/") {
+    return (
+      <Suspense fallback={null}>
+        <Organizers />
+      </Suspense>
+    );
+  }
   if (path === "/privacy" || path === "/privacy/") return <Privacy />;
   return <PageNotFound />;
 }

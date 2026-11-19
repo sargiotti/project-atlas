@@ -58,3 +58,20 @@ export function initialPanelLang(): Lang {
   const langs = nav?.languages?.length ? nav.languages : nav?.language ? [nav.language] : [];
   return loadStoredLang() ?? pickPanelLang(langs);
 }
+
+/**
+ * Spanish variant (slice 30): true when the first Spanish entry of the browser's language list is es-AR or es-UY
+ * (rioplatense vos). Any other Spanish (es-ES, es-MX, plain es) keeps the base tú copy.
+ */
+export function pickVos(browserLangs: readonly string[] | undefined | null): boolean {
+  for (const tag of browserLangs ?? []) {
+    const parts = String(tag).toLowerCase().split(/[-_]/);
+    if (parts[0] === "es") return parts[1] === "ar" || parts[1] === "uy";
+  }
+  return false;
+}
+
+export function prefersVos(): boolean {
+  const nav = typeof navigator !== "undefined" ? navigator : undefined;
+  return pickVos(nav?.languages?.length ? nav.languages : nav?.language ? [nav.language] : []);
+}

@@ -1,6 +1,6 @@
 import { createApp } from "./http/app";
 import type { Env } from "./http/app";
-import { pruneModeration } from "./application/prune";
+import { pruneModeration, pruneOrganizerRequests } from "./application/prune";
 
 export type { Env } from "./http/app";
 
@@ -14,6 +14,12 @@ export default {
       pruneModeration(env.DB, Date.now()).then(
         (n) => console.log(`[cron] action=prune audit=${n.audit} quota=${n.quota}`),
         (err) => console.error(`[cron] action=prune_failed name=${err instanceof Error ? err.name : "NonError"}`),
+      ),
+    );
+    ctx.waitUntil(
+      pruneOrganizerRequests(env.DB, Date.now()).then(
+        (n) => console.log(`[cron] action=prune_organizer_requests deleted=${n}`),
+        (err) => console.error(`[cron] action=prune_organizer_requests_failed name=${err instanceof Error ? err.name : "NonError"}`),
       ),
     );
   },

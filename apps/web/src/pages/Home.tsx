@@ -7,7 +7,7 @@ import { Link } from "../lib/router";
 import { matchesQuery, queryWords, SEARCH_MAX } from "../lib/search";
 import { useI18n } from "../i18n/I18nProvider";
 import { CoverMedia } from "../components/CoverMedia";
-import { LogoMark } from "../markers/Pixel";
+import { CategoryIcon, LogoMark } from "../markers/Pixel";
 import { Shell } from "./Pages";
 
 type State = { kind: "loading" } | { kind: "error" } | { kind: "ok"; events: EventSummary[] };
@@ -153,6 +153,11 @@ export default function Home() {
         </div>
         <HomeTrailTile className="home-hero-tile" />
       </div>
+      <Link to="/organizadores" className="org-banner">
+        <CategoryIcon category="stage" size={36} />
+        <span className="t"><b>{t("orgBannerT")}</b><span>{t("orgBannerP")}</span></span>
+        <span className="go" aria-hidden="true">→</span>
+      </Link>
       {state.kind === "ok" && sorted.length > 0 && (
         <SearchField query={query} setQuery={setQuery} shown={visible.length} total={sorted.length} inputRef={inputRef} />
       )}

@@ -3,24 +3,30 @@
  * every other path gets the noindex 404 shell, so crawlers stop seeing the SPA fallback as a real page.
  *
  * Allowlist (keep in sync with apps/web/src/App.tsx): `/`, `/privacy` (and `/privacy/`), `/panel`, `/panel/*`
- * (includes /panel/invite/*) and `/e/*` (handled by event-page.ts). Canonical and per-page meta come from
+ * (includes /panel/invite/*), `/organizadores` (slice 30, with or without a trailing slash) and `/e/*` (handled by event-page.ts). Canonical and per-page meta come from
  * PUBLIC_ORIGIN plus a fixed path, never from the request URL.
  */
 import type { Context } from "hono";
 import { canonicalLink, goneResponse, html, loadShell, parsePublicOrigin } from "./event-page";
 import type { AppEnv } from "./types";
 
-export type SpaRoute = "home" | "privacy" | "panel" | "unknown";
+export type SpaRoute = "home" | "privacy" | "organizers" | "panel" | "unknown";
 
 export function classifyPath(path: string): SpaRoute {
   if (path === "/") return "home";
   if (path === "/privacy" || path === "/privacy/") return "privacy";
+  if (path === "/organizadores" || path === "/organizadores/") return "organizers";
   if (path === "/panel" || path.startsWith("/panel/")) return "panel";
   return "unknown";
 }
 
 const PRIVACY_TITLE = "Privacy · leyenda.ink";
 const PRIVACY_DESCRIPTION = "How leyenda.ink handles your data: what we collect, why, and your rights.";
+
+const ORGANIZERS_TITLE = "Crea el mapa interactivo de tu evento · leyenda.ink";
+const ORGANIZERS_DESCRIPTION =
+  "Mapa interactivo para fiestas, ferias, festivales y carreras. Sin descargar ninguna app: escanean el QR y se abre en el navegador. Gratis hoy.";
+const ORGANIZERS_IMAGE_ALT = "Ilustración generada con IA de una plaza en fiesta y un celular con el mapa del evento";
 
 const setContent = (value: string) => ({
   element(el: Element) {
@@ -47,19 +53,34 @@ export async function serveSpaRoute(c: Context<AppEnv>, route: SpaRoute): Promis
   if (route === "panel" || res.status !== 200 || !isHtml) return res;
   try {
     const origin = parsePublicOrigin(c.env.PUBLIC_ORIGIN);
-    const rw = new HTMLRewriter().on("head", canonicalLink(`${origin}${route === "home" ? "/" : "/privacy"}`));
-    if (route === "privacy") {
+    const rw = new HTMLRewriter().on("head", canonicalLink(`${origin}${route === "home" ? "/" : route === "organizers" ? "/organizadores" : "/privacy"}`));
+    const meta =
+      route === "privacy"
+        ? { title: PRIVACY_TITLE, description: PRIVACY_DESCRIPTION, path: "/privacy" }
+        : route === "organizers"
+          ? { title: ORGANIZERS_TITLE, description: ORGANIZERS_DESCRIPTION, path: "/organizadores", image: `${origin}/organizers/og.jpg`, imageAlt: ORGANIZERS_IMAGE_ALT }
+          : null;
+    if (meta) {
       rw.on("title", {
         element(el) {
-          el.setInnerContent(PRIVACY_TITLE);
+          el.setInnerContent(meta.title);
         },
       })
-        .on('meta[name="description"]', setContent(PRIVACY_DESCRIPTION))
-        .on('meta[property="og:url"]', setContent(`${origin}/privacy`))
-        .on('meta[property="og:title"]', setContent(PRIVACY_TITLE))
-        .on('meta[property="og:description"]', setContent(PRIVACY_DESCRIPTION))
-        .on('meta[name="twitter:title"]', setContent(PRIVACY_TITLE))
-        .on('meta[name="twitter:description"]', setContent(PRIVACY_DESCRIPTION));
+        .on('meta[name="description"]', setContent(meta.description))
+        .on('meta[property="og:url"]', setContent(`${origin}${meta.path}`))
+        .on('meta[property="og:title"]', setContent(meta.title))
+        .on('meta[property="og:description"]', setContent(meta.description))
+        .on('meta[name="twitter:title"]', setContent(meta.title))
+        .on('meta[name="twitter:description"]', setContent(meta.description));
+      if (meta.image) {
+        rw.on('meta[property="og:image"]', setContent(meta.image))
+          .on('meta[property="og:image:type"]', setContent("image/jpeg"))
+          .on('meta[property="og:image:width"]', setContent("1200"))
+          .on('meta[property="og:image:height"]', setContent("630"))
+          .on('meta[property="og:image:alt"]', setContent(meta.imageAlt))
+          .on('meta[name="twitter:image"]', setContent(meta.image))
+          .on('meta[name="twitter:image:alt"]', setContent(meta.imageAlt));
+      }
     }
     return rw.transform(res);
   } catch (err) {

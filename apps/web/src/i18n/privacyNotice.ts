@@ -4,7 +4,7 @@ import type { Lang } from "./messages";
 import { privacyCa } from "./ca/privacy";
 
 /** Date shown as "Last updated". Change this single value when the text changes (and at merge time). */
-export const PRIVACY_LAST_UPDATED = "2026-11-18";
+export const PRIVACY_LAST_UPDATED = "2026-11-19";
 
 export type PrivacySection = { heading: string; lines: string[] };
 export type PrivacyNotice = { title: string; updatedLabel: string; sections: PrivacySection[] };
@@ -231,4 +231,74 @@ const da: PrivacyNotice = {
   ],
 };
 
-export const PRIVACY_NOTICE: Record<Lang, PrivacyNotice> = { es, en, da, ca: privacyCa };
+// Slice 30: the organizer request form (/organizadores). Inserted after the organizer section. The Spanish text avoids second-person verbs
+// on purpose, so it reads the same for vos and tú readers.
+const ORGANIZER_FORM: Record<Lang, PrivacySection> = {
+  en: {
+    heading: "If you request a map (organizer form)",
+    lines: [
+      "Controller: leyenda.ink. Contact for anything about this form: contact@leyenda.ink.",
+      "What we collect: the 7 things you type into the form (your name, email, event name, approximate date, city, your role and a message). The last four are optional. We don't store your IP address, device or browser details, or the security-check token with the request.",
+      "Why: to answer you and assess your request for an event map. The legal basis is GDPR Article 6(1)(b): steps taken at your request before giving you access.",
+      "How long: 12 months, then the request is deleted automatically.",
+      "Who helps us: Cloudflare hosts the site and the database (D1), and its Turnstile check tells people from bots; Turnstile processes your IP address and some device and browser signals for that. Resend delivers the email notification we receive when you send the form (all the form fields go in it). Resend is in the United States; the transfer relies on the EU–US Data Privacy Framework and standard contractual clauses.",
+      "The notification copy of the request kept in our contact@leyenda.ink mailbox is deleted within 12 months, same as the stored request.",
+      "No automated decisions are made about you. The only automatic step is the bot check.",
+      "Your rights: access, rectification, erasure, restriction, objection and portability. Write to contact@leyenda.ink. You can also complain to the Spanish Data Protection Agency (AEPD, www.aepd.es) or your local supervisory authority.",
+    ],
+  },
+  es: {
+    heading: "Si se pide un mapa (formulario de organizadores)",
+    lines: [
+      "Responsable: leyenda.ink. Contacto para cualquier consulta sobre este formulario: contact@leyenda.ink.",
+      "Datos que se recogen: los 7 que se escriben en el formulario (nombre, email, nombre del evento, fecha aproximada, ciudad, rol en la organización y un mensaje). Los últimos cuatro son opcionales. No guardamos la dirección IP, los datos del dispositivo o del navegador ni el token de la comprobación de seguridad junto con el pedido.",
+      "Finalidad: responder y evaluar el pedido de un mapa para un evento. Base legal: artículo 6.1.b del RGPD, medidas previas a dar acceso, aplicadas a petición de la persona interesada.",
+      "Plazo de conservación: 12 meses; después el pedido se borra automáticamente.",
+      "Quién nos ayuda: Cloudflare aloja el sitio y la base de datos (D1), y su comprobación Turnstile distingue personas de bots; para eso Turnstile procesa la dirección IP y algunas señales del dispositivo y del navegador. Resend entrega el email de aviso que recibimos cuando se envía el formulario (lleva todos los campos). Resend está en Estados Unidos; la transferencia se apoya en el Marco de Privacidad de Datos UE–EE. UU. y en cláusulas contractuales tipo.",
+      "La copia del aviso que se conserva en nuestro buzón contact@leyenda.ink se borra en un plazo máximo de 12 meses, igual que el pedido guardado.",
+      "No se toman decisiones automatizadas sobre las personas. El único paso automático es la comprobación contra bots.",
+      "Derechos: acceso, rectificación, supresión, limitación, oposición y portabilidad. Se ejercen escribiendo a contact@leyenda.ink. También se puede reclamar ante la Agencia Española de Protección de Datos (AEPD, www.aepd.es) o ante la autoridad de control del país de residencia.",
+    ],
+  },
+  da: {
+    heading: "Hvis du beder om et kort (arrangørformularen)",
+    lines: [
+      "Dataansvarlig: leyenda.ink. Kontakt ved alt om denne formular: contact@leyenda.ink.",
+      "Hvad vi indsamler: de 7 oplysninger, du skriver i formularen (navn, e-mail, begivenhedens navn, omtrentlig dato, by, din rolle og en besked). De sidste fire er valgfrie. Vi gemmer ikke din IP-adresse, oplysninger om enhed eller browser eller sikkerhedskontrollens token sammen med forespørgslen.",
+      "Formål: at svare dig og vurdere din forespørgsel om et kort til en begivenhed. Retsgrundlag: GDPR artikel 6, stk. 1, litra b, foranstaltninger truffet på din anmodning, før du får adgang.",
+      "Opbevaring: 12 måneder, derefter slettes forespørgslen automatisk.",
+      "Hvem hjælper os: Cloudflare hoster siden og databasen (D1), og dets Turnstile-kontrol skelner mennesker fra bots; til det behandler Turnstile din IP-adresse og nogle signaler fra enhed og browser. Resend leverer den e-mailnotifikation, vi får, når formularen sendes (alle formularens felter står i den). Resend er i USA; overførslen bygger på EU–USA-rammen for databeskyttelse og standardkontraktbestemmelser.",
+      "Notifikationskopien af forespørgslen i vores postkasse contact@leyenda.ink slettes inden for 12 måneder, ligesom den gemte forespørgsel.",
+      "Der træffes ingen automatiske afgørelser om dig. Det eneste automatiske trin er kontrollen mod bots.",
+      "Dine rettigheder: indsigt, berigtigelse, sletning, begrænsning, indsigelse og dataportabilitet. Skriv til contact@leyenda.ink. Du kan også klage til den spanske databeskyttelsesmyndighed (AEPD, www.aepd.es) eller til tilsynsmyndigheden i dit land.",
+    ],
+  },
+  ca: {
+    heading: "Si demanes un mapa (formulari d'organitzadors)",
+    lines: [
+      "Responsable: leyenda.ink. Contacte per a qualsevol consulta sobre aquest formulari: contact@leyenda.ink.",
+      "Dades que recollim: les 7 que escrius al formulari (nom, correu, nom de l'esdeveniment, data aproximada, ciutat, el teu rol a l'organització i un missatge). Les quatre últimes són opcionals. No desem la teva adreça IP, les dades del dispositiu o del navegador ni el testimoni de la comprovació de seguretat amb la sol·licitud.",
+      "Finalitat: respondre't i avaluar la teva sol·licitud d'un mapa per a un esdeveniment. Base legal: article 6.1.b del RGPD, mesures prèvies a donar-te accés, aplicades a petició teva.",
+      "Termini de conservació: 12 mesos; després la sol·licitud s'esborra automàticament.",
+      "Qui ens ajuda: Cloudflare allotja el lloc i la base de dades (D1), i la seva comprovació Turnstile distingeix persones de bots; per a això Turnstile processa l'adreça IP i alguns senyals del dispositiu i del navegador. Resend lliura el correu d'avís que rebem quan s'envia el formulari (hi van tots els camps). Resend és als Estats Units; la transferència es basa en el Marc de Privacitat de Dades UE–EUA i en clàusules contractuals tipus.",
+      "La còpia de l'avís que es conserva a la nostra bústia contact@leyenda.ink se suprimeix en un termini màxim de 12 mesos, igual que la sol·licitud desada.",
+      "No es prenen decisions automatitzades sobre tu. L'únic pas automàtic és la comprovació contra bots.",
+      "Drets: accés, rectificació, supressió, limitació, oposició i portabilitat. Escriu a contact@leyenda.ink. També pots reclamar davant l'Agència Espanyola de Protecció de Dades (AEPD, www.aepd.es) o davant l'autoritat de control del teu país.",
+    ],
+  },
+};
+
+/** Inserts the organizer-form section right after "If you are an organizer or were invited" (third section). */
+function withOrganizerForm(n: PrivacyNotice, lang: Lang): PrivacyNotice {
+  const sections = [...n.sections];
+  sections.splice(3, 0, ORGANIZER_FORM[lang]);
+  return { ...n, sections };
+}
+
+export const PRIVACY_NOTICE: Record<Lang, PrivacyNotice> = {
+  es: withOrganizerForm(es, "es"),
+  en: withOrganizerForm(en, "en"),
+  da: withOrganizerForm(da, "da"),
+  ca: withOrganizerForm(privacyCa, "ca"),
+};
+

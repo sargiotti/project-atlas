@@ -2,6 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { initialLang, isLang, loadStoredLang, storeLang } from "./detect";
 import { fetchGeoLang, knownGeoLang, shouldAskGeo } from "./geoLang";
 import { MESSAGES, type Lang, type MessageKey } from "./messages";
+import { ES_VOS } from "./organizerMessages";
+import { prefersVos } from "./detect";
 
 type Ctx = {
   lang: Lang;
@@ -10,7 +12,9 @@ type Ctx = {
 };
 const I18nContext = createContext<Ctx | null>(null);
 
-export function I18nProvider({ children, initial }: { children: ReactNode; initial?: Lang }) {
+export function I18nProvider({ children, initial, vos }: { children: ReactNode; initial?: Lang; vos?: boolean }) {
+  // Spanish variant (slice 30): base es is "tú"; es-AR / es-UY browsers get the vos overrides. One "Español" in the selector.
+  const [isVos] = useState(() => vos ?? prefersVos());
   // Precedence: stored manual choice > Catalonia geo default (slice 21b) > browser language > Spanish.
   // The geo answer lives in memory only; just an explicit pick (setLang) writes atlas.lang.
   const [askGeo] = useState(() => loadStoredLang() === null && shouldAskGeo());
@@ -44,12 +48,12 @@ export function I18nProvider({ children, initial }: { children: ReactNode; initi
       lang,
       setLang,
       t: (key, vars) => {
-        let s: string = MESSAGES[lang][key] ?? MESSAGES.es[key] ?? key;
+        let s: string = (lang === "es" && isVos ? (ES_VOS as Record<string, string>)[key] : undefined) ?? MESSAGES[lang][key] ?? MESSAGES.es[key] ?? key;
         if (vars) for (const [k, v] of Object.entries(vars)) s = s.replace(`{${k}}`, String(v));
         return s;
       },
     }),
-    [lang, setLang],
+    [lang, setLang, isVos],
   );
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }

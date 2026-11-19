@@ -81,6 +81,14 @@ describe("SPA routes and 404", () => {
     expect(body).not.toContain("Mapas interactivos gratis");
   });
 
+  it("gives /organizadores its own Spanish title and og:image", async () => {
+    const body = await (await call("/organizadores")).text();
+    expect(body).toContain("<title>Crea el mapa interactivo de tu evento · leyenda.ink</title>");
+    expect(body).toContain('<meta property="og:image" content="https://leyenda.ink/organizers/og.jpg"');
+    expect(body).toContain('<link rel="canonical" href="https://leyenda.ink/organizadores">');
+    expect(body).not.toContain("Mapas interactivos gratis");
+  });
+
   it("returns the noindex 404 shell for unknown paths and keeps unknown /api JSON", async () => {
     for (const path of ["/foo", "/privacy/x", "/index.html"]) {
       const res = await call(path);

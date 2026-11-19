@@ -109,3 +109,16 @@
 @media (min-width: 1024px) { .ad-stage { margin: 20px 0; } }
 .ad-bar .who .org { display: grid; color: var(--ink); font-weight: 700; }
 .ad-bar .who .org span:nth-child(2) { font-weight: 400; color: var(--ink-2); }
+
+/* slice 30: organizer requests list (read-only; the message is plain text, never linkified) */
+.req-row { background: var(--surface); border-radius: 22px; box-shadow: var(--card-sh); padding: 14px 16px; display: grid; gap: 8px; min-width: 0; }
+.req-row h3 { font-size: 1.06rem; line-height: 1.3; margin: 0; overflow-wrap: anywhere; }
+.req-meta { color: var(--ink-2); font-size: 0.9rem; display: grid; gap: 2px; overflow-wrap: anywhere; }
+.req-meta a { color: inherit; font-weight: 700; }
+.req-fields { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 0; font-size: 0.9rem; }
+.req-fields div { display: flex; gap: 6px; min-width: 0; }
+.req-fields dt { color: var(--ink-2); }
+.req-fields dt::after { content: ":"; }
+.req-fields dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.req-lbl { font-size: 0.8rem; color: var(--ink-2); }
+.req-msg { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 2px; }

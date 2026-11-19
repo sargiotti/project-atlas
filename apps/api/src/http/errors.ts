@@ -42,6 +42,9 @@ const MESSAGES: Record<ErrorCode, string> = {
   points_required: "Place at least one Point on the map before publishing.",
   point_has_sessions: "This place has shows. Confirm deleting them or move them first.",
   sessions_outside_dates: "Some shows would fall outside the new dates.",
+  submission_rejected: "We could not send your request. Please try again.",
+  service_unavailable: "The service is not available right now. Please try again later.",
+  daily_cap_reached: "We reached today's limit of requests. Please write to contact@leyenda.ink.",
 };
 
 export function errorResponse(

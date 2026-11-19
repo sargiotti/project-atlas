@@ -23,6 +23,15 @@ export interface Env {
   ADMIN_LIMITER?: Limiter;
   /** Slice 08a: ~5 map uploads / 60 s per organizer id. Fails open; the D1 daily counter is the real cap. */
   UPLOAD_LIMITER?: Limiter;
+  /** Slice 30: public organizer form, ~3 requests / 60 s per IP, checked before Turnstile and D1. Fails open (the D1 daily caps back it). */
+  FORM_LIMITER?: Limiter;
+  /** Slice 30 secrets (wrangler secret put). Turnstile missing: the form answers 503 (fails closed). Resend missing: email_status "skipped". */
+  TURNSTILE_SECRET?: string;
+  RESEND_API_KEY?: string;
+  /** Slice 30 plain vars. NOTIFY_SUBJECT_PREFIX is "" in production and "[preview] " on previews. */
+  NOTIFY_FROM?: string;
+  NOTIFY_TO?: string;
+  NOTIFY_SUBJECT_PREFIX?: string;
   /** Slice 06 secrets (wrangler secret put). Absent on previews/local: sign-in then reports `not_configured`. */
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
