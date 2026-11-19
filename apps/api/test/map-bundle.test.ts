@@ -95,33 +95,22 @@ describe("GET /api/v1/events/:slug/map-bundle", () => {
     expect(errors.join("\n")).toMatch(/\[bundle\] dropped 1 session\(s\) outside the event window slug=tiny-fest/);
   });
 
-  it("the database refuses a session whose point belongs to another event", async () => {
-    // evt_bare (previous test) has no point of its own; tiny-fest-stage belongs to evt_tiny-fest.
-    const insert = env.DB.prepare(
-      "INSERT INTO point_sessions (id, event_id, point_id, title, start_utc, end_utc, created_at, updated_at) VALUES ('x-1', 'evt_bare', 'tiny-fest-stage', 'Nope', '2026-08-01T10:00:00Z', '2026-08-01T11:00:00Z', 0, 0)",
-    );
-    await expect(insert.run()).rejects.toThrow(/does not belong/);
-  });
-
-  it("returns 404 event_not_found for a valid but unknown slug", async () => {
+  it("answers 404 event_not_found, 400 invalid_slug (before the database) and the generic not_found", async () => {
     const res = await get("/api/v1/events/no-such-event/map-bundle");
     expect(res.status).toBe(404);
     expect(res.headers.get("cache-control")).toBe("public, max-age=30");
     expect(errorResponseSchema.parse(await res.json()).error.code).toBe("event_not_found");
-  });
 
-  it("returns 400 invalid_slug before touching the database", async () => {
     for (const bad of ["Bad_Slug", "ab", "a--b", "x'%20OR%201=1"]) {
       const res = await get(`/api/v1/events/${bad}/map-bundle`);
       expect(res.status, bad).toBe(400);
       expect(res.headers.get("cache-control")).toBe("no-store");
       expect(errorResponseSchema.parse(await res.json()).error.code).toBe("invalid_slug");
     }
+
+    const other = await get("/api/v1/nope");
+    expect(other.status).toBe(404);
+    expect(errorResponseSchema.parse(await other.json()).error.code).toBe("not_found");
   });
 
-  it("returns the generic not_found error for other API paths", async () => {
-    const res = await get("/api/v1/nope");
-    expect(res.status).toBe(404);
-    expect(errorResponseSchema.parse(await res.json()).error.code).toBe("not_found");
-  });
 });

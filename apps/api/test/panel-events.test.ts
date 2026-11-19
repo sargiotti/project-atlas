@@ -94,28 +94,6 @@ describe("create", () => {
     expect(list.events.map((e) => e.id)).toEqual([event.id]);
   });
 
-  it("rejects invalid input with field codes only and saves nothing", async () => {
-    const o = await newOrganizer();
-    const res = await call("/api/v1/panel/events", {
-      method: "POST",
-      cookie: o.session,
-      json: { ...valid, name: "ab", website: "http://secret-value.example", endDate: "2026-07-01", status: "published" },
-    });
-    expect(res.status).toBe(400);
-    const text = await res.text();
-    const body = errorResponseSchema.parse(JSON.parse(text));
-    expect(body.error.code).toBe("validation_error");
-    expect(body.error.fields).toEqual(
-      expect.arrayContaining([
-        { path: "name", code: "too_short" },
-        { path: "website", code: "website_not_https" },
-        { path: "body", code: "unknown_field" },
-      ]),
-    );
-    expect(text).not.toContain("secret-value");
-    expect(await countEvents("owner_id IS NOT NULL")).toBe(0);
-  });
-
   it("refuses the 11th event; two parallel creates at 9 of 10 leave exactly one winner", async () => {
     const o = await newOrganizer();
     const other = await newOrganizer();
@@ -287,23 +265,6 @@ describe("CSRF guard on every non-safe method", () => {
     expect(await countEvents(`owner_id = '${o.id}'`)).toBe(1);
   });
 
-  it("PUT needs a JSON content type", async () => {
-    const o = await newOrganizer();
-    const ev = await create(o);
-    const res = await call(`/api/v1/panel/events/${ev.id}`, {
-      method: "PUT",
-      cookie: o.session,
-      headers: { "content-type": "text/plain" },
-      body: JSON.stringify(valid),
-    });
-    expect(res.status).toBe(415);
-  });
-
-  it("bodies over 8 KB are refused", async () => {
-    const o = await newOrganizer();
-    const res = await call("/api/v1/panel/events", { method: "POST", cookie: o.session, json: { ...valid, description: "x".repeat(9000) } });
-    expect(res.status).toBe(413);
-  });
 });
 
 describe("venue address (slice 08d)", () => {

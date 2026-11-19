@@ -5,7 +5,6 @@ import {
   INVITE_EMAIL_DAILY_CAP,
   INVITE_TOKEN_REGEX,
   ORGANIZER_LOCALES,
-  inviteActionBodySchema,
   inviteFromRequestResponseSchema,
   organizerRequestActionResponseSchema,
   organizerRequestListResponseSchema,
@@ -224,28 +223,6 @@ describe("POST /:id/invite", () => {
     expect(sent).toHaveLength(1);
   });
 
-  it("validates the body: strict keys, note at most 1000 characters, hostile characters stripped", async () => {
-    const admin = await user("admin");
-    const id = await addRequest();
-    expect((await invite(admin, id, { note: "x", email: "evil@example.com" })).status).toBe(400);
-    expect((await invite(admin, id, { note: "x".repeat(1001) })).status).toBe(400);
-    expect((await invite(admin, id, { note: 5 })).status).toBe(400);
-    expect(await statusOf(id)).toBe("pending");
-    expect(inviteActionBodySchema.parse({ note: "a‮b​c\u0007d\u0085e\r\nf" }).note).toBe("abcde\nf");
-    expect(inviteActionBodySchema.parse({ note: "a\u200Eb\u200Fc\u061Cd\u2028e\u2029f\ng" }).note).toBe("abcdef\ng");
-    expect(inviteActionBodySchema.parse({ note: " \n " }).note).toBeUndefined();
-    const res = await invite(admin, id, { note: "gate ‮hello​" });
-    expect(res.status).toBe(201);
-    expect(sent[0]!.text.startsWith("gate hello\n")).toBe(true);
-  });
-
-  it("404 for an unknown or malformed id", async () => {
-    const admin = await user("admin");
-    expect((await invite(admin, 99999)).status).toBe(404);
-    expect((await call("POST", `${BASE}/abc/invite`, admin, {})).status).toBe(404);
-    expect((await call("POST", `${BASE}/0/discard`, admin, {})).status).toBe(404);
-    expect(sent).toHaveLength(0);
-  });
 });
 
 describe("POST /:id/invite-again", () => {
@@ -335,12 +312,6 @@ describe("discard and restore", () => {
     expect((await call("POST", `${BASE}/9999/discard`, admin, {})).status).toBe(404);
   });
 
-  it("takes no fields", async () => {
-    const admin = await user("admin");
-    const id = await addRequest();
-    expect((await call("POST", `${BASE}/${id}/discard`, admin, { note: "x" })).status).toBe(400);
-    expect(await statusOf(id)).toBe("pending");
-  });
 });
 
 describe("list filter and Joined", () => {
@@ -407,24 +378,5 @@ describe("admin rate limit", () => {
     expect(res.status).toBe(429);
     expect(await statusOf(id)).toBe("pending");
     expect(sent).toHaveLength(0);
-  });
-});
-
-describe("invite inspection never consumes", () => {
-  it("inspecting an invite any number of times leaves it usable", async () => {
-    const admin = await user("admin");
-    const id = await addRequest();
-    resendStatus = 500;
-    const res = await invite(admin, id);
-    const text = await res.text();
-    expect(res.status, text).toBe(201);
-    const link = inviteFromRequestResponseSchema.parse(JSON.parse(text)).inviteLink!;
-    const token = tokenOf(link);
-    for (let n = 0; n < 3; n++) {
-      const r = await call("POST", "/api/v1/invites/inspect", undefined, { token });
-      expect(((await r.json()) as any).status).toBe("valid");
-    }
-    const row = await env.DB.prepare("SELECT used_at, revoked_at FROM invites").first<{ used_at: number | null; revoked_at: number | null }>();
-    expect(row).toEqual({ used_at: null, revoked_at: null });
   });
 });

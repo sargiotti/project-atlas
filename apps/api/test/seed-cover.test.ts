@@ -19,12 +19,9 @@ const vp8l = (w: number, h: number) => {
 };
 
 describe("loadCover", () => {
-  it("returns null (event seeded without cover) when the file is not there yet", () => {
+  it("returns null when the file is not there yet or the seed declares no cover", () => {
     const dir = mkdtempSync(join(tmpdir(), "covers-"));
     expect(loadCover("some-event", { width: 960, height: 640 }, dir)).toBeNull();
-  });
-
-  it("returns null when the seed declares no cover", () => {
     expect(loadCover("some-event", undefined, tmpdir())).toBeNull();
   });
 

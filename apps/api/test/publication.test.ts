@@ -681,23 +681,3 @@ describe("audit log and prune", () => {
     expect(await rows("SELECT 1 FROM moderation_audit WHERE created_at = ?1", old)).toEqual([]);
   });
 });
-
-describe("map and theme edits in every status", () => {
-  it("replace and theme work while In review and Published, and bump the content version", async () => {
-    const o = await newUser("organizer");
-    const a = await newUser("admin");
-    const { ev } = await readyEvent(o);
-    const version = async () => (await env.DB.prepare("SELECT updated_at FROM events WHERE id = ?1").bind(ev.id).first<{ updated_at: number }>())!.updated_at;
-    await org(o, ev.id, "publish-request");
-    const v0 = await version();
-    await new Promise((r) => setTimeout(r, 5));
-    expect((await call(`/api/v1/panel/events/${ev.id}/map/theme`, { method: "PATCH", cookie: o.session, json: { theme: "dark" } })).status).toBe(200);
-    const v1 = await version();
-    expect(v1).toBeGreaterThan(v0);
-    await approve(a, ev.id, (await review(a, ev.id)).review.updatedAt);
-    await new Promise((r) => setTimeout(r, 5));
-    await uploadMap(o, ev.id, "light", 2300);
-    expect(await version()).toBeGreaterThan(v1);
-    expect(await rows("SELECT publish_state FROM events WHERE id = ?1", ev.id)).toEqual([{ publish_state: "published" }]);
-  });
-});

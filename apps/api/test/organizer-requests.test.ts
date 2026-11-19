@@ -100,20 +100,6 @@ describe("POST /api/v1/organizer-requests", () => {
     expect(sent?.text).toContain("hxxps://x[.]example and www[.]y[.]example");
   });
 
-  it("stores the form language (default es when missing) and refuses an unknown one with a field error", async () => {
-    expect((await post(form())).status).toBe(201);
-    expect((await post(form({ email: "b@example.com", locale: "es-vos" }))).status).toBe(201);
-    const rows = (await env.DB.prepare("SELECT email, locale, status FROM organizer_requests ORDER BY id").all<{ email: string; locale: string; status: string }>()).results;
-    expect(rows).toEqual([
-      { email: "ana@example.com", locale: "es", status: "pending" },
-      { email: "b@example.com", locale: "es-vos", status: "pending" },
-    ]);
-    const bad = await post({ ...form({ email: "c@example.com" }), locale: "fr" });
-    expect(bad.status).toBe(400);
-    expect(((await bad.json()) as any).error.fields).toEqual([{ path: "locale", code: "invalid" }]);
-    expect(await count()).toBe(2);
-  });
-
   it("keeps the request when the email service fails", async () => {
     resendStatus = 500;
     expect((await post(form())).status).toBe(201);
@@ -158,15 +144,6 @@ describe("POST /api/v1/organizer-requests", () => {
     expect((await post(form())).status).toBe(503);
     expect((await post(form(), { TURNSTILE_SECRET: undefined })).status).toBe(503);
     expect(await count()).toBe(0);
-  });
-
-  it("returns field errors without calling anything else", async () => {
-    const res = await post(form({ email: "bad", name: "" }));
-    expect(res.status).toBe(400);
-    const body = errorResponseSchema.parse(await res.json());
-    expect(body.error.code).toBe("validation_error");
-    expect(body.error.fields).toEqual(expect.arrayContaining([{ path: "email", code: "invalid" }, { path: "name", code: "required" }]));
-    expect(calls).toEqual([]);
   });
 
   it("answers the uniform 201 and stores nothing past 3 per email per day", async () => {

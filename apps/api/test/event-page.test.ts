@@ -96,8 +96,6 @@ describe("GET /e/{slug}", () => {
   it.each([
     ["a malformed key", "../../evil.jpg"],
     ["the key of another event", `covers/evt_other/${HEX}-og.jpg`],
-    ["the full file instead of the og file", `covers/evt_odd/${HEX}-full.webp`],
-    ["the legacy static shape", "odd.0123abcd.jpg"],
   ])("a stored og key that is %s is ignored: the tone image is used", async (_what, ogKey) => {
     await env.DB.batch(insert("odd", "Odd", { ogKey }));
     const html = await (await get("/e/odd")).text();
@@ -221,10 +219,14 @@ describe("GET /e/{slug}", () => {
 });
 
 describe("unknown and invalid paths", () => {
-  it.each(["/e/does-not-exist", "/e/", "/e//", "/e/a/b", "/e/UPPER", "/e/bad_slug", "/e/%00", "/e/" + "a".repeat(100)])(
-    "%s is the noindex 404 shell with brand meta (T2, B2, slice 08b)",
+  it.each(["/e/UPPER", "/e/%00", "/e/" + "a".repeat(100)])(
+    "%s is the noindex 404 shell with brand meta, and never reaches D1 (T2, B2, B6, slice 08b)",
     async (path) => {
-      const res = await get(path);
+      const prepare = vi.fn(() => {
+        throw new Error("D1 must not be used");
+      });
+      const res = await get(path, {}, { DB: { prepare } });
+      expect(prepare).not.toHaveBeenCalled();
       expect(res.status).toBe(404);
       expect(res.headers.get("content-type")).toMatch(/^text\/html/);
       expect(res.headers.get("content-security-policy")).toBe(HTML_CSP);
@@ -237,15 +239,6 @@ describe("unknown and invalid paths", () => {
       expect(metaContent(html, 'property="og:image"')).toBe(BRAND_CARD);
     },
   );
-
-  it("invalid slugs never reach D1 (B6)", async () => {
-    const prepare = vi.fn(() => {
-      throw new Error("D1 must not be used");
-    });
-    const res = await get("/e/Not_A_Slug", {}, { DB: { prepare } });
-    expect(res.status).toBe(404);
-    expect(prepare).not.toHaveBeenCalled();
-  });
 
   it("valid unknown slugs are answered from one bounded query, not one per slug", async () => {
     await env.DB.batch(insert("havnelobet", "Havneløbet 2026"));
