@@ -203,14 +203,14 @@ const INVITE_NOTE_RAW_MAX = 4000;
 
 /**
  * Plain text note. NFC, CRLF and CR to LF, trim. Stripped silently: C0/C1 controls except LF, bidi overrides and isolates
- * (U+202A-202E, U+2066-2069), zero-width characters (U+200B-200D, U+2060, U+FEFF). Blank means absent.
+ * (U+202A-202E, U+2066-2069), zero-width characters (U+200B-200D, U+2060, U+FEFF), LRM/RLM/ALM (U+200E, U+200F, U+061C) and line/paragraph separators (U+2028, U+2029). Blank means absent.
  * The limit counts UTF-16 units after normalizing. Shared with the web for the counter.
  */
 export function normalizeInviteNote(s: string): string {
   return s
     .normalize("NFC")
     .replace(/\r\n?/g, "\n")
-    .replace(/[\u0000-\u0009\u000B-\u001F\u007F-\u009F‪-‮⁦-⁩​-‍⁠﻿]/g, "")
+    .replace(/[\u0000-\u0009\u000B-\u001F\u007F-\u009F‪-‮⁦-⁩​-‍⁠﻿\u200E\u200F\u061C\u2028\u2029]/g, "")
     .trim();
 }
 

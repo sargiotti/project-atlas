@@ -120,7 +120,7 @@ describe("POST /:id/invite", () => {
     expect(mail.to).toEqual(["ana@example.com"]);
     expect(mail.subject).toBe("La teva invitació a leyenda.ink");
     expect(mail.html).toBeUndefined();
-    expect(mail.text.startsWith("Hola Ana\nCom estàs?\n\n")).toBe(true);
+    expect(mail.text.startsWith("Hola Ana\nCom estàs?\n----\nL'únic enllaç per acceptar és el de sota, a atlas.test.\n\n")).toBe(true);
     const link = /https:\/\/atlas\.test\/panel\/invite\/(\S+)/.exec(mail.text)!;
     expect(INVITE_TOKEN_REGEX.test(link[1]!)).toBe(true);
     expect(mail.text).toContain("ana@example.com");
@@ -232,6 +232,7 @@ describe("POST /:id/invite", () => {
     expect((await invite(admin, id, { note: 5 })).status).toBe(400);
     expect(await statusOf(id)).toBe("pending");
     expect(inviteActionBodySchema.parse({ note: "a‮b​c\u0007d\u0085e\r\nf" }).note).toBe("abcde\nf");
+    expect(inviteActionBodySchema.parse({ note: "a\u200Eb\u200Fc\u061Cd\u2028e\u2029f\ng" }).note).toBe("abcdef\ng");
     expect(inviteActionBodySchema.parse({ note: " \n " }).note).toBeUndefined();
     const res = await invite(admin, id, { note: "gate ‮hello​" });
     expect(res.status).toBe(201);
@@ -372,10 +373,13 @@ describe("invite email templates", () => {
   it("every locale has its own subject, the fixed order, and only the allowed interpolations", () => {
     const subjects = new Map<string, string>();
     for (const locale of ORGANIZER_LOCALES) {
-      const { subject, text } = buildInviteEmail(locale, { note: "NOTE", link: "https://x.test/panel/invite/T", email: "a@b.test" });
+      const { subject, text } = buildInviteEmail(locale, { note: "NOTE", link: "https://x.test/panel/invite/T", email: "a@b.test", host: "atlas.test" });
       subjects.set(locale, subject);
       const lines = text.split("\n");
       expect(lines[0]).toBe("NOTE");
+      expect(lines[1]).toBe("----");
+      expect(lines[2]).toMatch(/atlas\.test\.$/);
+      expect(lines[2]).not.toBe(lines[0]);
       expect(text.indexOf("NOTE")).toBeLessThan(text.indexOf("https://x.test/panel/invite/T"));
       expect(text).toContain("a@b.test");
       expect(text).toContain("7");
@@ -389,6 +393,20 @@ describe("invite email templates", () => {
     const vos = buildInviteEmail("es-vos", { link: "L", email: "e" }).text;
     expect(vos).not.toBe(tu);
     expect(vos).toContain("Aceptá");
+  });
+});
+
+describe("admin rate limit", () => {
+  it("a refusing ADMIN_LIMITER gives 429 on the list and on invite, and nothing is sent", async () => {
+    const admin = await user("admin");
+    const id = await addRequest();
+    const over = { ADMIN_LIMITER: { limit: async () => ({ success: false }) } };
+    const list = await call("GET", BASE, admin, undefined, over);
+    expect(list.status).toBe(429);
+    const res = await call("POST", `${BASE}/${id}/invite`, admin, {}, over);
+    expect(res.status).toBe(429);
+    expect(await statusOf(id)).toBe("pending");
+    expect(sent).toHaveLength(0);
   });
 });
 
