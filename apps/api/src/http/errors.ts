@@ -35,7 +35,7 @@ const MESSAGES: Record<ErrorCode, string> = {
   cover_changed: "The cover was changed by another request. Reload and try again.",
   unsupported_image_type: "Unsupported image type.",
   invalid_upload: "The uploaded image was refused.",
-  invalid_transition: "This action is not possible in the event's current state.",
+  invalid_transition: "This action is not possible in the current state.",
   event_changed: "The event changed. Reload and try again.",
   map_required: "Upload a map before publishing.",
   transition_cap_reached: "Too many publish actions today. Try again tomorrow.",
