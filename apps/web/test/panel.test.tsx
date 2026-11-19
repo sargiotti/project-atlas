@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { I18nProvider } from "../src/i18n/I18nProvider";
 import { Routes } from "../src/App";
 import { errorBody, goTo, json } from "./fixtures";
+import { EXAMPLE_EVENT_SLUG } from "../src/lib/exampleEvent";
 import { peekCoverHandoff, setCoverHandoff } from "../src/lib/coverHandoff";
 
 const TOKEN = "A".repeat(43);
@@ -83,6 +84,35 @@ describe("panel guard", () => {
     renderAt("/panel");
     await user.click(await screen.findByRole("button", { name: "Account menu" }));
     expect(screen.getByRole("menuitem", { name: /Invites/ })).toBeInTheDocument();
+  });
+});
+
+describe("header tabs and empty-panel welcome (slice 35)", () => {
+  it("shows the admin tabs only to an admin, marks the current one and keeps the sign-out in the account menu", async () => {
+    mockApi({ "GET /auth/me": () => json(me("admin")), "GET /panel/events": () => json({ events: [] }) });
+    const { unmount } = renderAt("/panel");
+    const nav = await screen.findByRole("navigation", { name: "Panel" });
+    expect(within(nav).getByRole("link", { name: "My events" })).toHaveAttribute("aria-current", "page");
+    expect(within(nav).getByRole("link", { name: "Requests" })).toHaveAttribute("href", "/panel/admin/requests");
+    unmount();
+
+    mockApi({ "GET /auth/me": () => json(me("organizer")), "GET /panel/events": () => json({ events: [] }) });
+    renderAt("/panel");
+    const orgNav = await screen.findByRole("navigation", { name: "Panel" });
+    expect(within(orgNav).getByRole("link", { name: "My events" })).toBeInTheDocument();
+    expect(within(orgNav).queryByRole("link", { name: "Requests" })).not.toBeInTheDocument();
+  });
+
+  it("welcomes a new organizer by first name and links the example event through the router", async () => {
+    mockApi({ "GET /auth/me": () => json(me("organizer")), "GET /panel/events": () => json({ events: [] }) });
+    const user = userEvent.setup();
+    renderAt("/panel");
+    expect(await screen.findByText("Hello, Ada")).toBeInTheDocument();
+    expect(screen.queryByText(/coming soon/i)).not.toBeInTheDocument();
+    const link = screen.getByRole("link", { name: "See an example event" });
+    expect(link).toHaveAttribute("href", `/e/${EXAMPLE_EVENT_SLUG}`);
+    await user.click(link);
+    expect(window.location.pathname).toBe(`/e/${EXAMPLE_EVENT_SLUG}`);
   });
 });
 
