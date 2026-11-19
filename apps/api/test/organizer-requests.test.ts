@@ -3,7 +3,8 @@ import app from "../src/index";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { errorResponseSchema, organizerRequestListResponseSchema, organizerRequestSchema, toOrganizerFieldErrors, type OrganizerRequestInput } from "@atlas/contract";
 import { randomToken, sha256Hex } from "../src/adapters/crypto";
-import { buildNotification } from "../src/application/organizer-notify";
+import { isAllowedTurnstileHostname } from "../src/application/turnstile";
+import { buildNotification, defang } from "../src/application/organizer-notify";
 import { pruneOrganizerRequests } from "../src/application/prune";
 
 const ORIGIN = "http://atlas.test";
@@ -96,7 +97,7 @@ describe("POST /api/v1/organizer-requests", () => {
     expect(sent?.subject).toBe(`New organizer request #${row!.id}`);
     expect(sent?.reply_to).toBe("ana@example.com");
     expect(sent?.html).toBeUndefined();
-    expect(sent?.text).toContain("hxxps://x.example and www[.]y.example");
+    expect(sent?.text).toContain("hxxps://x[.]example and www[.]y[.]example");
   });
 
   it("keeps the request when the email service fails", async () => {
@@ -190,6 +191,24 @@ describe("notification and retention", () => {
     expect(subject).toBe("[preview] New organizer request #7");
     expect(text).toContain("City: -");
     expect(text).toContain("Event: Evil <b>subject</b>");
+  });
+
+  it("defangs URLs and bare domains in user text but not in the Email line", () => {
+    expect(defang("see https://evil.com and www.x.org or foo.io")).toBe("see hxxps://evil[.]com and www[.]x[.]org or foo[.]io");
+    expect(defang(defang("a.com"))).toBe("a[.]com");
+    const parsed = organizerRequestSchema.parse(form({ eventName: "fest.ar", message: "visit evil.com" }));
+    const { text } = buildNotification(1, 0, parsed, "");
+    expect(text).toContain("Event: fest[.]ar");
+    expect(text).toContain("visit evil[.]com");
+    expect(text).toContain("Email: ana@example.com");
+  });
+
+  it("accepts only the PUBLIC_ORIGIN host in production and fixed preview hosts on previews", () => {
+    expect(isAllowedTurnstileHostname("https://leyenda.ink", "leyenda.ink")).toBe(true);
+    for (const h of ["www.leyenda.ink", "slice-x-atlas.sargiotti67.workers.dev", "atlas.sargiotti67.workers.dev", "evil.example"]) expect(isAllowedTurnstileHostname("https://leyenda.ink", h)).toBe(false);
+    const prev = "https://atlas.sargiotti67.workers.dev";
+    for (const h of ["atlas.sargiotti67.workers.dev", "slice-30-organizer-page-atlas.sargiotti67.workers.dev"]) expect(isAllowedTurnstileHostname(prev, h)).toBe(true);
+    for (const h of ["leyenda.ink", "evilatlas.sargiotti67.workers.dev", "x-atlas.sargiotti67.workers.dev.evil.com", "x-atlas.other.dev"]) expect(isAllowedTurnstileHostname(prev, h)).toBe(false);
   });
 
   it("prunes requests older than 12 months only", async () => {

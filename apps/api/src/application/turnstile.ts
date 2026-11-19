@@ -9,7 +9,7 @@ export type TurnstileOutcome = "ok" | "rejected" | "unavailable";
  * Server-side Turnstile check. Never cached or reused: every token is verified once (siteverify itself refuses
  * a reused token). Secret missing, network error, non-2xx or a 5 s timeout all mean `unavailable`.
  */
-export async function verifyTurnstile(opts: { secret: string | undefined; token: string; remoteIp?: string; action: string; hostname: string }): Promise<TurnstileOutcome> {
+export async function verifyTurnstile(opts: { secret: string | undefined; token: string; remoteIp?: string; action: string; hostname: string; isAllowedHostname?: (h: string) => boolean }): Promise<TurnstileOutcome> {
   if (!opts.secret) return "unavailable";
   try {
     const res = await fetch(SITEVERIFY, {
@@ -24,8 +24,18 @@ export async function verifyTurnstile(opts: { secret: string | undefined; token:
     if (codes.includes("missing-input-secret") || codes.includes("invalid-input-secret") || codes.includes("internal-error")) return "unavailable";
     if (body.success !== true) return "rejected";
     if (opts.secret === ALWAYS_PASS_TEST_SECRET) return "ok";
-    return body.action === opts.action && body.hostname === opts.hostname ? "ok" : "rejected";
+    return body.action === opts.action && (body.hostname === opts.hostname || (!!body.hostname && !!opts.isAllowedHostname?.(body.hostname))) ? "ok" : "rejected";
   } catch {
     return "unavailable";
   }
+}
+
+const PREVIEW_BASE_HOST = "atlas.sargiotti67.workers.dev";
+
+/** Hosts Turnstile may report. Production: exactly the PUBLIC_ORIGIN host. Preview (decided by PUBLIC_ORIGIN being the preview base host, never by the request): the base host or `<anything>-atlas.sargiotti67.workers.dev`. */
+export function isAllowedTurnstileHostname(publicOrigin: string, reported: string): boolean {
+  const base = new URL(publicOrigin).hostname;
+  if (reported === base) return true;
+  if (base !== PREVIEW_BASE_HOST) return false;
+  return reported.endsWith(`-${PREVIEW_BASE_HOST}`);
 }

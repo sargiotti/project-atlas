@@ -1,8 +1,9 @@
 import type { OrganizerRequestParsed } from "@atlas/contract";
 
-/** Mail clients must not turn user text into live links: `https://` -> `hxxps://`, `http://` -> `hxxp://`, `www.` -> `www[.]`. */
+/** Mail clients must not turn user text into live links: `https://` -> `hxxps://`, `http://` -> `hxxp://`, `www.` -> `www[.]`, bare `name.tld` -> `name[.]tld`. */
 export function defang(s: string): string {
-  return s.replace(/https:\/\//gi, "hxxps://").replace(/http:\/\//gi, "hxxp://").replace(/www\./gi, "www[.]");
+  return s.replace(/https:\/\//gi, "hxxps://").replace(/http:\/\//gi, "hxxp://").replace(/www\./gi, "www[.]")
+    .replace(/\b([a-z0-9-]+)\.([a-z]{2,})\b/gi, "$1[.]$2");
 }
 
 const field = (v: string | undefined) => (v ? defang(v) : "-");
@@ -14,7 +15,7 @@ export function buildNotification(id: number, createdAt: number, r: OrganizerReq
     `Received: ${new Date(createdAt).toISOString()}`,
     "",
     `Name: ${defang(r.name)}`,
-    `Email: ${defang(r.email)}`,
+    `Email: ${r.email}`,
     `Event: ${defang(r.eventName)}`,
     `Date: ${field(r.eventDate)}`,
     `City: ${field(r.city)}`,

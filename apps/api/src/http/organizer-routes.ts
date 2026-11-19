@@ -10,7 +10,7 @@ import {
 } from "@atlas/contract";
 import { D1OrganizerRequestRepository } from "../adapters/d1-organizer-request-repository";
 import { sendNotification } from "../application/organizer-notify";
-import { verifyTurnstile } from "../application/turnstile";
+import { isAllowedTurnstileHostname, verifyTurnstile } from "../application/turnstile";
 import { adminLimiter } from "./admin-event-routes";
 import { guardMutations, limitBody } from "./auth-routes";
 import { errorResponse } from "./errors";
@@ -70,6 +70,7 @@ export function registerOrganizerRoutes(app: Hono<AppEnv>): void {
       remoteIp: c.req.header("cf-connecting-ip"),
       action: ORGANIZER_TURNSTILE_ACTION,
       hostname: new URL(c.env.PUBLIC_ORIGIN).hostname,
+      isAllowedHostname: (h) => isAllowedTurnstileHostname(c.env.PUBLIC_ORIGIN, h),
     });
     if (outcome === "unavailable") {
       console.error(`[organizer-request] requestId=${c.get("requestId")} outcome=turnstile_unavailable`);
