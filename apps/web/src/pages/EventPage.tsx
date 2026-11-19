@@ -11,7 +11,7 @@ import { LogoMark } from "../markers/Pixel";
 import { Link } from "../lib/router";
 import { parseAt, withTimes, type TimedSession } from "../lib/schedule";
 import { EventGone, Loading, Unavailable } from "./Pages";
-import { EventPrivacyLink } from "../components/PrivacyLink";
+import { EventFootStrip } from "../components/PrivacyLink";
 import MapIntroHint from "../components/MapIntroHint";
 
 // The map viewer (gestures + marker art) is the heavy part: load it only on event pages.
@@ -243,7 +243,7 @@ function EventView({ bundle, imageUrl, onImageError }: { bundle: MapBundle; imag
           <AboutSheet event={event} onClose={closeAbout} />
         </Suspense>
       )}
-      <EventPrivacyLink />
+      <EventFootStrip />
       {shareOpen && <ShareDialog slug={event.slug} eventName={event.name} onClose={() => setShareOpen(false)} />}
     </div>
   );

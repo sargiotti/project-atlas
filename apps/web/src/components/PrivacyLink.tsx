@@ -11,12 +11,16 @@ export function SiteFooter() {
   );
 }
 
-/** Small corner link for the full-screen event page, which has no scrolling page to put a footer in. */
-export function EventPrivacyLink() {
+/**
+ * Thin strip below the public event map (slice 30): the privacy link and a discreet invitation to create a map. The second link is a fixed
+ * internal path, never built from event data. The strip takes its own row, so it never covers the map.
+ */
+export function EventFootStrip() {
   const { t } = useI18n();
   return (
-    <Link to="/privacy" className="event-privacy">
-      {t("privacyLink")}
-    </Link>
+    <footer className="event-foot">
+      <Link to="/privacy">{t("privacyLink")}</Link>
+      <Link to="/organizadores" className="foot-org">{t("orgMapFoot")}</Link>
+    </footer>
   );
 }

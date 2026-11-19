@@ -86,6 +86,10 @@ function UserMenu({ me }: { me: Organizer }) {
                 {count > 0 && <span className="pa-cnt" aria-label={t("adWaitingSr", { n: count })}>{count}</span>}
               </Link>
               <Link to="/panel/admin/published" role="menuitem" onClick={() => setOpen(false)}>{t("adTabPublished")}</Link>
+              <Link to="/panel/admin/requests" role="menuitem" onClick={() => setOpen(false)}>
+                {t("reqNav")}
+                <span className="mini">{t("adminBadge")}</span>
+              </Link>
               <Link to="/panel/admin/invites" role="menuitem" onClick={() => setOpen(false)}>
                 {t("invitesNav")}
                 <span className="mini">{t("adminBadge")}</span>

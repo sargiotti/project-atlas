@@ -5,6 +5,7 @@ import { matchAdminReview, matchInviteToken, matchPanelEvent, usePath } from "..
 import { PageNotFound } from "../Pages";
 import AdminInvites from "./AdminInvites";
 import AdminList from "./admin/AdminLists";
+import AdminRequests from "./admin/AdminRequests";
 import AdminReview from "./admin/AdminReview";
 import InvitePage from "./InvitePage";
 import PanelGuard from "./PanelGuard";
@@ -96,6 +97,13 @@ function Screens() {
     return (
       <PanelGuard admin bare>
         <AdminReview key={reviewId} id={reviewId} />
+      </PanelGuard>
+    );
+  }
+  if (path === "/panel/admin/requests") {
+    return (
+      <PanelGuard admin>
+        <AdminRequests />
       </PanelGuard>
     );
   }
