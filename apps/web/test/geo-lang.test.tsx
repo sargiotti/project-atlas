@@ -54,26 +54,19 @@ describe("Catalonia default language (slice 21b)", () => {
     expect(screen.getByTestId("lang")).toHaveTextContent("en");
   });
 
-  it("null falls back to the browser language", async () => {
-    setup({ browser: ["da-DK"] });
-    fetchMock.mockImplementation(() => reply({ lang: null }));
+  it.each([
+    ["null", ["da-DK"], () => reply({ lang: null }), "da"],
+    ["a network error", ["es-AR"], () => Promise.reject(new Error("net")), "es"],
+    ["a 429", ["es-AR"], () => reply({}, 429), "es"],
+    ["a language we do not offer", ["es-AR"], () => reply({ lang: "fr" }), "es"],
+    ["an unexpected extra field", ["es-AR"], () => reply({ lang: "ca", x: 1 }), "es"],
+  ] as [string, string[], () => Promise<Response>, string][])("%s from the endpoint falls back silently to the browser language", async (_name, browser, res, expected) => {
+    setup({ browser });
+    fetchMock.mockImplementation(res);
     render(<I18nProvider><Probe /></I18nProvider>);
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     await act(async () => {});
-    expect(screen.getByTestId("lang")).toHaveTextContent("da");
-  });
-
-  it("errors, 429 and a bad shape fall back silently", async () => {
-    for (const res of [() => Promise.reject(new Error("net")), () => reply({}, 429), () => reply({ lang: "fr" }), () => reply({ lang: "ca", x: 1 })]) {
-      resetGeoLang();
-      setup({ browser: ["es-AR"] });
-      fetchMock.mockReset().mockImplementation(res);
-      const { unmount } = render(<I18nProvider><Probe /></I18nProvider>);
-      await waitFor(() => expect(fetchMock).toHaveBeenCalled());
-      await act(async () => {});
-      expect(screen.getByTestId("lang")).toHaveTextContent("es");
-      unmount();
-    }
+    expect(screen.getByTestId("lang")).toHaveTextContent(expected);
   });
 
   it("a request that never answers is aborted after about 1.5 s and the page keeps the browser language", async () => {

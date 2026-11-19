@@ -15,12 +15,16 @@ describe("ics text escaping", () => {
     expect(escapeIcsText("a\\b;c,d\r\ne")).toBe("a\\\\b\\;c\\,d\\ne");
   });
 
-  it("a description that tries to inject lines stays inside one escaped property", () => {
-    const ics = buildIcs({ ...base, session: { ...base.session, description: "hi\nBEGIN:VEVENT\nATTACH:http://evil.example\r\nX:y" } });
+  it("a title, description or place name that tries to inject lines stays inside one escaped property", () => {
+    const evil = "Set\n BEGIN:VEVENT\nATTACH:http://evil.example\r\nX:y";
+    const ics = buildIcs({ ...base, session: { ...base.session, title: evil, description: evil }, placeName: evil, eventName: evil });
     const lines = ics.split("\r\n");
     expect(lines.filter((l) => l.startsWith("BEGIN:VEVENT"))).toHaveLength(1);
     expect(lines.some((l) => l.startsWith("ATTACH"))).toBe(false);
-    expect(ics.replace(/\r\n /g, "")).toContain("DESCRIPTION:hi\\nBEGIN:VEVENT\\nATTACH:http://evil.example\\nX:y");
+    const u = ics.replace(/\r\n /g, "");
+    expect(u).toContain("SUMMARY:Set\\n BEGIN:VEVENT\\nATTACH:http://evil.example\\nX:y — ");
+    expect(u).toContain("DESCRIPTION:Set\\n BEGIN:VEVENT\\nATTACH:http://evil.example\\nX:y\\n\\n");
+    expect(u).toContain("LOCATION:Set\\n BEGIN:VEVENT\\nATTACH:http://evil.example\\nX:y\\, Set");
   });
 });
 
@@ -34,6 +38,14 @@ describe("ics folding and structure", () => {
     for (const p of parts.slice(1)) expect(p.startsWith(" ")).toBe(true);
     // Unfolding gives the original back.
     expect(parts.map((p, i) => (i ? p.slice(1) : p)).join("")).toBe(line);
+  });
+
+  it("a long title with ; , backslash and four-byte characters folds within 75 octets and unfolds to the escaped original", () => {
+    const title = ("a;b,c\\" + "\u{1F600}".repeat(2)).repeat(20).slice(0, 120);
+    const ics = buildIcs({ ...base, session: { ...base.session, title } });
+    const enc = new TextEncoder();
+    for (const line of ics.split("\r\n")) expect(enc.encode(line).length).toBeLessThanOrEqual(75);
+    expect(ics.replace(/\r\n /g, "")).toContain(`SUMMARY:${escapeIcsText(title)} — Main Stage\r\n`);
   });
 
   it("builds a fixed CRLF template with UTC times, a UID on our host and the link back", () => {
@@ -69,6 +81,13 @@ describe("Google Calendar link", () => {
     expect(url.searchParams.get("location")).toBe("Main Stage, Test Fest");
     expect(url.searchParams.get("details")).toBe("x\n\nhttps://atlas.example/e/test-fest");
     expect([...url.searchParams.keys()].sort()).toEqual(["action", "dates", "details", "location", "text"]);
+  });
+
+  it("a description with &add= and &text= stays inside the details parameter", () => {
+    const url = new URL(googleCalendarUrl({ ...base, session: { ...base.session, description: "x&add=evil@example.com&text=Hacked#frag" } }));
+    expect(url.searchParams.getAll("add")).toEqual([]);
+    expect(url.searchParams.get("text")).toBe("Band; The, Best — Main Stage");
+    expect(url.searchParams.get("details")).toContain("x&add=evil@example.com&text=Hacked#frag");
   });
 
   it("truncates a long description so the URL stays short but keeps the link back", () => {

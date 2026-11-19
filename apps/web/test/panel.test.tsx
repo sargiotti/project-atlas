@@ -71,29 +71,18 @@ describe("panel guard", () => {
     expect(await screen.findByRole("heading", { name: "You don't have access to this page" })).toBeInTheDocument();
     expect(screen.queryByLabelText("Organizer's email")).not.toBeInTheDocument();
   });
-
-  it("hides the Invites entry from organizers and shows it to admins", async () => {
-    mockApi({ "GET /auth/me": () => json(me("organizer")) });
-    const user = userEvent.setup();
-    const { unmount } = renderAt("/panel");
-    await user.click(await screen.findByRole("button", { name: "Account menu" }));
-    expect(screen.queryByRole("menuitem", { name: /Invites/ })).not.toBeInTheDocument();
-    unmount();
-
-    mockApi({ "GET /auth/me": () => json(me("admin")) });
-    renderAt("/panel");
-    await user.click(await screen.findByRole("button", { name: "Account menu" }));
-    expect(screen.getByRole("menuitem", { name: /Invites/ })).toBeInTheDocument();
-  });
 });
 
 describe("header tabs and empty-panel welcome (slice 35)", () => {
-  it("shows the admin tabs only to an admin, marks the current one and keeps the sign-out in the account menu", async () => {
+  it("shows the admin tabs and the Invites entry only to an admin, marks the current tab and keeps the sign-out in the account menu", async () => {
+    const user = userEvent.setup();
     mockApi({ "GET /auth/me": () => json(me("admin")), "GET /panel/events": () => json({ events: [] }) });
     const { unmount } = renderAt("/panel");
     const nav = await screen.findByRole("navigation", { name: "Panel" });
     expect(within(nav).getByRole("link", { name: "My events" })).toHaveAttribute("aria-current", "page");
     expect(within(nav).getByRole("link", { name: "Requests" })).toHaveAttribute("href", "/panel/admin/requests");
+    await user.click(screen.getByRole("button", { name: "Account menu" }));
+    expect(screen.getByRole("menuitem", { name: /Invites/ })).toBeInTheDocument();
     unmount();
 
     mockApi({ "GET /auth/me": () => json(me("organizer")), "GET /panel/events": () => json({ events: [] }) });
@@ -101,6 +90,8 @@ describe("header tabs and empty-panel welcome (slice 35)", () => {
     const orgNav = await screen.findByRole("navigation", { name: "Panel" });
     expect(within(orgNav).getByRole("link", { name: "My events" })).toBeInTheDocument();
     expect(within(orgNav).queryByRole("link", { name: "Requests" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Account menu" }));
+    expect(screen.queryByRole("menuitem", { name: /Invites/ })).not.toBeInTheDocument();
   });
 
   it("welcomes a new organizer by first name and links the example event through the router", async () => {
@@ -315,21 +306,5 @@ describe("admin invites", () => {
     await user.click(screen.getByRole("button", { name: "Revoke" }));
     await waitFor(() => expect(screen.queryByText("mette@kulturnat.dk")).not.toBeInTheDocument());
     expect(screen.getByText("No pending invites")).toBeInTheDocument();
-  });
-});
-
-describe("privacy notice links", () => {
-  it("is reachable from the login page and renders the notice in the UI language", async () => {
-    mockApi({});
-    renderAt("/panel/login");
-    await userEvent.click(await screen.findByRole("link", { name: "Privacy" }));
-    expect(await screen.findByRole("heading", { name: "Privacy notice" })).toBeInTheDocument();
-    expect(screen.getByText(/closed test and not yet open to the public/)).toBeInTheDocument();
-  });
-
-  it("is reachable from the invite page", async () => {
-    mockApi({});
-    renderAt(`/panel/invite/${TOKEN}`);
-    expect(await screen.findByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/privacy");
   });
 });

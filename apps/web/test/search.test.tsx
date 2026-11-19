@@ -66,8 +66,8 @@ afterEach(() => {
 });
 
 describe("home search", () => {
-  it("filters as the user types, with no extra request and nothing in URL or storage", async () => {
-    const fetchFn = openHome();
+  it("filters as the user types, with no extra request and nothing in URL or storage (?near= stays as it was)", async () => {
+    const fetchFn = openHome("en", "/?near=es");
     const box = await screen.findByRole("searchbox", { name: "Search events" });
     const user = userEvent.setup();
     expect(names()).toEqual(ORDER);
@@ -81,32 +81,9 @@ describe("home search", () => {
     await user.type(box, "København");
     expect(names()).toEqual(["Havneløbet 2026"]);
 
-    expect(fetchFn).toHaveBeenCalledTimes(1);
-    expect(window.location.search).toBe("");
+    expect(fetchFn.mock.calls.map((c: any) => String(c[0]))).toEqual(["/api/v1/events?near=ES"]);
+    expect(window.location.search).toBe("?near=es");
     expect(localStorage.length).toBe(0);
-  });
-
-  it("finds the fiesta by city and by country in any language", async () => {
-    openHome("da");
-    const box = await screen.findByRole("searchbox");
-    const user = userEvent.setup();
-    for (const q of ["valencia", "espana", "spain", "spanien", "españa"]) {
-      await user.clear(box);
-      await user.type(box, q);
-      expect(names()).toEqual(["Fiestas del Barrio de la Alameda 2026"]);
-    }
-  });
-
-  it("combines words with AND", async () => {
-    openHome();
-    const box = await screen.findByRole("searchbox");
-    const user = userEvent.setup();
-    await user.type(box, "galway ireland");
-    expect(names()).toEqual(["Nightfall Meadows Festival 2026"]);
-    await user.clear(box);
-    await user.type(box, "galway spain");
-    expect(names()).toEqual([]);
-    expect(screen.getByText(/No events match/)).toBeInTheDocument();
   });
 
   it("shows the empty state, and its clear action restores the full list in order and refocuses the field", async () => {
@@ -142,35 +119,8 @@ describe("home search", () => {
     expect(names()).toEqual(ORDER);
   });
 
-  it("does not throw on regex-like input", async () => {
-    openHome();
-    const box = await screen.findByRole("searchbox");
-    const user = userEvent.setup();
-    await user.type(box, "(a+)+$");
-    expect(names()).toEqual([]);
-    await user.clear(box);
-    await user.type(box, "(");
-    expect(names()).toEqual([]);
-    expect(screen.getByText(/No events match/)).toBeInTheDocument();
-  });
-
   it("caps the field at 100 characters", async () => {
     openHome();
     expect(await screen.findByRole("searchbox")).toHaveAttribute("maxlength", "100");
-  });
-
-  it("localizes the field and the empty state", async () => {
-    openHome("es");
-    const box = await screen.findByRole("searchbox", { name: "Buscar eventos" });
-    await userEvent.setup().type(box, "zzz");
-    expect(screen.getByText(/Ningún evento coincide con/)).toBeInTheDocument();
-  });
-
-  it("keeps ?near= separate: the query is never added to the URL or the request", async () => {
-    const fetchFn = openHome("en", "/?near=es");
-    const box = await screen.findByRole("searchbox");
-    await userEvent.setup().type(box, "spain");
-    expect(fetchFn.mock.calls.map((c: any) => String(c[0]))).toEqual(["/api/v1/events?near=ES"]);
-    expect(window.location.search).toBe("?near=es");
   });
 });

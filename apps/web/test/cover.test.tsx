@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { I18nProvider } from "../src/i18n/I18nProvider";
 import { Routes } from "../src/App";
@@ -152,43 +152,42 @@ describe("cover in the create form", () => {
   });
 
   it("if the cover upload fails after the event exists: edit form with Try again / Skip, and the event is never created twice", async () => {
-    pipe.put.mockResolvedValueOnce({ status: "error", key: "cvFailNet", retryable: true });
-    const api = mockApi(createRoutes());
-    const user = userEvent.setup();
-    open("/panel/events/new");
-    await user.upload(await screen.findByLabelText("Choose image"), pic());
-    await screen.findByRole("group", { name: /Focal point/ });
-    await fillValid(user);
-    await user.click(screen.getAllByRole("button", { name: "Save" })[0]);
+    // Fills the create form with a cover whose first upload fails, and lands on the edit form with the alert.
+    const failFirstUpload = async (key: string) => {
+      pipe.put.mockResolvedValueOnce({ status: "error", key, retryable: true });
+      const api = mockApi(createRoutes());
+      const user = userEvent.setup();
+      open("/panel/events/new");
+      await user.upload(await screen.findByLabelText("Choose image"), pic());
+      await screen.findByRole("group", { name: /Focal point/ });
+      await fillValid(user);
+      await user.click(screen.getAllByRole("button", { name: "Save" })[0]);
+      await waitFor(() => expect(window.location.pathname).toBe(`/panel/events/${ID}/edit`));
+      return { api, user, alert: await screen.findByRole("alert") };
+    };
 
-    await waitFor(() => expect(window.location.pathname).toBe(`/panel/events/${ID}/edit`));
-    const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Your event was created, but the cover didn't upload.");
-    expect(alert).toHaveTextContent("The upload didn't finish");
-    const retry = within(alert).getByRole("button", { name: "Try again" });
-    expect(within(alert).getByRole("button", { name: "Skip, add it later" })).toBeInTheDocument();
-
+    // Try again re-sends the same cover to the same event.
+    const first = await failFirstUpload("cvFailNet");
+    expect(first.alert).toHaveTextContent("Your event was created, but the cover didn't upload.");
+    expect(first.alert).toHaveTextContent("The upload didn't finish");
+    const retry = within(first.alert).getByRole("button", { name: "Try again" });
+    expect(within(first.alert).getByRole("button", { name: "Skip, add it later" })).toBeInTheDocument();
     pipe.put.mockResolvedValueOnce({ status: "ok", cover: COVER });
-    await user.click(retry);
+    await first.user.click(retry);
     await waitFor(() => expect(window.location.pathname).toBe(`/panel/events/${ID}`));
     expect(pipe.put).toHaveBeenCalledTimes(2);
     expect(pipe.put.mock.calls[1][0]).toBe(ID);
-    expect(calls(api, "POST /panel/events")).toHaveLength(1); // never re-POSTed
-  });
+    expect(calls(first.api, "POST /panel/events")).toHaveLength(1); // never re-POSTed
 
-  it("Skip leaves for the hub without another upload", async () => {
-    pipe.put.mockResolvedValueOnce({ status: "error", key: "cvFailServer", retryable: true });
-    const api = mockApi(createRoutes());
-    const user = userEvent.setup();
-    open("/panel/events/new");
-    await user.upload(await screen.findByLabelText("Choose image"), pic());
-    await screen.findByRole("group", { name: /Focal point/ });
-    await fillValid(user);
-    await user.click(screen.getAllByRole("button", { name: "Save" })[0]);
-    await user.click(await screen.findByRole("button", { name: "Skip, add it later" }));
+    // Skip leaves for the hub without another upload.
+    cleanup();
+    clearCoverHandoff();
+    pipe.put.mockClear();
+    const second = await failFirstUpload("cvFailServer");
+    await second.user.click(within(second.alert).getByRole("button", { name: "Skip, add it later" }));
     await waitFor(() => expect(window.location.pathname).toBe(`/panel/events/${ID}`));
     expect(pipe.put).toHaveBeenCalledTimes(1);
-    expect(calls(api, "POST /panel/events")).toHaveLength(1);
+    expect(calls(second.api, "POST /panel/events")).toHaveLength(1);
   });
 });
 

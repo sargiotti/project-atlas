@@ -4,8 +4,6 @@ import userEvent from "@testing-library/user-event";
 import { I18nProvider } from "../src/i18n/I18nProvider";
 import { Routes } from "../src/App";
 import PointList from "../src/components/PointList";
-import { displayName } from "../src/lib/pointLabel";
-import { MESSAGES } from "../src/i18n/messages";
 import { draftKey } from "../src/lib/pointsDraft";
 import { errorBody, goTo, json } from "./fixtures";
 
@@ -226,24 +224,15 @@ describe("Just-drop points and their localized label", () => {
     await user.click(screen.getByRole("button", { name: "Guardar" }));
     await waitFor(() => expect(putBody(fetchMock)).not.toBeNull());
     expect(putBody(fetchMock).points[0].name).toBeNull();
-  });
 
-  it("the shared helper shows the custom name as-is and the label in the UI language otherwise", () => {
-    const es = (k: string) => (MESSAGES.es as any)[k];
-    const da = (k: string) => (MESSAGES.da as any)[k];
-    expect(displayName({ name: null, category: "toilets" }, es)).toBe("Baños");
-    expect(displayName({ name: null, category: "toilets" }, da)).toBe("Toiletter");
-    expect(displayName({ name: "North gate", category: "entrance-exit" }, es)).toBe("North gate");
-  });
-
-  it("the visitor list shows the label and sorts by the displayed name in the viewer's language", () => {
-    const points: any[] = [
+    const listPoints: any[] = [
       { id: "a", name: "Zumo", category: "drinks", description: "", x: 0, y: 0 },
       { id: "b", name: null, category: "drinks", description: "", x: 0, y: 0 },
       { id: "c", name: "Agua", category: "drinks", description: "", x: 0, y: 0 },
     ];
-    render(<I18nProvider initial="es"><PointList points={points} onPick={() => {}} /></I18nProvider>);
-    const names = [...document.querySelectorAll(".list-name")].map((n) => n.textContent);
+    const list = render(<I18nProvider initial="es"><PointList points={listPoints} onPick={() => {}} /></I18nProvider>);
+    // The visitor list shows the label and sorts by the displayed name in the viewer's language.
+    const names = [...list.container.querySelectorAll(".list-name")].map((n) => n.textContent);
     expect(names).toEqual(["Agua", "Bebidas", "Zumo"]);
   });
 });

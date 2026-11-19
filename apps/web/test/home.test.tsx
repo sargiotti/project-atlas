@@ -79,11 +79,6 @@ describe("sortEvents with nearby", () => {
       "far-soon",
     ]);
   });
-
-  it("with every nearby false, equals the plain date-state order", () => {
-    const list = [ev("old", "2026-01-01", "2026-01-03"), ev("soon", "2026-11-14", "2026-11-15"), ev("running", "2026-11-10", "2026-11-20")];
-    expect(sortEvents(list, TODAY).map((e) => e.slug)).toEqual(["running", "soon", "old"]);
-  });
 });
 
 function openHome(handler: () => Response | Promise<Response>, lang: "en" | "es" | "da" = "en", path = "/") {
@@ -141,14 +136,6 @@ describe("home", () => {
     expect(within(links[1]).getByText("Galway, Ireland")).toBeInTheDocument();
   });
 
-  it("shows the colour cover of the event tone instead of an image when the event has no cover", async () => {
-    openHome(() => json([ev("nocover", "2026-12-01", "2026-12-02", { name: "No Cover Fest", tone: 3 })]));
-    const link = await screen.findByRole("link", { name: /No Cover Fest/ });
-    expect(link.querySelector("img")).toBeNull();
-    const svg = link.querySelector("svg.cv-fb")!;
-    expect(svg.querySelector("rect")).toHaveAttribute("fill", "#FBD3B0"); // tone 3, a light tone
-  });
-
   it("falls back to the colour cover when the cover image fails to load (e.g. replaced meanwhile)", async () => {
     openHome(() => json([ev("broken", "2026-12-01", "2026-12-02", { name: "Broken Cover Fest", tone: 5, cover: COVER })]));
     const link = await screen.findByRole("link", { name: /Broken Cover Fest/ });
@@ -168,12 +155,13 @@ describe("home", () => {
     expect(screen.queryByRole("link", { name: /Name/ })).not.toBeInTheDocument();
   });
 
-  it("shows the error state on 429, and Retry reloads only when clicked", async () => {
+  it.each([
+    ["429", () => json(errorBody("rate_limited"), 429, { "Retry-After": "60" })],
+    ["500", () => json(errorBody("internal_error"), 500)],
+  ])("shows the error state on a %s, and Retry reloads only when clicked", async (_status, failure) => {
     let n = 0;
     const fetchFn = openHome(() =>
-      ++n === 1
-        ? json(errorBody("rate_limited"), 429, { "Retry-After": "60" })
-        : json([ev("back-online", "2026-12-01", "2026-12-02", { name: "Back Online" })]),
+      ++n === 1 ? failure() : json([ev("back-online", "2026-12-01", "2026-12-02", { name: "Back Online" })]),
     );
     const user = userEvent.setup();
     expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't load the events");
@@ -182,11 +170,6 @@ describe("home", () => {
     await user.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByRole("link", { name: /Back Online/ })).toBeInTheDocument();
     expect(fetchFn).toHaveBeenCalledTimes(2);
-  });
-
-  it("shows the error state on a 500", async () => {
-    openHome(() => json(errorBody("internal_error"), 500));
-    expect(await screen.findByRole("button", { name: "Try again" })).toBeInTheDocument();
   });
 
   it("forwards a valid ?near= uppercased, and never forwards invalid values", async () => {

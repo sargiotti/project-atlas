@@ -15,6 +15,13 @@ describe("groupPins", () => {
     const g = groupPins([pin("a", 0, 0), pin("b", 30, 0), pin("c", 60, 0)], null);
     expect(g.clusters.map((c) => c.members.map((m) => m.id))).toEqual([["a", "b"]]);
     expect(g.singles.map((s) => s.id)).toEqual(["c"]);
+    // The cluster anchors at the member closest to the centroid.
+    expect(groupPins([pin("a", 0, 0), pin("b", 30, 0), pin("c", 14, 0)], null).clusters[0]!.anchor.id).toBe("c");
+    // Pins on identical coordinates stay together.
+    const same = groupPins([pin("a", 5, 5), pin("b", 5, 5), pin("c", 5, 5)], null);
+    expect(same.clusters[0]!.members).toHaveLength(3);
+    expect(allSamePlace(same.clusters[0]!.members)).toBe(true);
+    expect(allSamePlace([pin("a", 0, 0), pin("b", 1, 0)])).toBe(false);
   });
 
   it("never puts the selected pin in a cluster, so the count excludes it", () => {
@@ -23,18 +30,6 @@ describe("groupPins", () => {
     expect(g.clusters[0]!.members.map((m) => m.id)).toEqual(["a", "c"]);
     // With only one neighbour left, the group dissolves into a plain pin.
     expect(groupPins([pin("a", 0, 0), pin("b", 10, 0)], "b").clusters).toHaveLength(0);
-  });
-
-  it("anchors the cluster at the member closest to the centroid", () => {
-    const g = groupPins([pin("a", 0, 0), pin("b", 30, 0), pin("c", 14, 0)], null);
-    expect(g.clusters[0]!.anchor.id).toBe("c");
-  });
-
-  it("keeps pins on identical coordinates together", () => {
-    const g = groupPins([pin("a", 5, 5), pin("b", 5, 5), pin("c", 5, 5)], null);
-    expect(g.clusters[0]!.members).toHaveLength(3);
-    expect(allSamePlace(g.clusters[0]!.members)).toBe(true);
-    expect(allSamePlace([pin("a", 0, 0), pin("b", 1, 0)])).toBe(false);
   });
 });
 

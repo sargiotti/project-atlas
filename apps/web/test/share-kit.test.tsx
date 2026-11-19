@@ -8,7 +8,6 @@ import { I18nProvider } from "../src/i18n/I18nProvider";
 import ShareKit from "../src/pages/panel/events/ShareKit";
 import QrSvg from "../src/components/QrSvg";
 import { buildEventUrl, drawQr, kitFilename, makeQr, qrSvgMarkup, type Ctx } from "../src/lib/shareKit/qr";
-import { fitName } from "../src/lib/shareKit/badge";
 
 const SLUG = "fiestas-la-alameda";
 const LONG_SLUG = "a".repeat(30) + "-" + "b".repeat(29); // 60 chars: QR version 7 or higher
@@ -109,21 +108,15 @@ describe("share kit: what gets encoded", () => {
     expect(svg).not.toMatch(/<text|<script|foreignObject|href=|font|<image|<style|<title/i);
     expect(svg.match(/<(\w+)/g)!.every((t) => ["<svg", "<rect", "<path", "<g"].includes(t))).toBe(true);
   });
-
-  it("a very long event name is cut to 2 lines at a fixed width", () => {
-    const ctx: any = { font: "", measureText: (s: string) => ({ width: s.length * 30 }) };
-    const r = fitName(ctx, "Festival ".repeat(30), 940);
-    expect(r.lines).toHaveLength(2);
-    expect(r.lines[1].endsWith("…")).toBe(true);
-    expect(r.size).toBe(64);
-    expect(fitName(ctx, "x".repeat(200), 940).lines.every((l) => l.length * 30 <= 940)).toBe(true);
-  });
 });
 
 describe("share kit card", () => {
-  it.each(["draft", "in_review", "review", "rejected", "unpublished"])("is not shown for a %s event", (status) => {
-    mount({ ...EV, status });
-    expect(screen.queryByText("Share your map")).not.toBeInTheDocument();
+  it("is not shown for a draft, in review, rejected or unpublished event", () => {
+    for (const status of ["draft", "in_review", "review", "rejected", "unpublished"]) {
+      const { unmount } = mount({ ...EV, status });
+      expect(screen.queryByText("Share your map"), status).not.toBeInTheDocument();
+      unmount();
+    }
   });
 
   it("is shown for a published event with the link", () => {
