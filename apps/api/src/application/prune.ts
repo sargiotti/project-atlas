@@ -14,3 +14,11 @@ export async function pruneModeration(db: D1Database, now: number): Promise<{ au
   ]);
   return { audit: audit?.meta.changes ?? 0, quota: quota?.meta.changes ?? 0 };
 }
+
+/** Slice 30: organizer requests are kept 12 months (privacy policy), then deleted. */
+export const ORGANIZER_REQUEST_RETENTION_DAYS = 365;
+
+export async function pruneOrganizerRequests(db: D1Database, now: number): Promise<number> {
+  const res = await db.prepare(`DELETE FROM organizer_requests WHERE created_at < ?1`).bind(now - ORGANIZER_REQUEST_RETENTION_DAYS * DAY_MS).run();
+  return res.meta.changes ?? 0;
+}

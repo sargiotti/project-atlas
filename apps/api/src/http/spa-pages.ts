@@ -3,18 +3,19 @@
  * every other path gets the noindex 404 shell, so crawlers stop seeing the SPA fallback as a real page.
  *
  * Allowlist (keep in sync with apps/web/src/App.tsx): `/`, `/privacy` (and `/privacy/`), `/panel`, `/panel/*`
- * (includes /panel/invite/*) and `/e/*` (handled by event-page.ts). Canonical and per-page meta come from
+ * (includes /panel/invite/*), `/organizadores` (slice 30, with or without a trailing slash) and `/e/*` (handled by event-page.ts). Canonical and per-page meta come from
  * PUBLIC_ORIGIN plus a fixed path, never from the request URL.
  */
 import type { Context } from "hono";
 import { canonicalLink, goneResponse, html, loadShell, parsePublicOrigin } from "./event-page";
 import type { AppEnv } from "./types";
 
-export type SpaRoute = "home" | "privacy" | "panel" | "unknown";
+export type SpaRoute = "home" | "privacy" | "organizers" | "panel" | "unknown";
 
 export function classifyPath(path: string): SpaRoute {
   if (path === "/") return "home";
   if (path === "/privacy" || path === "/privacy/") return "privacy";
+  if (path === "/organizadores" || path === "/organizadores/") return "organizers";
   if (path === "/panel" || path.startsWith("/panel/")) return "panel";
   return "unknown";
 }
@@ -47,7 +48,7 @@ export async function serveSpaRoute(c: Context<AppEnv>, route: SpaRoute): Promis
   if (route === "panel" || res.status !== 200 || !isHtml) return res;
   try {
     const origin = parsePublicOrigin(c.env.PUBLIC_ORIGIN);
-    const rw = new HTMLRewriter().on("head", canonicalLink(`${origin}${route === "home" ? "/" : "/privacy"}`));
+    const rw = new HTMLRewriter().on("head", canonicalLink(`${origin}${route === "home" ? "/" : route === "organizers" ? "/organizadores" : "/privacy"}`));
     if (route === "privacy") {
       rw.on("title", {
         element(el) {

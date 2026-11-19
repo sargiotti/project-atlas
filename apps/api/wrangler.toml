@@ -38,6 +38,12 @@ PUBLIC_ORIGIN = "https://leyenda.ink"
 # previews and local dev do not set it, so sign-in there reports `not_configured` instead of sending a code to prod.
 # Secrets (wrangler secret put, never in this file): GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, ADMIN_EMAIL.
 OAUTH_REDIRECT_URI = "https://leyenda.ink/api/v1/auth/google/callback"
+# Slice 30: organizer request notification (Resend). From must be an exact @leyenda.ink address (strict DMARC, DKIM aligned).
+# Secrets (wrangler secret put, never in this file): TURNSTILE_SECRET, RESEND_API_KEY. The public Turnstile site key is in
+# packages/contract (TURNSTILE_SITE_KEY).
+NOTIFY_FROM = "leyenda.ink <noreply@leyenda.ink>"
+NOTIFY_TO = "contact@leyenda.ink"
+NOTIFY_SUBJECT_PREFIX = ""
 
 # Privacy (GDPR): invocation logs (automatic per-request logs that can include IP and request.cf geo)
 # are OFF. Our own console.* logs still go to Workers Logs. Metrics stay on.
@@ -122,6 +128,15 @@ namespace_id = "1006"
   limit = 60
   period = 60
 
+# Slice 30: per-IP limit on the public organizer form (POST /api/v1/organizer-requests): ~3 requests / 60 s. Fails open
+# (the D1 daily caps are the real bound). Delete the block to switch it off.
+[[ratelimits]]
+name = "FORM_LIMITER"
+namespace_id = "1007"
+  [ratelimits.simple]
+  limit = 3
+  period = 60
+
 # Slice 08b: daily prune (moderation audit rows older than 365 days, old transition quota rows). 03:17 UTC.
 # Cron triggers are free. Workers Previews have no cron support, so previews never run the prune.
 [triggers]
@@ -135,6 +150,10 @@ crons = ["17 3 * * *"]
 # [previews.vars] must stay AFTER the top-level PUBLIC_ORIGIN: apps/web/vite.config.ts takes the last match for previews.
 [previews.vars]
 PUBLIC_ORIGIN = "https://atlas.sargiotti67.workers.dev"
+# Slice 30: previews do not inherit vars, so the notification vars are repeated. Preview mails are tagged.
+NOTIFY_FROM = "leyenda.ink <noreply@leyenda.ink>"
+NOTIFY_TO = "contact@leyenda.ink"
+NOTIFY_SUBJECT_PREFIX = "[preview] "
 
 [[previews.d1_databases]]
 binding = "DB"
@@ -181,6 +200,13 @@ name = "ADMIN_LIMITER"
 namespace_id = "2006"
   [previews.ratelimits.simple]
   limit = 60
+  period = 60
+
+[[previews.ratelimits]]
+name = "FORM_LIMITER"
+namespace_id = "2007"
+  [previews.ratelimits.simple]
+  limit = 3
   period = 60
 
 [[previews.r2_buckets]]

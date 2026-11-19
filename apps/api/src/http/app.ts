@@ -16,6 +16,7 @@ import { decideHost, REDIRECT_STATUS } from "./canonical-host";
 import { registerAuthRoutes } from "./auth-routes";
 import { registerPanelRoutes } from "./panel-routes";
 import { registerAdminEventRoutes } from "./admin-event-routes";
+import { registerOrganizerRoutes } from "./organizer-routes";
 import { registerMediaRoutes } from "./map-routes";
 import { registerCoverMediaRoutes } from "./cover-routes";
 import type { AppContext, AppEnv } from "./types";
@@ -89,6 +90,7 @@ export function createApp() {
 
   registerAuthRoutes(app);
   registerAdminEventRoutes(app);
+  registerOrganizerRoutes(app);
   registerPanelRoutes(app);
   registerMediaRoutes(app);
   registerCoverMediaRoutes(app);

@@ -4,3 +4,8 @@
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 ADMIN_EMAIL=
+
+# Slice 30: Cloudflare Turnstile always-pass TEST secret (local only; the site key in the web .env.local is 1x00000000000000000000AA).
+# Leave RESEND_API_KEY empty locally: nothing is sent and email_status becomes "skipped". NOTIFY_* come from wrangler.toml.
+TURNSTILE_SECRET=1x0000000000000000000000000000000AA
+RESEND_API_KEY=
