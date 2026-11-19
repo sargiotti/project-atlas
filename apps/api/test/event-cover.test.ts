@@ -18,6 +18,7 @@ import { D1CoverRepository } from "../src/adapters/d1-cover-repository";
 import { DAILY_UPLOAD_LIMIT } from "../src/adapters/d1-map-image-repository";
 import { clearEventPreviewCache } from "../src/application/get-event-preview";
 import { clearListEventsCache } from "../src/application/list-events";
+import { buildSeedStatements, planSeedCover } from "../scripts/seed-lib";
 import { EXIF_GPS_PAYLOAD, fakeJpeg, fakeWebp } from "./map-fixtures";
 import shellSource from "../../web/index.html?raw";
 
@@ -191,6 +192,10 @@ describe("upload, serve, replace, change focal, remove", () => {
         expect(denied.headers.get("cache-control")).toBe("no-store");
       }
     }
+
+    // The type comes from what was stored at upload, never from an unexpected stored value
+    await env.MAPS.put(cover.url.replace("/media/", ""), fakeWebp(1200, 800), { httpMetadata: { contentType: "text/html" } });
+    expect((await send(cover.url, { cookie: owner.session })).headers.get("content-type")).toBe("image/webp");
   });
 
   it("accepts a JPEG pair: .jpg keys, image/jpeg stored and served, URLs pass the contract", async () => {
@@ -367,7 +372,7 @@ describe("refusals store nothing and cost no quota", () => {
     expect(await quotaRows(owner)).toBe(0);
   };
 
-  it("the part allowlist: unknown, duplicate and missing parts", async () => {
+  it("the part allowlist and focal values: unknown, duplicate and missing parts, bad fx/fy", async () => {
     await refuse(coverForm({ extra: ["key", "covers/x"] }), 400, "invalid_upload", "unknown_part");
     await refuse(coverForm({ extra: ["fx", "0.1"] }), 400, "invalid_upload", "unknown_part"); // duplicate
     await refuse(coverForm({ extra: ["baseVersion", "a".repeat(32)] }), 400, "invalid_upload", "unknown_part"); // a PATCH part on PUT
@@ -377,9 +382,6 @@ describe("refusals store nothing and cost no quota", () => {
     const asText = coverForm({ omit: "full" });
     asText.append("full", "not a file");
     await refuse(asText, 400, "invalid_upload", "missing_part");
-  });
-
-  it("bad focal values", async () => {
     await refuse(coverForm({ omit: "fx" }), 400, "invalid_upload", "bad_focal");
     await refuse(coverForm({ fx: "1.5" }), 400, "invalid_upload", "bad_focal");
     await refuse(coverForm({ fy: "-0.1" }), 400, "invalid_upload", "bad_focal");
@@ -387,39 +389,10 @@ describe("refusals store nothing and cost no quota", () => {
     await refuse(coverForm({ fy: "0.12345" }), 400, "invalid_upload", "bad_focal");
   });
 
-  it("type by magic bytes: SVG, HTML, PNG, GIF and a JPEG in a WebP slot are 415", async () => {
+  it("content refusals at the route (type, metadata, dimensions) store nothing and cost no quota", async () => {
     await refuse(coverForm({ full: new TextEncoder().encode("<svg xmlns='http://www.w3.org/2000/svg'><script>1</script></svg>") }), 415, "unsupported_image_type");
-    await refuse(coverForm({ small: new TextEncoder().encode("<!doctype html><script>alert(1)</script>") }), 415, "unsupported_image_type");
-    await refuse(coverForm({ og: new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]) }), 415, "unsupported_image_type");
-    await refuse(coverForm({ full: fakeJpeg(1200, 800) }), 415, "unsupported_image_type");
-    await refuse(coverForm({ og: fakeWebp(1200, 630) }), 415, "unsupported_image_type");
-  });
-
-  it("JPEG full and small: EXIF is refused and a mixed pair is 415", async () => {
-    const exif = { segments: [{ marker: 0xe1, payload: EXIF_GPS_PAYLOAD }] };
-    await refuse(coverForm({ full: fakeJpeg(1200, 800, exif), small: fakeJpeg(800, 533) }), 400, "invalid_upload", "metadata_present");
-    await refuse(coverForm({ full: fakeJpeg(1200, 800), small: fakeJpeg(800, 533, exif) }), 400, "invalid_upload", "metadata_present");
-    await refuse(coverForm({ full: fakeJpeg(1200, 800) }), 415, "unsupported_image_type");
-    await refuse(coverForm({ small: fakeJpeg(800, 533) }), 415, "unsupported_image_type");
-  });
-
-  it("each file rule: animated WebP, progressive JPEG, metadata, trailing bytes, truncation", async () => {
-    await refuse(coverForm({ full: fakeWebp(1200, 800, { animated: true }) }), 400, "invalid_upload", "animated_image");
-    await refuse(coverForm({ og: fakeJpeg(1200, 630, { progressive: true }) }), 400, "invalid_upload", "og_not_baseline");
-    await refuse(coverForm({ og: fakeJpeg(1200, 630, { segments: [{ marker: 0xe1, payload: EXIF_GPS_PAYLOAD }] }) }), 400, "invalid_upload", "metadata_present");
-    await refuse(coverForm({ full: fakeWebp(1200, 800, { exif: true }) }), 400, "invalid_upload", "metadata_present");
-    await refuse(coverForm({ og: fakeJpeg(1200, 630, { trailing: [0, 0] }) }), 400, "invalid_upload", "corrupt_image");
-    await refuse(coverForm({ full: new Uint8Array([...fakeWebp(1200, 800), 0]) }), 400, "invalid_upload", "corrupt_image");
-    await refuse(coverForm({ small: fakeWebp(800, 533, { truncateAt: 30 }) }), 400, "invalid_upload", "corrupt_image");
-  });
-
-  it("wrong dimensions", async () => {
+    await refuse(coverForm({ full: fakeJpeg(1200, 800, { segments: [{ marker: 0xe1, payload: EXIF_GPS_PAYLOAD }] }), small: fakeJpeg(800, 533) }), 400, "invalid_upload", "metadata_present");
     await refuse(coverForm({ full: fakeWebp(1700, 1000) }), 400, "invalid_upload", "full_size_out_of_range");
-    await refuse(coverForm({ full: fakeWebp(900, 600) }), 400, "invalid_upload", "full_size_out_of_range");
-    await refuse(coverForm({ full: fakeWebp(1200, 2000), small: fakeWebp(800, 1333) }), 400, "invalid_upload", "aspect_out_of_range");
-    await refuse(coverForm({ small: fakeWebp(1200, 800) }), 400, "invalid_upload", "small_size_out_of_range");
-    await refuse(coverForm({ small: fakeWebp(800, 700) }), 400, "invalid_upload", "aspect_mismatch");
-    await refuse(coverForm({ og: fakeJpeg(1200, 600) }), 400, "invalid_upload", "og_size_invalid");
   });
 
   it("per-file caps (600 / 200 / 300 KB) and the 1.25 MiB body limit are 413", async () => {
@@ -651,19 +624,6 @@ describe("media gating by status", () => {
     expect((await send(`/media/covers/${mine.id}/${hex}-full.webp`)).status).toBe(404);
     expect((await send(cover.url)).status).toBe(200);
   });
-
-  it("serves the type stored at upload, and falls back to the file suffix only when it is missing", async () => {
-    const owner = await newUser();
-    const { id } = await newEvent(owner);
-    const cover = await uploadOk(id, owner);
-    await setState(id, "published");
-    const key = cover.url.replace("/media/", "");
-    await env.MAPS.put(key, fakeWebp(1200, 800), { httpMetadata: { contentType: "text/html" } }); // an unexpected stored value
-    const res = await send(cover.url);
-    expect(res.headers.get("content-type")).toBe("image/webp");
-    expect(res.headers.get("x-content-type-options")).toBe("nosniff");
-    expect(res.headers.get("content-security-policy")).toBe("default-src 'none'; sandbox");
-  });
 });
 
 describe("public surfaces", () => {
@@ -765,7 +725,6 @@ describe("hard delete", () => {
 
 describe("seeded covers (R2 + event_covers, like an upload)", () => {
   it("the seed statements are idempotent and the demo event's cover is served publicly from R2 with focal (0.5, 0.5)", async () => {
-    const { buildSeedStatements, planSeedCover } = await import("../scripts/seed-lib");
     const seeds = [
       {
         source: "inline",

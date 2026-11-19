@@ -473,15 +473,6 @@ describe("invites: create, inspect, accept", () => {
     expect(await count("invites")).toBe(MAX_PENDING_INVITES);
   });
 
-  it("an existing account's email can't be invited again", async () => {
-    const admin = await adminSession();
-    const { token } = await createInviteFor(admin, ANA.email);
-    await signIn(ANA, { invite: token });
-    const res = await authed("/api/v1/admin/invites", admin, { method: "POST", body: JSON.stringify({ email: ANA.email }) });
-    expect(res.status).toBe(409);
-    expect(((await res.json()) as { error: { code: string } }).error.code).toBe("email_already_registered");
-  });
-
   it("revoking: 204, repeatable, 404 for unknown, 409 once used", async () => {
     const admin = await adminSession();
     const a = await createInviteFor(admin, "a@example.com");

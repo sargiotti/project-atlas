@@ -59,7 +59,14 @@ describe("/sitemap.xml", () => {
 
 describe("SPA routes and 404", () => {
   it("serves every allowlisted route as 200, panel headers intact, with canonical where it applies", async () => {
-    for (const path of ["/", "/privacy", "/privacy/", "/panel", "/panel/events/x/edit", "/panel/invite/abc123"]) {
+    const own: Record<string, string[]> = {
+      "/privacy": ["<title>Privacy · leyenda.ink</title>", '<meta property="og:url" content="https://leyenda.ink/privacy"'],
+      "/organizadores": [
+        "<title>Crea el mapa interactivo de tu evento · leyenda.ink</title>",
+        '<meta property="og:image" content="https://leyenda.ink/organizers/og.jpg"',
+      ],
+    };
+    for (const path of ["/", "/privacy", "/privacy/", "/organizadores", "/panel", "/panel/events/x/edit", "/panel/invite/abc123"]) {
       const res = await call(`${path}?utm=1`);
       expect(res.status, path).toBe(200);
       const body = await res.text();
@@ -68,25 +75,12 @@ describe("SPA routes and 404", () => {
         expect(res.headers.get("cache-control")).toBe("no-store");
         expect(body).not.toContain('rel="canonical"');
       } else {
-        const href = path === "/" ? "https://leyenda.ink/" : "https://leyenda.ink/privacy";
+        const href = path === "/" ? "https://leyenda.ink/" : `https://leyenda.ink/${path.replace(/^\/|\/$/g, "")}`;
         expect(body).toContain(`<link rel="canonical" href="${href}">`);
+        for (const needle of own[path.replace(/\/$/, "")] ?? []) expect(body, path).toContain(needle);
+        if (path !== "/") expect(body).not.toContain("Mapas interactivos gratis");
       }
     }
-  });
-
-  it("gives /privacy its own title, description and og:url", async () => {
-    const body = await (await call("/privacy")).text();
-    expect(body).toContain("<title>Privacy · leyenda.ink</title>");
-    expect(body).toContain('<meta property="og:url" content="https://leyenda.ink/privacy"');
-    expect(body).not.toContain("Mapas interactivos gratis");
-  });
-
-  it("gives /organizadores its own Spanish title and og:image", async () => {
-    const body = await (await call("/organizadores")).text();
-    expect(body).toContain("<title>Crea el mapa interactivo de tu evento · leyenda.ink</title>");
-    expect(body).toContain('<meta property="og:image" content="https://leyenda.ink/organizers/og.jpg"');
-    expect(body).toContain('<link rel="canonical" href="https://leyenda.ink/organizadores">');
-    expect(body).not.toContain("Mapas interactivos gratis");
   });
 
   it("returns the noindex 404 shell for unknown paths and keeps unknown /api JSON", async () => {

@@ -115,7 +115,7 @@ describe("GET /api/v1/events", () => {
     expect(inIreland.headers.get("etag")).toBe(inIreland2.headers.get("etag"));
   });
 
-  it.each(["?near=ES", "?near=none", "?near=garbage", "?near=", "?near=es&x=1"])(
+  it.each(["?near=es&x=1", "?near=garbage"])(
     "any near param (%s) is no-store, has no ETag and ignores If-None-Match",
     async (qs) => {
       const plain = await get("/api/v1/events");

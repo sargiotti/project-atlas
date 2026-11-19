@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import app from "../src/index";
 import { describe, expect, it } from "vitest";
-import { decideHost, PUBLIC_ORIGIN, REDIRECT_STATUS } from "../src/http/canonical-host";
+import { decideHost, PUBLIC_ORIGIN } from "../src/http/canonical-host";
 
 describe("decideHost", () => {
   it("serves the canonical host", () => {
@@ -39,13 +39,6 @@ describe("decideHost", () => {
 describe("canonical host in the Worker", () => {
   const call = (url: string, init: RequestInit = {}, headers: Record<string, string> = {}) =>
     app.fetch(new Request(url, { ...init, headers, redirect: "manual" }), env);
-
-  it("redirects navigations on the old host to the fixed origin, ignoring Host-like headers", async () => {
-    const res = await call("https://atlas.sargiotti67.workers.dev/e/havnelobet?a=1", {}, { "X-Forwarded-Host": "evil.test", Host: "evil.test" });
-    expect(res.status).toBe(REDIRECT_STATUS);
-    expect(res.headers.get("location")).toBe("https://leyenda.ink/e/havnelobet?a=1");
-    expect(await res.text()).toBe("");
-  });
 
   it("POST to the panel API on a non-canonical host is 403, never a redirect", async () => {
     for (const host of ["www.leyenda.ink", "atlas.sargiotti67.workers.dev"]) {

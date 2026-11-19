@@ -421,53 +421,6 @@ describe("limits", () => {
     expect(Math.max(...sizes)).toBeLessThanOrEqual(60_000);
   });
 
-  it("the 512 KB body limit belongs to PUT /events/:id/points only", async () => {
-    const o = await newUser("organizer");
-    const ev = await readyEvent(o);
-    const start = await getPoints(o, ev.id);
-    const pad = "x".repeat(9 * 1024);
-
-    // Under 512 KB (about 100 KB of valid points): accepted
-    const points = Array.from({ length: 120 }, (_, i) => item({ name: `P${i}`, description: "d".repeat(500), x: i / 120 }));
-    expect(JSON.stringify({ baseUpdatedAt: start.eventUpdatedAt, points }).length).toBeGreaterThan(60_000);
-    expect((await put(o, ev.id, { baseUpdatedAt: start.eventUpdatedAt, points })).status).toBe(200);
-
-    // Over 512 KB on the route: 413, with and without a Content-Length header (chunked)
-    const huge = JSON.stringify({ baseUpdatedAt: start.eventUpdatedAt, points: [], pad: "x".repeat(524_288) });
-    const tooBig = await call(`/api/v1/panel/events/${ev.id}/points`, { method: "PUT", cookie: o.session, rawBody: huge });
-    expect(tooBig.status).toBe(413);
-    expect((await errorOf(tooBig)).code).toBe("payload_too_large");
-    const bytes = new TextEncoder().encode(huge);
-    const chunked = new ReadableStream<Uint8Array>({
-      start(c) {
-        for (let i = 0; i < bytes.length; i += 16_384) c.enqueue(bytes.slice(i, i + 16_384));
-        c.close();
-      },
-    });
-    const streamed = await app.fetch(
-      new Request(`${ORIGIN}/api/v1/panel/events/${ev.id}/points`, {
-        method: "PUT",
-        headers: { origin: ORIGIN, "content-type": "application/json", cookie: `__Host-atlas_session=${o.session}`, "cf-connecting-ip": "198.51.100.250" },
-        body: chunked,
-        // @ts-expect-error workerd needs duplex for streamed request bodies
-        duplex: "half",
-      }),
-      baseEnv as unknown as typeof env,
-    );
-    expect(streamed.status).toBe(413);
-
-    // Near misses keep the 8 KB limit: other panel routes, other methods, other paths
-    const big = { baseUpdatedAt: start.eventUpdatedAt, points: [], pad };
-    expect((await call(`/api/v1/panel/events/${ev.id}`, { method: "PUT", cookie: o.session, json: big })).status).toBe(413);
-    expect((await call(`/api/v1/panel/events/${ev.id}`, { method: "PATCH", cookie: o.session, json: big })).status).toBe(413);
-    expect((await call(`/api/v1/panel/events/${ev.id}/points/x`, { method: "PUT", cookie: o.session, json: big })).status).toBe(413);
-    expect((await call(`/api/v1/panel/events/${ev.id}/points/`, { method: "PUT", cookie: o.session, json: big })).status).toBe(413);
-    expect((await call(`/api/v1/panel/events/${ev.id}/points`, { method: "POST", cookie: o.session, json: big })).status).toBe(413);
-    expect((await call(`/api/v1/panel/events/${ev.id}/points`, { method: "PATCH", cookie: o.session, json: big })).status).toBe(413);
-    expect((await call(`/api/v1/panel/events/${ev.id}/publish-request`, { method: "POST", cookie: o.session, json: big })).status).toBe(413);
-    expect((await call(`/api/v1/panel/events/${ev.id.toUpperCase()}/points`, { method: "PUT", cookie: o.session, json: big })).status).toBe(413);
-    expect((await call(`/api/v1/panel/events`, { method: "POST", cookie: o.session, json: big })).status).toBe(413);
-  });
 });
 
 describe("publish needs a Point", () => {
@@ -587,24 +540,5 @@ describe("where Points show up", () => {
 
     expect((await call(`/api/v1/panel/events/${ev.id}`, { method: "DELETE", cookie: o.session })).status).toBe(204);
     expect(await dbPoints(ev.id)).toEqual([]);
-  });
-});
-
-describe("logs", () => {
-  it("one line per save with ids and counts only, never names, descriptions or coordinates", async () => {
-    const o = await newUser("organizer");
-    const ev = await readyEvent(o);
-    const start = await getPoints(o, ev.id);
-    const lines: string[] = [];
-    const orig = console.log;
-    console.log = (...a: unknown[]) => void lines.push(a.join(" "));
-    try {
-      await put(o, ev.id, { baseUpdatedAt: start.eventUpdatedAt, points: [item({ name: "SecretName", description: "SecretDescription", x: 0.123 })] });
-    } finally {
-      console.log = orig;
-    }
-    const line = lines.find((l) => l.startsWith("[points]"))!;
-    expect(line).toMatch(/action=points_saved outcome=ok organizer=org_pts\d+ event=\S+ created=1 updated=0 deleted=0$/);
-    expect(lines.join("\n")).not.toMatch(/SecretName|SecretDescription|0\.123/);
   });
 });

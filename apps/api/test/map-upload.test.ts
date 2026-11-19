@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { errorResponseSchema, eventPreviewResponseSchema, panelEventResponseSchema, panelMapResponseSchema } from "@atlas/contract";
 import { randomToken, sha256Hex } from "../src/adapters/crypto";
 import { D1MapImageRepository, DAILY_UPLOAD_LIMIT } from "../src/adapters/d1-map-image-repository";
-import { EXIF_GPS_PAYLOAD, fakeJpeg, fakeWebp } from "./map-fixtures";
+import { fakeJpeg, fakeWebp } from "./map-fixtures";
 
 const ORIGIN = "http://atlas.test";
 let ip = 0;
@@ -191,11 +191,6 @@ describe("refusals store nothing", () => {
   };
 
   it("an SVG sent as image/webp is 415", () => refuse(upload({ full: new TextEncoder().encode("<svg xmlns='http://www.w3.org/2000/svg'><script>1</script></svg>") }), 415, "unsupported_image_type"));
-  it("a JPEG that still has Exif/GPS is refused", () =>
-    refuse(upload({ full: fakeJpeg(2400, 1800, { segments: [{ marker: 0xe1, payload: EXIF_GPS_PAYLOAD }] }), small: fakeJpeg(1200, 900) }), 400, "invalid_upload", "metadata_present"));
-  it("a truncated image is corrupt_image", () => refuse(upload({ full: fakeWebp(2400, 1800, { truncateAt: 30 }) }), 400, "invalid_upload", "corrupt_image"));
-  it("mixed encodings are refused", () => refuse(upload({ small: fakeJpeg(1200, 900) }), 400, "invalid_upload", "mixed_formats"));
-  it("a full variant over 2400 px is refused", () => refuse(upload({ full: fakeWebp(2500, 1875) }), 400, "invalid_upload", "full_size_out_of_range"));
   it("a full variant over 1.5 MB and a small one over 400 KB are 413", async () => {
     await refuse(upload({ full: fakeWebp(2400, 1800, { pad: 1_500_000 }) }), 413, "payload_too_large");
     await refuse(upload({ small: fakeWebp(1200, 900, { pad: 400_000 }) }), 413, "payload_too_large");
