@@ -23,7 +23,7 @@ binding = "ASSETS"
 not_found_handling = "single-page-application"
 run_worker_first = [
   "/*",
-  "!/assets/*", "!/maps/*", "!/og/*", "!/tone-og/*", "!/organizers/*",
+  "!/assets/*", "!/maps/*", "!/og/*", "!/tone-og/*", "!/organizers/*", "!/welcome/*",
   "!/favicon.ico", "!/favicon.svg", "!/favicon-32.png", "!/apple-touch-icon.png",
   "!/icon-192.png", "!/icon-512.png", "!/icon-maskable-512.png", "!/cover-badge.png",
   "!/google-g.svg", "!/beacon-loader.js", "!/manifest.webmanifest", "!/robots.txt",
