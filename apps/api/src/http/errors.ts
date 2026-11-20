@@ -18,6 +18,7 @@ const MESSAGES: Record<ErrorCode, string> = {
   invite_expired: "This invite has expired.",
   invite_used: "This invite was already used.",
   invite_revoked: "This invite was revoked.",
+  terms_not_accepted: "The Terms of use must be accepted to join.",
   unauthenticated: "Sign in required.",
   forbidden: "You do not have access to this.",
   invalid_origin: "Request origin not allowed.",

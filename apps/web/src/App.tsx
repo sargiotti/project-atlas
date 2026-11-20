@@ -5,6 +5,7 @@ import EventPage from "./pages/EventPage";
 import Home from "./pages/Home";
 import { PageNotFound } from "./pages/Pages";
 import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 
 const PanelRoutes = lazy(() => import("./pages/panel/PanelRoutes"));
 // Slice 30: the organizer page carries its own CSS, art and the Turnstile glue; visitors of the map never download it.
@@ -30,6 +31,7 @@ export function Routes() {
     );
   }
   if (path === "/privacy" || path === "/privacy/") return <Privacy />;
+  if (path === "/terms" || path === "/terms/") return <Terms />;
   return <PageNotFound />;
 }
 

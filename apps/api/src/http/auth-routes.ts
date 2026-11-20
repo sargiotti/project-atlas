@@ -32,6 +32,7 @@ interface Flow {
   n: string; // nonce
   v: string; // PKCE code_verifier
   i?: string; // invite token
+  t?: true; // Terms of use accepted on the invite page (slice 32)
 }
 
 const TOKEN_43 = /^[A-Za-z0-9_-]{43}$/;
@@ -42,7 +43,13 @@ function parseFlow(raw: string | undefined): Flow | null {
     const f = JSON.parse(new TextDecoder().decode(fromBase64Url(raw))) as Record<string, unknown>;
     if (![f.s, f.n, f.v].every((x) => typeof x === "string" && TOKEN_43.test(x))) return null;
     const invite = typeof f.i === "string" && INVITE_TOKEN_REGEX.test(f.i) ? f.i : undefined;
-    return { s: f.s as string, n: f.n as string, v: f.v as string, ...(invite ? { i: invite } : {}) };
+    return {
+      s: f.s as string,
+      n: f.n as string,
+      v: f.v as string,
+      ...(invite ? { i: invite } : {}),
+      ...(f.t === true ? { t: true as const } : {}),
+    };
   } catch {
     return null;
   }
@@ -175,7 +182,15 @@ export function registerAuthRoutes(app: Hono<AppEnv>): void {
       logAuth(c, "sign_in_start", "not_configured");
       return failRedirect(c, "not_configured", invite);
     }
-    const flow: Flow = { s: randomToken(), n: randomToken(), v: randomToken(), ...(invite ? { i: invite } : {}) };
+    // The terms flag only matters on the invite flow, and only the exact value "true" counts.
+    const terms = invite && c.req.query("terms") === "true";
+    const flow: Flow = {
+      s: randomToken(),
+      n: randomToken(),
+      v: randomToken(),
+      ...(invite ? { i: invite } : {}),
+      ...(terms ? { t: true as const } : {}),
+    };
     setCookie(c, OAUTH_COOKIE, toBase64Url(new TextEncoder().encode(JSON.stringify(flow))), {
       ...cookieBase,
       maxAge: OAUTH_COOKIE_MAX_AGE_S,
@@ -198,6 +213,8 @@ export function registerAuthRoutes(app: Hono<AppEnv>): void {
     // Cheapest checks first: no D1 and no call to Google unless the state matches the cookie.
     const state = c.req.query("state");
     if (!flow || !state || !(await safeEqual(state, flow.s))) return fail("invalid_state", "state");
+    // Slice 32: accepting an invite requires the Terms flag. Checked before any Google call or D1 write, so the invite stays usable.
+    if (flow.i && !flow.t) return fail("terms_not_accepted", "rejected");
     if (c.req.query("error")) return fail("oauth_failed", "google_error"); // never reflected
     const code = c.req.query("code");
     if (!code || code.length > 2048) return fail("oauth_failed", "no_code");

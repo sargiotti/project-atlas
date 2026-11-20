@@ -58,12 +58,34 @@ export function Alert({ children }: { children: ReactNode }) {
  * Plain link to the server-side OAuth start (302 to Google). Local "G" asset, no Google script,
  * no iframe, no rendered Google button: CSP stays script-src 'self'.
  */
-export function GoogleButton({ label, inviteToken }: { label: string; inviteToken?: string }) {
+export function GoogleButton({ label, inviteToken, termsAccepted, disabled }: { label: string; inviteToken?: string; termsAccepted?: boolean; disabled?: boolean }) {
+  if (disabled) {
+    return (
+      <button type="button" className="gbtn" disabled>
+        <img src="/google-g.svg" width="20" height="20" alt="" />
+        <span>{label}</span>
+      </button>
+    );
+  }
   return (
-    <a className="gbtn" href={googleStartUrl(inviteToken)}>
+    <a className="gbtn" href={googleStartUrl(inviteToken, termsAccepted)}>
       <img src="/google-g.svg" width="20" height="20" alt="" />
       <span>{label}</span>
     </a>
+  );
+}
+
+/** Mandatory "I accept the Terms of use" checkbox of the invite page; the link opens in a new tab so the invite is not lost. */
+export function TermsCheck({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  const { t } = useI18n();
+  return (
+    <label className="terms-check">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <span>
+        {t("termsAcceptPre")}{" "}
+        <a href="/terms" target="_blank" rel="noopener">{t("termsLink")}</a>
+      </span>
+    </label>
   );
 }
 

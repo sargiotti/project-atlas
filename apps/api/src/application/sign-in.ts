@@ -1,4 +1,4 @@
-import type { AuthRedirectError } from "@atlas/contract";
+import { TERMS_VERSION, type AuthRedirectError } from "@atlas/contract";
 import type { D1AuthRepository } from "../adapters/d1-auth-repository";
 import { randomId, randomToken, sha256Hex } from "../adapters/crypto";
 import {
@@ -65,7 +65,7 @@ export async function completeSignIn(
       return { ok: true, sessionToken, organizerId: account.organizerId, expiresAt };
     }
     if (decision.kind === "accept_invite" && inviteHash) {
-      if (await repo.acceptInvite(inviteHash, account)) {
+      if (await repo.acceptInvite(inviteHash, { ...account, termsVersion: TERMS_VERSION, termsAcceptedAt: now })) {
         return { ok: true, sessionToken, organizerId: account.organizerId, expiresAt };
       }
       // Lost the race (or the invite changed since we read it): classify from the current state.

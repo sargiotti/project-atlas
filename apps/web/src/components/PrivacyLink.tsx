@@ -7,6 +7,7 @@ export function SiteFooter() {
   return (
     <footer className="site-footer">
       <Link to="/privacy">{t("privacyLink")}</Link>
+      <Link to="/terms">{t("termsLink")}</Link>
     </footer>
   );
 }

@@ -250,6 +250,9 @@ export default function OrganizerForm() {
       <p className="org-fnote">
         {t("orgCollects")} <Link to="/privacy">{t("privacyLink")}</Link>
       </p>
+      <p className="org-fnote">
+        {t("termsFormPre")} <Link to="/terms">{t("termsLink")}</Link>.
+      </p>
     </form>
   );
 }

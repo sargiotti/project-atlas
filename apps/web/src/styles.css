@@ -788,6 +788,12 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
 .privacy h1 { font-size: 1.7rem; line-height: 1.2; margin-bottom: 6px; }
 .privacy h2 { font-size: 1.15rem; margin: 28px 0 8px; }
 .privacy p { margin: 0 0 10px; line-height: 1.55; max-width: 68ch; overflow-wrap: anywhere; }
+.privacy ul { margin: 0 0 10px; padding-left: 1.25rem; max-width: 68ch; }
+.privacy li { margin: 0 0 6px; line-height: 1.55; overflow-wrap: anywhere; }
+.terms-check { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0 12px; font-size: 0.95rem; line-height: 1.4; cursor: pointer; }
+.terms-check input { width: 20px; height: 20px; margin-top: 1px; flex: none; }
+.terms-check a { text-decoration: underline; }
+.gbtn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
 .event-privacy {
   position: absolute; z-index: 25; left: 8px; bottom: calc(2px + env(safe-area-inset-bottom));
   padding: 4px 8px; font-size: 0.75rem; color: var(--ink-2); background: var(--surface); border-radius: 999px; opacity: 0.9;

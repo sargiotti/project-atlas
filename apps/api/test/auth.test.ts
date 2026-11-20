@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import app from "../src/index";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { MAX_PENDING_INVITES } from "@atlas/contract";
+import { MAX_PENDING_INVITES, TERMS_VERSION } from "@atlas/contract";
 import { GOOGLE_JWKS_URL, GOOGLE_TOKEN_URL, clearJwksCache } from "../src/adapters/google-oidc";
 import { toBase64Url } from "../src/adapters/crypto";
 
@@ -131,9 +131,9 @@ interface FlowResult {
 /** Runs start + callback as a browser would. `idToken` overrides what Google's token endpoint returns. */
 async function signIn(
   who: Who,
-  opts: { invite?: string; idToken?: (nonce: string) => Promise<string>; stateOverride?: string; cookieOverride?: string } = {},
+  opts: { invite?: string; terms?: boolean; idToken?: (nonce: string) => Promise<string>; stateOverride?: string; cookieOverride?: string } = {},
 ): Promise<FlowResult> {
-  const start = await call(`/api/v1/auth/google/start${opts.invite ? `?invite=${opts.invite}` : ""}`);
+  const start = await call(`/api/v1/auth/google/start${opts.invite ? `?invite=${opts.invite}${opts.terms === false ? "" : "&terms=true"}` : ""}`);
   expect(start.status).toBe(302);
   const authUrl = new URL(start.headers.get("location")!);
   const nonce = authUrl.searchParams.get("nonce")!;
@@ -379,6 +379,35 @@ describe("invites: create, inspect, accept", () => {
     expect((await signIn(ANA, { invite: token })).location).toBe("/panel");
   });
 
+  it("accepting an invite without the terms flag is refused and the invite stays usable; with it, version and time are stored", async () => {
+    const admin = await adminSession();
+    const { token } = await createInviteFor(admin, ANA.email);
+
+    for (const start of [`?invite=${token}`, `?invite=${token}&terms=1`, `?invite=${token}&terms=false`]) {
+      const s = await call(`/api/v1/auth/google/start${start}`);
+      const state = new URL(s.headers.get("location")!).searchParams.get("state")!;
+      fetchSpy.mockClear();
+      const cb = await call(`/api/v1/auth/google/callback?code=abc&state=${state}`, {
+        headers: { cookie: `__Host-atlas_oauth=${cookieValue(cookieOf(s, "__Host-atlas_oauth"))}` },
+      });
+      expect(cb.headers.get("location")).toBe(`/panel/invite/${token}?error=terms_not_accepted`);
+      expect(fetchSpy).not.toHaveBeenCalled(); // refused before any Google call
+    }
+    expect(await count("organizers")).toBe(1); // only the admin
+    expect((await env.DB.prepare("SELECT used_at FROM invites").first<{ used_at: number | null }>())!.used_at).toBeNull();
+
+    const before = Date.now();
+    const ok = await signIn(ANA, { invite: token });
+    expect(ok.location).toBe("/panel");
+    const row = (await env.DB.prepare("SELECT terms_version, terms_accepted_at FROM organizers WHERE email = ?1")
+      .bind(ANA.email)
+      .first<{ terms_version: string; terms_accepted_at: number }>())!;
+    expect(row.terms_version).toBe(TERMS_VERSION);
+    expect(row.terms_accepted_at).toBeGreaterThanOrEqual(before);
+    const adminRow = (await env.DB.prepare("SELECT terms_version FROM organizers WHERE role = 'admin'").first<{ terms_version: string | null }>())!;
+    expect(adminRow.terms_version).toBeNull();
+  });
+
   it("an unverified email on an invite gets email_not_verified and creates nothing", async () => {
     const admin = await adminSession();
     const { token } = await createInviteFor(admin, ANA.email);
@@ -393,7 +422,7 @@ describe("invites: create, inspect, accept", () => {
     // Same invite, same verified email, two different Google subs, all four requests in flight together.
     const flows = await Promise.all(
       ["sub-a", "sub-b"].map(async (sub) => {
-        const start = await call(`/api/v1/auth/google/start?invite=${token}`);
+        const start = await call(`/api/v1/auth/google/start?invite=${token}&terms=true`);
         const u = new URL(start.headers.get("location")!);
         return { sub, nonce: u.searchParams.get("nonce")!, state: u.searchParams.get("state")!, cookie: cookieValue(cookieOf(start, "__Host-atlas_oauth")) };
       }),

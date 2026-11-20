@@ -250,6 +250,7 @@ export default function Organizers() {
           <div className="org-links">
             <Link to="/">{t("orgFootHome")}</Link>
             <Link to="/privacy">{t("privacyLink")}</Link>
+            <Link to="/terms">{t("termsLink")}</Link>
             <a href={`mailto:${CONTACT}`}>{CONTACT}</a>
           </div>
         </div>

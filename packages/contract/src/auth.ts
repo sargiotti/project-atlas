@@ -6,6 +6,9 @@ export const MAX_PENDING_INVITES = 50;
 export const INVITE_TTL_DAYS = 7;
 export const SESSION_TTL_DAYS = 7;
 
+/** Slice 32: version of the Terms of use text (date-based). Shown on /terms and stored on the account at invite acceptance. */
+export const TERMS_VERSION = "2026-11-20";
+
 /** Invite token: 32 random bytes, base64url without padding (43 chars). */
 export const INVITE_TOKEN_REGEX = /^[A-Za-z0-9_-]{43}$/;
 export const inviteTokenSchema = z.string().regex(INVITE_TOKEN_REGEX, "Invalid invite token");
@@ -28,6 +31,7 @@ export const AUTH_REDIRECT_ERRORS = [
   "invite_expired",
   "invite_used",
   "invite_revoked",
+  "terms_not_accepted",
 ] as const;
 export const authRedirectErrorSchema = z.enum(AUTH_REDIRECT_ERRORS);
 export type AuthRedirectError = z.infer<typeof authRedirectErrorSchema>;

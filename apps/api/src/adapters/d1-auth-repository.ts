@@ -23,6 +23,9 @@ export interface PendingInvite {
 export type CreateInviteOutcome = "created" | "email_already_registered" | "invite_already_pending" | "invite_cap_reached";
 
 interface NewAccount {
+  /** Slice 32: only set when an invite is accepted. NULL for the first Admin and for older accounts. */
+  termsVersion?: string;
+  termsAcceptedAt?: number;
   organizerId: string;
   googleSub: string;
   email: string;
@@ -72,11 +75,11 @@ export class D1AuthRepository {
         .bind(a.now, a.organizerId, tokenHash),
       this.db
         .prepare(
-          `INSERT INTO organizers (id, google_sub, email, display_name, role, created_at)
-           SELECT ?1, ?2, ?3, ?4, 'organizer', ?5
+          `INSERT INTO organizers (id, google_sub, email, display_name, role, created_at, terms_version, terms_accepted_at)
+           SELECT ?1, ?2, ?3, ?4, 'organizer', ?5, ?7, ?8
            WHERE EXISTS (SELECT 1 FROM invites WHERE token_hash = ?6 AND accepted_organizer_id = ?1)`,
         )
-        .bind(a.organizerId, a.googleSub, a.email, a.displayName, a.now, tokenHash),
+        .bind(a.organizerId, a.googleSub, a.email, a.displayName, a.now, tokenHash, a.termsVersion ?? null, a.termsAcceptedAt ?? null),
       this.db
         .prepare(
           `INSERT INTO sessions (token_hash, organizer_id, created_at, expires_at)

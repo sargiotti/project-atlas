@@ -39,6 +39,7 @@ describe("/sitemap.xml", () => {
     const xml = await res.text();
     expect(xml).toContain("<loc>https://leyenda.ink/</loc>");
     expect(xml).toContain("<loc>https://leyenda.ink/privacy</loc>");
+    expect(xml).toContain("<loc>https://leyenda.ink/terms</loc>");
     expect(xml).toContain("<loc>https://leyenda.ink/e/ev-published</loc><lastmod>2025-11-18</lastmod>");
     for (const s of ["draft", "in-review", "rejected", "unpublished-admin"]) expect(xml).not.toContain(`/e/ev-${s}<`);
     expect(xml).not.toMatch(/\/(panel|api|media)/);
@@ -61,12 +62,13 @@ describe("SPA routes and 404", () => {
   it("serves every allowlisted route as 200, panel headers intact, with canonical where it applies", async () => {
     const own: Record<string, string[]> = {
       "/privacy": ["<title>Privacy · leyenda.ink</title>", '<meta property="og:url" content="https://leyenda.ink/privacy"'],
+      "/terms": ["<title>Terms of use · leyenda.ink</title>", '<meta property="og:url" content="https://leyenda.ink/terms"'],
       "/organizadores": [
         "<title>Crea el mapa interactivo de tu evento · leyenda.ink</title>",
         '<meta property="og:image" content="https://leyenda.ink/organizers/og.jpg"',
       ],
     };
-    for (const path of ["/", "/privacy", "/privacy/", "/organizadores", "/panel", "/panel/events/x/edit", "/panel/invite/abc123"]) {
+    for (const path of ["/", "/privacy", "/privacy/", "/terms", "/terms/", "/organizadores", "/panel", "/panel/events/x/edit", "/panel/invite/abc123"]) {
       const res = await call(`${path}?utm=1`);
       expect(res.status, path).toBe(200);
       const body = await res.text();

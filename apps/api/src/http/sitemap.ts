@@ -53,7 +53,7 @@ export async function handleSitemap(c: Context<AppEnv>): Promise<Response> {
     `SELECT slug, updated_at FROM events WHERE ${publishedEvent()} ORDER BY start_date, slug LIMIT ${MAX_URLS}`,
   ).all<{ slug: string; updated_at: number }>();
 
-  const urls = [entry(`${origin}/`), entry(`${origin}/privacy`), entry(`${origin}/organizadores`)];
+  const urls = [entry(`${origin}/`), entry(`${origin}/privacy`), entry(`${origin}/terms`), entry(`${origin}/organizadores`)];
   for (const row of results) {
     if (!SLUG_REGEX.test(row.slug)) continue;
     urls.push(entry(`${origin}/e/${row.slug}`, Number.isFinite(row.updated_at) ? row.updated_at : undefined));

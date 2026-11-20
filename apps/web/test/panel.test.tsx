@@ -179,10 +179,16 @@ describe("invite page", () => {
     expect(await screen.findByText("ana@havnelobet.dk")).toBeInTheDocument();
     expect(screen.getByText("Ada L.")).toBeInTheDocument();
     expect(screen.getByText(/invited you to publish event maps on leyenda.ink/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue with Google" })).toBeDisabled();
+    expect(screen.queryByRole("link", { name: "Continue with Google" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("checkbox", { name: /I accept the Terms of use/ }));
     expect(screen.getByRole("link", { name: "Continue with Google" })).toHaveAttribute(
       "href",
-      `/api/v1/auth/google/start?invite=${TOKEN}`,
+      `/api/v1/auth/google/start?invite=${TOKEN}&terms=true`,
     );
+    await userEvent.click(screen.getByRole("checkbox", { name: /I accept the Terms of use/ }));
+    expect(screen.getByRole("button", { name: "Continue with Google" })).toBeDisabled();
+    expect(within(screen.getByRole("checkbox").closest("label")!).getByRole("link", { name: "Terms of use" })).toHaveAttribute("target", "_blank");
     const [, init] = fetchMock.mock.calls[0];
     expect(JSON.parse(init!.body as string)).toEqual({ token: TOKEN });
     expect(screen.queryByText(/organization/i)).not.toBeInTheDocument();
@@ -216,9 +222,11 @@ describe("invite page", () => {
     render(<I18nProvider initial="en"><Routes /></I18nProvider>);
     expect(await screen.findByRole("heading", { name: "This invite is for a different email" })).toBeInTheDocument();
     expect(screen.getByText("ana@havnelobet.dk")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Try another Google account" })).toBeDisabled();
+    await userEvent.click(screen.getByRole("checkbox", { name: /I accept the Terms of use/ }));
     expect(screen.getByRole("link", { name: "Try another Google account" })).toHaveAttribute(
       "href",
-      `/api/v1/auth/google/start?invite=${TOKEN}`,
+      `/api/v1/auth/google/start?invite=${TOKEN}&terms=true`,
     );
   });
 
@@ -227,7 +235,15 @@ describe("invite page", () => {
     goTo(`/panel/invite/${TOKEN}?error=email_not_verified`);
     render(<I18nProvider initial="en"><Routes /></I18nProvider>);
     expect(await screen.findByRole("alert")).toHaveTextContent("isn't verified");
-    expect(screen.getByRole("link", { name: "Continue with Google" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue with Google" })).toBeInTheDocument();
+  });
+
+  it("terms_not_accepted: shows its message and keeps the button blocked until the box is ticked", async () => {
+    mockApi(inspect({ status: "valid", email: "ana@havnelobet.dk", inviterName: "Ada L." }));
+    goTo(`/panel/invite/${TOKEN}?error=terms_not_accepted`);
+    render(<I18nProvider initial="en"><Routes /></I18nProvider>);
+    expect(await screen.findByRole("alert")).toHaveTextContent("accept the Terms of use");
+    expect(screen.getByRole("button", { name: "Continue with Google" })).toBeDisabled();
   });
 });
 
