@@ -18,6 +18,7 @@ import { skCa, skDa, skEn, skEs } from "./shareKitMessages";
 import { orgCa, orgDa, orgEn, orgEs } from "./organizerMessages";
 import { welCa } from "./ca/welcome";
 import { welDa, welEn, welEs } from "./welcomeMessages";
+import { termsCa, termsDa, termsEn, termsEs } from "./termsMessages";
 import { mainCa } from "./ca/main";
 import { panelCa } from "./ca/panel";
 import { eventCa } from "./ca/event";
@@ -33,6 +34,7 @@ const es = {
   ...panelEs,
   ...eventEs,
   ...welEs,
+  ...termsEs,
   ...mapEs,
   ...clusterEs,
   ...pubEs,
@@ -152,6 +154,7 @@ const en: Messages = {
   ...panelEn,
   ...eventEn,
   ...welEn,
+  ...termsEn,
   ...mapEn,
   ...clusterEn,
   ...pubEn,
@@ -269,6 +272,7 @@ const da: Messages = {
   ...panelDa,
   ...eventDa,
   ...welDa,
+  ...termsDa,
   ...mapDa,
   ...clusterDa,
   ...pubDa,
@@ -386,6 +390,7 @@ const ca: Messages = {
   ...panelCa,
   ...eventCa,
   ...welCa,
+  ...termsCa,
   ...mapCa,
   ...clusterCa,
   ...pubCa,

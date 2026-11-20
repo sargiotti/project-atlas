@@ -15,8 +15,10 @@ import {
 const BASE = "/api/v1";
 
 /** Google sign-in is a plain same-origin navigation (302 to Google). No third-party script. */
-export function googleStartUrl(inviteToken?: string) {
-  return inviteToken ? `${BASE}/auth/google/start?invite=${encodeURIComponent(inviteToken)}` : `${BASE}/auth/google/start`;
+export function googleStartUrl(inviteToken?: string, termsAccepted = false) {
+  if (!inviteToken) return `${BASE}/auth/google/start`;
+  // terms=true only when the checkbox is ticked (slice 32); the server is the authority.
+  return `${BASE}/auth/google/start?invite=${encodeURIComponent(inviteToken)}${termsAccepted ? "&terms=true" : ""}`;
 }
 
 async function request(method: string, path: string, body?: unknown, signal?: AbortSignal) {

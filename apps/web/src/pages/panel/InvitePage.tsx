@@ -3,7 +3,7 @@ import { INVITE_TOKEN_REGEX } from "@atlas/contract";
 import { inspectInvite, type InspectResult } from "../../api/auth";
 import { useI18n } from "../../i18n/I18nProvider";
 import { Link } from "../../lib/router";
-import { Alert, AuthFrame, BoldSlot, errorKey, GoogleButton, MAIL } from "./parts";
+import { Alert, AuthFrame, BoldSlot, errorKey, GoogleButton, MAIL, TermsCheck } from "./parts";
 
 type State = { kind: "loading" } | { kind: "error" } | { kind: "done"; result: InspectResult };
 
@@ -24,6 +24,7 @@ export default function InvitePage({ token }: { token: string }) {
   const validShape = INVITE_TOKEN_REGEX.test(token);
   const [state, setState] = useState<State>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
+  const [terms, setTerms] = useState(false);
 
   useEffect(() => {
     if (!validShape) return;
@@ -76,7 +77,8 @@ export default function InvitePage({ token }: { token: string }) {
             <p className="muted">{t("mismatchBody")}</p>
             {bound}
             <p className="blabel">{t("mismatchChoose")}</p>
-            <GoogleButton label={t("mismatchTry")} inviteToken={token} />
+            <TermsCheck checked={terms} onChange={setTerms} />
+            <GoogleButton label={t("mismatchTry")} inviteToken={token} termsAccepted={terms} disabled={!terms} />
             <p className="fine">{t("mismatchHelp")}</p>
           </div>
         );
@@ -90,7 +92,8 @@ export default function InvitePage({ token }: { token: string }) {
             <p className="blabel">{t("inviteFor")}</p>
             {bound}
             {code && <Alert>{t(code)}</Alert>}
-            <GoogleButton label={t("googleContinue")} inviteToken={token} />
+            <TermsCheck checked={terms} onChange={setTerms} />
+            <GoogleButton label={t("googleContinue")} inviteToken={token} termsAccepted={terms} disabled={!terms} />
             <p className="fine">{t("inviteFine")}</p>
             <p className="foot">{t("inviteHaveAccount")} <Link to="/panel/login">{t("signInLink")}</Link></p>
           </div>
