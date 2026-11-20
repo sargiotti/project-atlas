@@ -2,7 +2,7 @@
  * Slice 25: navigations that reach the Worker. Only an explicit allowlist of SPA routes is served as the app (200);
  * every other path gets the noindex 404 shell, so crawlers stop seeing the SPA fallback as a real page.
  *
- * Allowlist (keep in sync with apps/web/src/App.tsx): `/`, `/privacy` (and `/privacy/`), `/panel`, `/panel/*`
+ * Allowlist (keep in sync with apps/web/src/App.tsx): `/`, `/privacy` and `/terms` (each also with a trailing slash), `/panel`, `/panel/*`
  * (includes /panel/invite/*), `/organizadores` (slice 30, with or without a trailing slash) and `/e/*` (handled by event-page.ts). Canonical and per-page meta come from
  * PUBLIC_ORIGIN plus a fixed path, never from the request URL.
  */
@@ -10,11 +10,12 @@ import type { Context } from "hono";
 import { canonicalLink, goneResponse, html, loadShell, parsePublicOrigin } from "./event-page";
 import type { AppEnv } from "./types";
 
-export type SpaRoute = "home" | "privacy" | "organizers" | "panel" | "unknown";
+export type SpaRoute = "home" | "privacy" | "terms" | "organizers" | "panel" | "unknown";
 
 export function classifyPath(path: string): SpaRoute {
   if (path === "/") return "home";
   if (path === "/privacy" || path === "/privacy/") return "privacy";
+  if (path === "/terms" || path === "/terms/") return "terms";
   if (path === "/organizadores" || path === "/organizadores/") return "organizers";
   if (path === "/panel" || path.startsWith("/panel/")) return "panel";
   return "unknown";
@@ -22,6 +23,9 @@ export function classifyPath(path: string): SpaRoute {
 
 const PRIVACY_TITLE = "Privacy · leyenda.ink";
 const PRIVACY_DESCRIPTION = "How leyenda.ink handles your data: what we collect, why, and your rights.";
+
+const TERMS_TITLE = "Terms of use · leyenda.ink";
+const TERMS_DESCRIPTION = "The terms that apply to using leyenda.ink and to publishing events on it.";
 
 const ORGANIZERS_TITLE = "Crea el mapa interactivo de tu evento · leyenda.ink";
 const ORGANIZERS_DESCRIPTION =
@@ -53,11 +57,13 @@ export async function serveSpaRoute(c: Context<AppEnv>, route: SpaRoute): Promis
   if (route === "panel" || res.status !== 200 || !isHtml) return res;
   try {
     const origin = parsePublicOrigin(c.env.PUBLIC_ORIGIN);
-    const rw = new HTMLRewriter().on("head", canonicalLink(`${origin}${route === "home" ? "/" : route === "organizers" ? "/organizadores" : "/privacy"}`));
+    const rw = new HTMLRewriter().on("head", canonicalLink(`${origin}${route === "home" ? "/" : route === "organizers" ? "/organizadores" : route === "terms" ? "/terms" : "/privacy"}`));
     const meta =
       route === "privacy"
         ? { title: PRIVACY_TITLE, description: PRIVACY_DESCRIPTION, path: "/privacy" }
-        : route === "organizers"
+        : route === "terms"
+          ? { title: TERMS_TITLE, description: TERMS_DESCRIPTION, path: "/terms" }
+          : route === "organizers"
           ? { title: ORGANIZERS_TITLE, description: ORGANIZERS_DESCRIPTION, path: "/organizadores", image: `${origin}/organizers/og.jpg`, imageAlt: ORGANIZERS_IMAGE_ALT }
           : null;
     if (meta) {

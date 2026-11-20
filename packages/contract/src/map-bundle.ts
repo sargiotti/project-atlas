@@ -264,6 +264,7 @@ export const ERROR_CODES = [
   "invite_expired",
   "invite_used",
   "invite_revoked",
+  "terms_not_accepted",
   // JSON API errors of the invite/admin/auth endpoints.
   "unauthenticated",
   "forbidden",
