@@ -1,5 +1,5 @@
 /**
- * `GET|HEAD /sitemap.xml` (slice 25). Home, /privacy, /organizadores and every published event (demo events included).
+ * `GET|HEAD /sitemap.xml` (slice 25). Home, /privacy, /organizadores and every published event (demo events excluded: slice 26).
  *
  * Every URL is PUBLIC_ORIGIN + a fixed path or `/e/<slug>`; Host and X-Forwarded-Host are never read. Visibility
  * comes from the shared publishedEvent() predicate, the same switch as the public event page, so drafts, events in
@@ -50,7 +50,7 @@ export async function handleSitemap(c: Context<AppEnv>): Promise<Response> {
   }
 
   const { results } = await c.env.DB.prepare(
-    `SELECT slug, updated_at FROM events WHERE ${publishedEvent()} ORDER BY start_date, slug LIMIT ${MAX_URLS}`,
+    `SELECT slug, updated_at FROM events WHERE ${publishedEvent()} AND owner_id IS NOT NULL ORDER BY start_date, slug LIMIT ${MAX_URLS}`,
   ).all<{ slug: string; updated_at: number }>();
 
   const urls = [entry(`${origin}/`), entry(`${origin}/privacy`), entry(`${origin}/terms`), entry(`${origin}/organizadores`)];

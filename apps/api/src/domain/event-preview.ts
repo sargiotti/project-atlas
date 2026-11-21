@@ -16,6 +16,10 @@ export interface StoredEventPreview {
   country: string; // ISO 3166-1 alpha-2
   /** `covers/{eventId}/{hex32}-og.jpg` as stored; re-validated before it becomes a URL. Null: no cover. */
   ogKey: string | null;
+  /** Organizer-written description as stored (may hold links or junk). Null or empty: none. Slice 26 cleans it. */
+  description: string | null;
+  /** `owner_id IS NULL`: a seeded demo event (slice 37). Demo pages are noindex and carry no JSON-LD. */
+  isDemo: boolean;
 }
 
 export interface EventPreview {
@@ -27,11 +31,20 @@ export interface EventPreview {
    */
   imagePath: string;
   imageAlt: string;
+  /** Slice 26: what the crawlable page shows as text, all cleaned. `description` is null when there is nothing to show. */
+  page: { heading: string; dates: string | null; place: string; description: string | null };
+  isDemo: boolean;
+  /** Plain city and ISO country for the JSON-LD Place (cleaned). */
+  city: string;
+  country: string;
+  startDate: string;
+  endDate: string;
 }
 
 export const MAX_TITLE = 120;
 export const MAX_DESCRIPTION = 200;
 export const MAX_ALT = 200;
+export const MAX_INDEXED_DESCRIPTION = 300;
 
 /** Same shape the cover upload writes (slice 14): `covers/{eventId}/{hex32}-og.jpg`. */
 export const OG_KEY_REGEX = /^covers\/[a-z0-9_-]{1,64}\/[0-9a-f]{32}-og\.jpg$/;
@@ -54,6 +67,21 @@ export function cleanText(input: string, max: number): string {
   const points = Array.from(cleaned);
   if (points.length <= max) return cleaned;
   return points.slice(0, max - 1).join("").trimEnd() + String.fromCharCode(0x2026);
+}
+
+/** Removes URL-like tokens (`https?://...`, `www....`). The website field is where an event's link belongs (slice 26, S5). */
+export function stripUrls(input: string): string {
+  return input.replace(/https?:\/\/\S*/gi, " ").replace(/(^|[^a-z0-9])www\.\S*/gi, "$1 ");
+}
+
+/**
+ * The description as Google may index it: plain text, no links, capped at 300 code points (slice 26, S5).
+ * Cleaned once before the URL pass so invisible characters cannot split "https://" and sneak a link past it.
+ */
+export function indexedDescription(raw: string | null): string | null {
+  if (!raw) return null;
+  const text = cleanText(stripUrls(cleanText(raw, Infinity)), MAX_INDEXED_DESCRIPTION);
+  return text === "" ? null : text;
 }
 
 interface Ymd {
@@ -117,5 +145,36 @@ export function buildEventPreview(event: StoredEventPreview): EventPreview {
     description,
     imagePath: hasImage ? `/media/${event.ogKey}` : `/tone-og/${toneOf(event.id)}.jpg`,
     imageAlt: cleanText(`Cover image for ${event.name}`, MAX_ALT),
+    page: { heading: title, dates: when, place: cleanText(place, MAX_TITLE), description: indexedDescription(event.description) },
+    isDemo: event.isDemo,
+    city: cleanText(event.city, 100),
+    country: event.country,
+    startDate: event.startDate,
+    endDate: event.endDate,
+  };
+}
+
+/**
+ * schema.org/Event for a non-demo page (slice 26, S4). Fixed allowlist of fields built from cleaned data; `url` is the
+ * canonical and `image` the exact og:image value. No organizer data, no website. Dates are date-only (no time zone is
+ * claimed). Returns plain data: the one serializer is `jsonLdScript` in the HTTP layer.
+ */
+export function buildEventJsonLd(p: EventPreview, url: string, imageUrl: string): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: p.page.heading,
+    startDate: p.startDate,
+    endDate: p.endDate,
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    location: {
+      "@type": "Place",
+      name: p.city,
+      address: { "@type": "PostalAddress", addressLocality: p.city, addressCountry: p.country },
+    },
+    ...(p.page.description ? { description: p.page.description } : {}),
+    image: imageUrl,
+    url,
   };
 }

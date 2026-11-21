@@ -27,11 +27,18 @@ const get = (path: string, init: RequestInit & { cf?: unknown } = {}, over: Reco
 
 const HEX = "0123abcd".repeat(4);
 /** The event, plus a cover row (slice 14) when `ogKey` is given. Any stored key shape goes in, to prove the Worker re-validates it. */
-const insert = (slug: string, name: string, opts: { ogKey?: string | null } = {}) => [
+const insert = (
+  slug: string,
+  name: string,
+  opts: { ogKey?: string | null; demo?: boolean; state?: string; description?: string | null; city?: string } = {},
+) => [
   env.DB.prepare(
-    `INSERT INTO events (id, slug, name, start_date, end_date, city, country, language, publish_state, created_at, updated_at)
-     VALUES (?1, ?2, ?3, '2026-11-10', '2026-11-22', 'København', 'DK', 'en', 'published', 0, 0)`,
-  ).bind(`evt_${slug}`, slug, name),
+    "INSERT OR IGNORE INTO organizers (id, google_sub, email, display_name, role, created_at) VALUES ('org_page', 'sub-page', 'page@example.test', 'Page', 'organizer', 0)",
+  ),
+  env.DB.prepare(
+    `INSERT INTO events (id, slug, name, start_date, end_date, city, country, language, publish_state, description, owner_id, created_at, updated_at)
+     VALUES (?1, ?2, ?3, '2026-11-10', '2026-11-22', ?4, 'DK', 'en', ?5, ?6, ?7, 0, 0)`,
+  ).bind(`evt_${slug}`, slug, name, opts.city ?? "København", opts.state ?? "published", opts.description ?? null, opts.demo ? null : "org_page"),
   ...(opts.ogKey
     ? [
         env.DB.prepare(
@@ -108,7 +115,7 @@ describe("GET /e/{slug}", () => {
     const html = await (await get("/e/evil")).text();
 
     const scripts = (s: string) => s.match(/<script\b/g)?.length ?? 0;
-    expect(scripts(html)).toBe(scripts(SHELL));
+    expect(scripts(html)).toBe(scripts(SHELL) + 1); // +1: the ld+json block (slice 26)
     expect(html).not.toContain("<script>alert");
     expect(html).not.toContain(BIDI);
 
@@ -118,7 +125,8 @@ describe("GET /e/{slug}", () => {
     expect(html).not.toContain("&amp;amp;");
 
     // No raw angle brackets are injected anywhere (the rewriter would leave them raw inside attributes).
-    expect(html.match(/</g)!.length).toBe(SHELL.match(/</g)!.length + 1); // +1: the canonical link (slice 25)
+    // +1 canonical (slice 25); slice 26 adds the ld+json script (2), <main> (2), <h1> (2) and the date and place <p> (4).
+    expect(html.match(/</g)!.length).toBe(SHELL.match(/</g)!.length + 1 + 2 + 2 + 2 + 4);
     // Attributes: the quote is an entity, so every value stays inside its quotes. The regex used by
     // metaContent stops at the first raw quote, so a leak would show up as a truncated value.
     for (const sel of ['property="og:title"', 'name="twitter:title"', 'property="og:image:alt"', 'name="twitter:image:alt"']) {
@@ -134,6 +142,8 @@ describe("GET /e/{slug}", () => {
     const strip = (s: string) =>
       s
         .replace(/<link rel="canonical" href="[^"]*">/, "")
+        .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/, "")
+        .replace(/<main class="ssr-event">[\s\S]*?<\/main>/, "")
         .replace(/<title>[\s\S]*?<\/title>/, "")
         .replace(
           /<meta (?:name|property)="(?:description|og:url|og:title|og:description|og:image|og:image:alt|twitter:title|twitter:description|twitter:image|twitter:image:alt)" content="[^"]*" \/>/g,
@@ -215,6 +225,108 @@ describe("GET /e/{slug}", () => {
     await env.DB.prepare("UPDATE events SET name = 'Havneløbet 2027' WHERE slug = 'havnelobet'").run();
     clearEventPreviewCache();
     expect((await get("/e/havnelobet")).headers.get("etag")).not.toBe(a);
+  });
+});
+
+const freshSitemap = async () => {
+  await caches.default.delete(new Request(`${ORIGIN}/sitemap.xml`));
+  return (await get("/sitemap.xml")).text();
+};
+const ldOf = (html: string) => /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(html)?.[1] ?? null;
+const mainOf = (html: string) => /<main class="ssr-event">([\s\S]*?)<\/main>/.exec(html)?.[1] ?? null;
+
+describe("crawlable event page (slice 26)", () => {
+  it("T5: hostile name, city and description stay text and stay out of the script and of og:description", async () => {
+    const LS = String.fromCharCode(0x2028);
+    const PS = String.fromCharCode(0x2029);
+    const nasty = `"><script>alert(1)</script></script><!--&amp;'${LS}${PS}${BIDI}\u{1F389} Café`;
+    const description = `${nasty} see https://evil.example/x and www.evil.example now`;
+    await env.DB.batch(insert("evil", nasty, { description, city: nasty }));
+    const html = await (await get("/e/evil")).text();
+
+    const scripts = (s: string) => s.match(/<script\b/g)?.length ?? 0;
+    expect(scripts(html)).toBe(scripts(SHELL) + 1);
+    const ld = ldOf(html)!;
+    expect(ld).not.toMatch(/[<>&]/);
+    expect(ld).not.toContain(LS);
+    expect(ld).not.toContain(PS);
+    const parsed = JSON.parse(ld);
+    expect(parsed["@type"]).toBe("Event");
+    expect(parsed.name).toBe(`"scriptalert(1)/script/script!--&amp;' \u{1F389} Café`);
+    expect(parsed.description).toBe(`${parsed.name} see and now`);
+    expect(parsed.url).toBe(`${ORIGIN}/e/evil`);
+    expect(parsed.image).toBe(metaContent(html, 'property="og:image"'));
+
+    // Body: only the fixed elements, organizer values as escaped text, links gone.
+    const body = mainOf(html)!;
+    expect(body.match(/<[a-z0-9]+/g)).toEqual(["<h1", "<p", "<p", "<p"]);
+    expect(body).not.toContain("evil.example");
+    expect(body).not.toContain("<script");
+    expect(metaContent(html, 'property="og:description"')).not.toContain("evil");
+    expect(html).not.toContain(BIDI);
+  });
+
+  it("shows name, dates, place and description as text, with canonical and no robots meta", async () => {
+    await env.DB.batch(insert("havnelobet", "Havneløbet 2026", { description: "Run by the harbour." }));
+    const res = await get("/e/havnelobet");
+    const html = await res.text();
+    expect(mainOf(html)).toBe("<h1>Havneløbet 2026</h1><p>10–22 Nov 2026</p><p>København, Denmark</p><p>Run by the harbour.</p>");
+    expect(html.match(/rel="canonical"/g)).toHaveLength(1);
+    expect(html).not.toContain('name="robots"');
+    expect(res.headers.get("x-robots-tag")).toBeNull();
+    expect(JSON.parse(ldOf(html)!)).toMatchObject({
+      startDate: "2026-11-10",
+      endDate: "2026-11-22",
+      location: { "@type": "Place", address: { addressLocality: "København", addressCountry: "DK" } },
+    });
+  });
+
+  it("changes the ETag when only the description changes", async () => {
+    await env.DB.batch(insert("havnelobet", "Havneløbet 2026", { description: "spam" }));
+    const a = (await get("/e/havnelobet")).headers.get("etag");
+    await env.DB.prepare("UPDATE events SET description = 'clean' WHERE slug = 'havnelobet'").run();
+    clearEventPreviewCache();
+    expect((await get("/e/havnelobet")).headers.get("etag")).not.toBe(a);
+  });
+
+  it.each(["draft", "in_review", "rejected", "unpublished_admin"])(
+    "T6: a %s event is byte-identical to an unknown slug and leaks nothing",
+    async (state) => {
+      await env.DB.batch(insert("secret-evt", "Secret Gala", { state, description: "Hidden plans" }));
+      const hidden = await get("/e/secret-evt");
+      const unknown = await get("/e/no-such-event");
+      expect(hidden.status).toBe(404);
+      const body = await hidden.text();
+      expect(body).toBe(await unknown.text());
+      expect([...hidden.headers].sort()).toEqual([...unknown.headers].sort());
+      expect(body).not.toContain("ld+json");
+      expect(body).not.toContain("Secret Gala");
+      expect(body).not.toContain("Hidden plans");
+      expect(await freshSitemap()).not.toContain("secret-evt");
+    },
+  );
+
+  it("T7: a demo event is noindex (meta and header), has no JSON-LD and is not in the sitemap; a real one is the opposite", async () => {
+    await env.DB.batch([...insert("demo-evt", "Demo", { demo: true }), ...insert("real-evt", "Real")]);
+    const demo = await get("/e/demo-evt");
+    const demoHtml = await demo.text();
+    expect(demo.status).toBe(200);
+    expect(demo.headers.get("x-robots-tag")).toBe("noindex");
+    expect(demoHtml.match(/<meta name="robots" content="noindex">/g)).toHaveLength(1);
+    expect(demoHtml).not.toContain("ld+json");
+    const demo304 = await get("/e/demo-evt", { headers: { "if-none-match": demo.headers.get("etag")! } });
+    expect(demo304.status).toBe(304);
+    expect(demo304.headers.get("x-robots-tag")).toBe("noindex");
+
+    const real = await get("/e/real-evt");
+    const realHtml = await real.text();
+    expect(ldOf(realHtml)).not.toBeNull();
+    expect(realHtml).not.toContain('name="robots"');
+    expect(real.headers.get("x-robots-tag")).toBeNull();
+
+    const xml = await freshSitemap();
+    expect(xml).toContain("/e/real-evt<");
+    expect(xml).not.toContain("/e/demo-evt");
   });
 });
 

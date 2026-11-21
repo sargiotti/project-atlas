@@ -12,6 +12,8 @@ interface Row {
   city: string;
   country: string;
   og_key: string | null;
+  description: string | null;
+  owner_id: string | null;
 }
 
 export class D1EventPreviewRepository implements EventPreviewRepository {
@@ -22,7 +24,7 @@ export class D1EventPreviewRepository implements EventPreviewRepository {
     const { results } = await this.db
       .prepare(
         `SELECT e.id AS id, e.slug AS slug, e.name AS name, e.start_date AS start_date, e.end_date AS end_date, e.city AS city,
-                e.country AS country, c.og_key AS og_key
+                e.country AS country, c.og_key AS og_key, e.description AS description, e.owner_id AS owner_id
          FROM events e LEFT JOIN event_covers c ON c.event_id = e.id
          WHERE ${publishedEvent("e")} ORDER BY e.start_date, e.slug LIMIT ?1`,
       )
@@ -37,6 +39,8 @@ export class D1EventPreviewRepository implements EventPreviewRepository {
       city: r.city,
       country: r.country,
       ogKey: r.og_key,
+      description: r.description,
+      isDemo: r.owner_id === null,
     }));
   }
 }

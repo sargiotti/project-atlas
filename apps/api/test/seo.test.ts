@@ -17,14 +17,19 @@ const ASSETS = {
 const call = (path: string, init: RequestInit = {}, host = "leyenda.ink") =>
   app.fetch(new Request(`https://${host}${path}`, { redirect: "manual", ...init }), { ...env, ASSETS, PUBLIC_ORIGIN: ORIGIN } as never);
 
-const insert = (slug: string, state: string) =>
+const insert = (slug: string, state: string, owner: string | null = "org_seo") =>
   env.DB.prepare(
-    `INSERT INTO events (id, slug, name, start_date, end_date, city, country, language, publish_state, created_at, updated_at)
-     VALUES (?1, ?2, ?2, '2026-11-10', '2026-11-22', 'X', 'DK', 'en', ?3, 0, 1763424000000)`,
-  ).bind(`evt_${slug}`, slug, state);
+    `INSERT INTO events (id, slug, name, start_date, end_date, city, country, language, publish_state, owner_id, created_at, updated_at)
+     VALUES (?1, ?2, ?2, '2026-11-10', '2026-11-22', 'X', 'DK', 'en', ?3, ?4, 0, 1763424000000)`,
+  ).bind(`evt_${slug}`, slug, state, owner);
+const ensureOrganizer = () =>
+  env.DB.prepare(
+    "INSERT OR IGNORE INTO organizers (id, google_sub, email, display_name, role, created_at) VALUES ('org_seo', 'sub-seo', 'seo@example.test', 'Seo', 'organizer', 0)",
+  ).run();
 
 beforeEach(async () => {
   await env.DB.prepare("DELETE FROM events WHERE slug != 'tiny-fest'").run();
+  await ensureOrganizer();
   await caches.default.delete(new Request(`${ORIGIN}/sitemap.xml`));
 });
 
