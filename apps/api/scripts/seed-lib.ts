@@ -7,6 +7,7 @@ import {
   DEFAULT_DAY_START,
   MAX_POINTS_PER_MAP,
   MAX_SESSIONS_PER_EVENT,
+  addDays,
   contentLanguageSchema,
   formatUtcInstant,
   isInSessionWindow,
@@ -20,6 +21,7 @@ import {
   timeZoneSchema,
   type Session,
 } from "@atlas/contract";
+import { DEMO_PLACEMENTS, demoShiftDays, shiftLocalDateTime } from "../src/domain/demo-dates.ts";
 import { findSvgViolations, readViewBox } from "./svg-safety.ts";
 import { COVER_LIMITS, MAP_LIMITS, inspectWebp } from "./webp-safety.ts";
 
@@ -225,13 +227,25 @@ export function loadCover(
   return { bytes: info.cleaned, width: info.width, height: info.height, key: `${slug}.${hash8}.webp` };
 }
 
+/** Slice 39: demo events are seeded already current (same rule as the daily cron); any other seed is untouched. */
+export function redateDemoSeed(seed: SeedFile, nowMs: number): SeedFile {
+  const { slug, dates, timeZone } = seed.event;
+  if (!(slug in DEMO_PLACEMENTS)) return seed;
+  const days = demoShiftDays(slug, dates.start, timeZone, nowMs);
+  return {
+    ...seed,
+    event: { ...seed.event, dates: { start: addDays(dates.start, days), end: addDays(dates.end, days) } },
+    sessions: seed.sessions.map((s) => ({ ...s, start: shiftLocalDateTime(s.start, days), end: shiftLocalDateTime(s.end, days) })),
+  };
+}
+
 export function loadSeed(jsonPath: string, coversDir?: string): LoadedSeed {
   const jsonAbs = resolve(jsonPath);
   const parsed = seedFileSchema.safeParse(JSON.parse(readFileSync(jsonAbs, "utf8")));
   if (!parsed.success) {
     throw new Error(`${jsonAbs}: invalid seed file\n${z.prettifyError(parsed.error)}`);
   }
-  const seed = parsed.data;
+  const seed = redateDemoSeed(parsed.data, Date.now());
 
   const folder = dirname(jsonAbs);
   if (isAbsolute(seed.map.file)) throw new Error(`${jsonAbs}: map.file must be relative`);
