@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { isInSessionWindow, mapBundleSchema, parseUtcInstant, sessionDay, sessionWindow } from "@atlas/contract";
+import { addDays, isInSessionWindow, mapBundleSchema, parseUtcInstant, sessionDay, sessionWindow } from "@atlas/contract";
 import { loadAllSeeds, resolveSessions } from "../scripts/seed-lib";
 
 const root = resolve(import.meta.dirname, "../../..");
@@ -51,7 +51,7 @@ describe("demo seed programme", () => {
     expect(overlaps).toBe(true);
     // Starts after local midnight but belongs to the previous day's grid.
     const late = b.sessions.find((s) => sessionDay(ms(s.start), b.event.timeZone, b.event.dayStart) < b.event.endDate && s.title === "Neon Orchard")!;
-    expect(sessionDay(ms(late.start), "Europe/Dublin", "06:00")).toBe("2026-07-10");
+    expect(sessionDay(ms(late.start), "Europe/Dublin", "06:00")).toBe(addDays(b.event.startDate, 1)); // demo dates move daily (slice 39)
     expect(Math.max(...b.sessions.map((s) => s.title.length))).toBeGreaterThan(80);
   });
 
