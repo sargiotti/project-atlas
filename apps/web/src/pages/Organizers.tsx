@@ -17,8 +17,13 @@ const DEMO_SLUG = "fiestas-la-alameda";
 const DEMO_EVENT = { name: "Fiestas de La Alameda", startDate: "2026-12-04", endDate: "2026-12-07", city: "Valencia" };
 const CONTACT = "contact@leyenda.ink";
 
-/** Slice 33 will fill this with a sample-map path per use case; a card renders a link only when one is set. */
-const UC_LINKS: Partial<Record<(typeof SCENE_NAMES)[number], string>> = {};
+/** Example event slug per use case; a card links to /e/<slug> only when one is set (slice 33b adds congreso and escuela). */
+export const UC_EXAMPLE_SLUGS: Partial<Record<(typeof SCENE_NAMES)[number], string>> = {
+  fiestas: "fiestas-la-alameda",
+  musica: "nightfall-meadows",
+  carrera: "havnelobet",
+  mercado: "mercado-medieval-toledo",
+};
 
 const BENEFITS: ["toilets" | "refresh" | "lang" | "free", MessageKey, MessageKey][] = [
   ["toilets", "orgBen1T", "orgBen1P"],
@@ -181,9 +186,9 @@ export default function Organizers() {
             <div className="org-rail org-ucs" role="region" aria-label={t("orgUcLabel")} tabIndex={0}>
               {SCENE_NAMES.map((name, i) => {
                 const n = i + 1;
-                const link = UC_LINKS[name];
+                const slug = UC_EXAMPLE_SLUGS[name];
                 return (
-                  <article className={`org-uc${i === 0 ? " first" : ""}`} data-usecase={name} key={name}>
+                  <article className={`org-uc${i === 0 ? " first" : ""}${slug ? " linked" : ""}`} data-usecase={name} key={name}>
                     <Scenery name={name} />
                     <div className="org-ucb">
                       <h3>{t(`orgUc${n}T` as MessageKey)}</h3>
@@ -195,7 +200,7 @@ export default function Organizers() {
                           </li>
                         ))}
                       </ul>
-                      {link && <Link to={link} className="org-uc-link">→</Link>}
+                      {slug && <Link to={`/e/${slug}`} className="org-uc-link">{t("orgUcExample")} →</Link>}
                     </div>
                   </article>
                 );
