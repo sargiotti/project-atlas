@@ -4,7 +4,7 @@ import type { bbEs } from "../billboardMessages";
 export const bbCa: Record<keyof typeof bbEs, string> = {
   bbTitle: "Què hi ha",
   bbNear: "A prop de",
-  bbPlaceAuto: "La teva zona (aproximada)",
+  bbPlaceAuto: "La teva zona",
   bbPlaceLabel: "Tria el lloc per ordenar els esdeveniments",
   bbPlaceHint: "Sense GPS. Només per ordenar.",
   bbNow: "Ara",

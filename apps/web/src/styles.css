@@ -829,7 +829,7 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
 /* ---- Home billboard (slice 37): one rail, pixel trail, full-bleed posters ------------------------ */
 .bb { margin: 0 -16px 28px; position: relative; }
 .bb-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 16px; margin-bottom: 12px; }
-.bb-t { margin: 0; font: 800 1.55rem/1 var(--display); letter-spacing: -0.03em; }
+.bb-t { margin: 0; white-space: nowrap; flex: none; font: 800 1.55rem/1 var(--display); letter-spacing: -0.03em; }
 .bb-place { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 30px 0 12px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); font: 600 14px var(--ui); max-width: 62vw; }
 .bb-place-k { font-weight: 800; }
 .bb-place select { appearance: none; -webkit-appearance: none; border: 0; background: transparent; color: inherit; font: inherit; padding: 8px 0; min-width: 0; max-width: 100%; text-overflow: ellipsis; cursor: pointer; }
@@ -868,7 +868,7 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
 .pp-dt .mo { display: block; font: 800 10.5px/1 var(--ui); letter-spacing: 0.1em; color: #C2410C; text-transform: uppercase; }
 .pp-dt .d { display: block; font: 800 26px/1 var(--display); letter-spacing: -0.03em; margin-top: 3px; }
 .pp-dt .to { display: block; font: 700 11px/1 var(--ui); color: #5B6078; margin-top: 3px; white-space: nowrap; }
-.pp-ex { position: absolute; z-index: 1; top: 12px; right: 12px; background: rgba(250, 246, 239, 0.94); color: #1E2340; font: 800 10.5px/1 var(--ui); letter-spacing: 0.08em; text-transform: uppercase; padding: 5px 8px; border-radius: 999px; border: 1px solid rgba(30, 35, 64, 0.15); }
+.pp-ex { position: absolute; z-index: 1; top: 12px; right: 12px; background: rgba(250, 246, 239, 0.94); color: #1E2340; font: 800 10.5px/1 var(--ui); letter-spacing: 0.08em; text-transform: uppercase; padding: 5px 8px; border-radius: 999px; border: 1px solid rgba(30, 35, 64, 0.15); max-width: calc(100% - 92px); line-height: 1.15; text-align: center; }
 .pp-bt { position: absolute; z-index: 1; left: 14px; right: 14px; bottom: 14px; display: grid; gap: 6px; justify-items: start; }
 .pp-near { display: inline-flex; align-items: center; gap: 5px; background: #FF6A3D; color: #1E2340; font: 800 12px/1 var(--ui); padding: 5px 9px 5px 6px; border-radius: 999px; white-space: nowrap; }
 .pp-name { font: 800 1.35rem/1.04 var(--display); letter-spacing: -0.03em; color: #fff; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-wrap: balance; }

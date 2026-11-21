@@ -3,7 +3,7 @@
 export const bbEs = {
   bbTitle: "Qué hay",
   bbNear: "Cerca de",
-  bbPlaceAuto: "Tu zona (aproximada)",
+  bbPlaceAuto: "Tu zona",
   bbPlaceLabel: "Elegir el lugar para ordenar los eventos",
   bbPlaceHint: "Sin GPS. Solo para ordenar.",
   bbNow: "Ahora",
@@ -31,7 +31,7 @@ export const bbEsVos: Partial<Record<keyof typeof bbEs, string>> = {
 export const bbEn: Record<keyof typeof bbEs, string> = {
   bbTitle: "What's on",
   bbNear: "Near",
-  bbPlaceAuto: "Your area (approximate)",
+  bbPlaceAuto: "Your area",
   bbPlaceLabel: "Choose the place used to sort events",
   bbPlaceHint: "No GPS. Only used to sort.",
   bbNow: "Now",
@@ -54,7 +54,7 @@ export const bbEn: Record<keyof typeof bbEs, string> = {
 export const bbDa: Record<keyof typeof bbEs, string> = {
   bbTitle: "Hvad sker der",
   bbNear: "Nær",
-  bbPlaceAuto: "Dit område (omtrentligt)",
+  bbPlaceAuto: "Dit område",
   bbPlaceLabel: "Vælg stedet, der bruges til at sortere events",
   bbPlaceHint: "Ingen GPS. Bruges kun til sortering.",
   bbNow: "Nu",
