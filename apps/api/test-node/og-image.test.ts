@@ -11,7 +11,7 @@ const cover = (slug: string) => readFileSync(resolve(root, `design/assets/event-
 const OG_KEY = /^[a-z0-9]+(-[a-z0-9]+)*\.[0-9a-f]{8}\.jpg$/;
 
 describe("OG image build step (T4)", () => {
-  it.each(["havnelobet", "nightfall-meadows"])("renders %s as a 1200x630 baseline JPEG under the cap, no metadata", async (slug) => {
+  it.each(["fiestas-la-alameda", "havnelobet", "nightfall-meadows"])("renders %s as a 1200x630 baseline JPEG under the cap, no metadata", async (slug) => {
     const og = await renderEventOg(slug, cover(slug), badge);
     expect(og.key).toMatch(OG_KEY);
     expect(og.key.startsWith(`${slug}.`)).toBe(true);
