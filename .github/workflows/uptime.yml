@@ -22,12 +22,10 @@ jobs:
       - name: Check public URLs
         env:
           BASE_URL_INPUT: ${{ inputs.base_url }}
+        shell: bash
         run: |
           base="${BASE_URL_INPUT:-https://leyenda.ink}"
-          if ! printf '%s' "$base" | grep -Eq '^https://([a-z0-9-]+-atlas\.sargiotti67\.workers\.dev|leyenda\.ink)$'; then
-            echo "base_url not allowed"
-            exit 2
-          fi
+          [[ "$base" =~ ^https://([a-z0-9-]+-atlas\.sargiotti67\.workers\.dev|leyenda\.ink)$ ]] || { echo "base_url not allowed"; exit 2; }
           fail=0
           for path in / /e/nightfall-meadows /organizadores /terms /api/v1/health; do
             code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 -A 'atlas-uptime' "${base}${path}") || code="error"
