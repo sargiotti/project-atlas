@@ -185,11 +185,11 @@ function EventView({ bundle, imageUrl, onImageError }: { bundle: MapBundle; imag
           <LogoMark size={30} />
         </Link>
         <div className="topbar-title">
-          <div className="topbar-name">
-            <h1>{event.name}</h1>
+          <h1>{event.name}</h1>
+          <small className="topbar-sub">
             {event.isDemo && <span className="pp-ex pp-ex-inline">{t("bbExample")}</span>}
-          </div>
-          <small>{formatDates(event.startDate, event.endDate, lang)}</small>
+            <span className="topbar-dates">{formatDates(event.startDate, event.endDate, lang)}</span>
+          </small>
         </div>
         <LangSwitch />
         <button
