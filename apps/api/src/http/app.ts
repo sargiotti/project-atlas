@@ -19,6 +19,7 @@ import { registerAdminEventRoutes } from "./admin-event-routes";
 import { registerOrganizerRoutes } from "./organizer-routes";
 import { registerMediaRoutes } from "./map-routes";
 import { registerCoverMediaRoutes } from "./cover-routes";
+import { registerHealthRoutes } from "./health-routes";
 import type { AppContext, AppEnv } from "./types";
 
 export type { Env } from "./types";
@@ -94,6 +95,7 @@ export function createApp() {
   registerPanelRoutes(app);
   registerMediaRoutes(app);
   registerCoverMediaRoutes(app);
+  registerHealthRoutes(app);
 
   app.get("/api/v1/events/:slug/map-bundle", async (c) => {
     const parsed = slugSchema.safeParse(c.req.param("slug"));
