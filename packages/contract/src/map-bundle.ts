@@ -217,7 +217,12 @@ export type Session = z.infer<typeof sessionSchema>;
 
 export const mapBundleSchema = z
   .object({
-    event: eventSchema.and(eventAboutSchema),
+    event: eventSchema.and(eventAboutSchema).and(
+      z.object({
+        /** Slice 33a. `owner_id IS NULL`: a seeded demo event ("Example event" pill). Absent in older cached bundles: false. */
+        isDemo: z.boolean().default(false),
+      }),
+    ),
     map: eventMapSchema,
     points: z.array(pointSchema).max(MAX_POINTS_PER_MAP),
     /** Slice 09. Sorted by start, end, id. Absent in older payloads (a stale cached bundle): no sessions. */

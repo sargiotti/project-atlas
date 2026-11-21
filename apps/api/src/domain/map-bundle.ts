@@ -11,6 +11,8 @@ export interface StoredEventMap {
     /** Slice 14. Always set by the repository; optional so older fixtures still build. */
     cover?: CoverImage | null;
     tone?: number;
+    /** Slice 33a. `owner_id IS NULL` (seeded demo). Optional so older fixtures still build; absent means false. */
+    isDemo?: boolean;
   };
   map: {
     id: string;
@@ -53,7 +55,7 @@ export function imageUrl(imageKey: string): string {
 
 export function toMapBundle(stored: StoredEventMap): MapBundle {
   return {
-    event: stored.event,
+    event: { ...stored.event, isDemo: stored.event.isDemo ?? false },
     map: {
       id: stored.map.id,
       theme: stored.map.theme,
