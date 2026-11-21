@@ -1,7 +1,8 @@
 import { env } from "cloudflare:workers";
 import app from "../src/index";
 import { beforeEach, describe, expect, it } from "vitest";
-import { MAX_EVENTS_IN_LIST, eventListSchema, toneOf } from "@atlas/contract";
+import { MAX_EVENTS_IN_LIST, billboardSchema, eventListSchema, toneOf } from "@atlas/contract";
+import { clearBillboardCache } from "../src/application/get-billboard";
 import { clearListEventsCache } from "../src/application/list-events";
 
 const get = (path: string, headers: Record<string, string> = {}, cf?: Record<string, unknown>) =>
@@ -148,5 +149,62 @@ describe("GET /api/v1/events", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual([]);
     await env.DB.batch(env.TEST_SEED.map((sql) => env.DB.prepare(sql)));
+  });
+});
+
+describe("GET /api/v1/billboard", () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const plusDays = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
+  const parse = (text: string) => billboardSchema.parse(JSON.parse(text));
+  const galwayCf = { country: "IE", latitude: "53.27", longitude: "-9.05" };
+
+  beforeEach(() => clearBillboardCache());
+
+  it("groups published events, flags demo events, hides ended ones", async () => {
+    await env.DB.batch([
+      ...insert("ended-fest", plusDays(-30), false),
+      ...insert("running-fest", today, false),
+      ...insert("far-fest", plusDays(60), false),
+    ]);
+    await env.DB.prepare("UPDATE events SET end_date = ?1 WHERE slug = 'ended-fest'").bind(plusDays(-20)).run();
+    const res = await get("/api/v1/billboard");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("cache-control")).toBe("private, max-age=300");
+    const text = await res.text();
+    const b = parse(text);
+    const all = b.windows.flatMap((w) => w.events);
+    expect(all.map((e) => e.slug)).not.toContain("ended-fest");
+    expect(b.windows.find((w) => w.id === "now")!.events.map((e) => e.slug)).toContain("running-fest");
+    expect(b.windows.find((w) => w.id === "later")!.events.map((e) => e.slug)).toContain("far-fest");
+    expect(all.find((e) => e.slug === "running-fest")!.isDemo).toBe(true);
+    expect(text).not.toMatch(/evt_|latitude|longitude|timeZone|time_zone/);
+  });
+
+  it("a valid place marks nearby events and is no-store; an unknown place is ignored and never echoed", async () => {
+    await env.DB.batch([
+      ...insert("valencia-fest", plusDays(60), false, { country: "ES", lat: 39.47, lng: -0.38 }),
+      ...insert("galway-fest", plusDays(61), false, { country: "IE", lat: 53.27, lng: -9.05 }),
+    ]);
+    const picked = await get("/api/v1/billboard?place=valencia", {}, galwayCf);
+    expect(picked.headers.get("cache-control")).toBe("no-store");
+    expect(picked.headers.get("etag")).toBeNull();
+    const events = parse(await picked.text()).windows.flatMap((w) => w.events);
+    expect(events.find((e) => e.slug === "valencia-fest")!.nearby).toBe(true);
+    expect(events.find((e) => e.slug === "galway-fest")!.nearby).toBe(false);
+
+    const unknown = await get("/api/v1/billboard?place=%3Cb%3Eatlantis", {}, galwayCf);
+    expect(unknown.headers.get("cache-control")).toBe("no-store");
+    const text = await unknown.text();
+    expect(text).not.toContain("atlantis");
+    const ub = parse(text).windows.flatMap((w) => w.events);
+    expect(ub.find((e) => e.slug === "galway-fest")!.nearby).toBe(true);
+  });
+
+  it("never reveals the visitor's location", async () => {
+    await env.DB.batch(insert("galway-fest", plusDays(60), false, { country: "IE", lat: 53.27, lng: -9.05 }));
+    const res = await get("/api/v1/billboard", {}, { ...galwayCf, city: "Galway" });
+    const text = await res.text();
+    expect(text).not.toMatch(/53\.27|-9\.05|detected/);
+    expect(Object.keys(JSON.parse(text))).toEqual(["windows"]);
   });
 });

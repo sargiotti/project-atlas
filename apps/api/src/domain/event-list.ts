@@ -15,6 +15,10 @@ export interface StoredEventSummary {
   /** City-level coordinates, domain only (used to compute `nearby`). Never copied to the public summary. */
   latitude: number | null;
   longitude: number | null;
+  /** Billboard only (slice 37). IANA zone the event dates are in. */
+  timeZone?: string;
+  /** Billboard only (slice 37). Seeded demo event (`owner_id IS NULL`). */
+  isDemo?: boolean;
 }
 
 export function toEventSummary(s: StoredEventSummary): EventSummaryBase {

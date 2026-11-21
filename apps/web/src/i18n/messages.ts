@@ -28,6 +28,8 @@ import { pedCa } from "./ca/pointsEditor";
 import { sedCa } from "./ca/scheduleEditor";
 import { coverCa } from "./ca/cover";
 import { clusterCa } from "./ca/cluster";
+import { bbDa, bbEn, bbEs } from "./billboardMessages";
+import { bbCa } from "./ca/billboard";
 
 const es = {
   ...orgEs,
@@ -37,6 +39,7 @@ const es = {
   ...termsEs,
   ...mapEs,
   ...clusterEs,
+  ...bbEs,
   ...pubEs,
   ...skEs,
   ...pedEs,
@@ -157,6 +160,7 @@ const en: Messages = {
   ...termsEn,
   ...mapEn,
   ...clusterEn,
+  ...bbEn,
   ...pubEn,
   ...skEn,
   ...pedEn,
@@ -275,6 +279,7 @@ const da: Messages = {
   ...termsDa,
   ...mapDa,
   ...clusterDa,
+  ...bbDa,
   ...pubDa,
   ...skDa,
   ...pedDa,
@@ -393,6 +398,7 @@ const ca: Messages = {
   ...termsCa,
   ...mapCa,
   ...clusterCa,
+  ...bbCa,
   ...pubCa,
   ...skCa,
   ...pedCa,

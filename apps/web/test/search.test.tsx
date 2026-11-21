@@ -44,7 +44,8 @@ describe("normalize / matchesQuery", () => {
 
 function openHome(lang: "en" | "es" | "da" = "en", path = "/") {
   const fn = vi.fn(async () => json(EVENTS));
-  vi.stubGlobal("fetch", fn);
+  // The billboard (slice 37) has its own tests; here it just answers "no events" and is not counted in `fn`.
+  vi.stubGlobal("fetch", (url: any, init: any) => (String(url).startsWith("/api/v1/billboard") ? Promise.resolve(json({ windows: [] })) : (fn as any)(url, init)));
   goTo(path);
   render(
     <I18nProvider initial={lang}>

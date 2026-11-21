@@ -20,15 +20,15 @@ export function toneOf(id: string): Tone {
 // --- Colour cover geometry ---------------------------------------------------------------------
 // viewBox 600x300: tone fill, a faint map grid (2x2 dots every 30), two pixel trails (8-unit squares every 18 along two
 // curves) towards the centre, four small pixel "x" marks, a white tile 100x100 (radius 26, 6-unit offset shadow) and the
-// Atlas pin (16x16 pixel art, scale 4). `shape-rendering: crispEdges` on the pixel layers.
+// Pin & Pixel mark (10x10 cells, scale 6). `shape-rendering: crispEdges` on the pixel layers.
 
-/** Atlas pin pixel art: [fill, path data] layers on a 16x16 grid. */
+/**
+ * Pin & Pixel mark (ADR 0014 section 2.1): 10 x 10 cells, tangerine body, ink inner window. Layers are [fill, path data] on a
+ * 10 x 10 unit grid (one unit = one cell). The tile behind it is white, so the ink window is the light-background variant.
+ */
 export const FALLBACK_LOGO: ReadonlyArray<readonly [string, string]> = [
-  ["#3A2C78", "M5 0h6v1h-6zM3 1h2v1h-2zM11 1h2v1h-2zM2 2h1v1h-1zM13 2h1v1h-1zM1 3h1v1h-1zM14 3h1v1h-1zM1 4h1v1h-1zM14 4h1v1h-1zM0 5h1v1h-1zM15 5h1v1h-1zM0 6h1v1h-1zM15 6h1v1h-1zM1 7h1v1h-1zM14 7h1v1h-1zM1 8h1v1h-1zM14 8h1v1h-1zM2 9h1v1h-1zM13 9h1v1h-1zM3 10h1v1h-1zM12 10h1v1h-1zM4 11h1v1h-1zM11 11h1v1h-1zM5 12h1v1h-1zM10 12h1v1h-1zM6 13h1v1h-1zM9 13h1v1h-1zM7 14h2v1h-2z"],
-  ["#5B45B0", "M10 1h1v1h-1zM12 2h1v1h-1zM13 3h1v1h-1zM13 4h1v1h-1zM14 5h1v1h-1zM1 6h1v1h-1zM14 6h1v1h-1zM13 7h1v1h-1zM2 8h1v1h-1zM13 8h1v1h-1zM3 9h1v1h-1zM12 9h1v1h-1zM4 10h1v1h-1zM11 10h1v1h-1zM5 11h1v1h-1zM10 11h1v1h-1zM6 12h1v1h-1zM9 12h1v1h-1zM7 13h2v1h-2z"],
-  ["#7F68D8", "M5 2h6v1h-6zM3 3h10v1h-10zM3 4h4v1h-4zM9 4h4v1h-4zM2 5h4v1h-4zM10 5h4v1h-4zM2 6h4v1h-4zM10 6h4v1h-4zM3 7h4v1h-4zM9 7h4v1h-4zM3 8h10v1h-10zM4 9h8v1h-8zM5 10h6v1h-6zM6 11h4v1h-4zM7 12h2v1h-2z"],
-  ["#B9A8F0", "M5 1h5v1h-5zM3 2h2v1h-2zM11 2h1v1h-1zM2 3h1v1h-1zM2 4h1v1h-1zM1 5h1v1h-1zM2 7h1v1h-1z"],
-  ["#B5DB7A", "M7 4h2v1h-2zM6 5h4v1h-4zM6 6h4v1h-4zM7 7h2v1h-2z"],
+  ["#FF6A3D", "M2 0h6v1h-6zM2 7h6v1h-6zM1 1h8v1h-8zM1 6h8v1h-8zM0 2h10v1h-10zM0 5h10v1h-10zM0 3h3v2h-3zM7 3h3v2h-3zM3 8h4v1h-4zM4 9h2v1h-2z"],
+  ["#1E2340", "M3 3h4v2h-4z"],
 ];
 
 function curvePoints(p0: [number, number], p1: [number, number], p2: [number, number], step: number): Array<[number, number]> {
@@ -84,12 +84,12 @@ export function fallbackCoverGeometry(tone: number): FallbackCoverGeometry {
   return {
     viewBox: "0 0 600 300",
     background: TONE_FILLS[t]!,
-    grain: { fill: "rgba(31,27,51,.07)", d: GRID_PATH },
-    trail: { fill: "rgba(31,27,51,.2)", d: TRAIL_PATH },
-    marks: { fill: "rgba(31,27,51,.2)", d: MARKS_PATH },
-    shadow: { fill: "rgba(20,16,40,.13)", x: 250, y: 106, width: 100, height: 100, rx: 26 },
+    grain: { fill: "rgba(30,35,64,.07)", d: GRID_PATH },
+    trail: { fill: "rgba(30,35,64,.2)", d: TRAIL_PATH },
+    marks: { fill: "rgba(30,35,64,.2)", d: MARKS_PATH },
+    shadow: { fill: "rgba(30,35,64,.13)", x: 250, y: 106, width: 100, height: 100, rx: 26 },
     tile: { fill: "#fff", x: 250, y: 100, width: 100, height: 100, rx: 26 },
-    pin: { transform: "translate(268 118) scale(4)", layers: FALLBACK_LOGO.map(([fill, d]) => ({ fill, d })) },
+    pin: { transform: "translate(270 120) scale(6)", layers: FALLBACK_LOGO.map(([fill, d]) => ({ fill, d })) },
   };
 }
 

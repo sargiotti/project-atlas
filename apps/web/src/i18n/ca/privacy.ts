@@ -14,6 +14,7 @@ export const privacyCa: PrivacyNotice = {
       lines: [
         "No cal que tinguis compte. No fem servir publicitat ni galetes de seguiment, i no elaborem perfils de les persones que ens visiten. Per saber quanta gent fa servir leyenda.ink, fem servir Cloudflare Web Analytics. No fa servir galetes i només desa recomptes agregats de la pàgina visitada, la pàgina d'on vens (referent), el teu navegador i tipus de dispositiu, el teu país i el rendiment de càrrega. No t'identifica ni et segueix entre llocs web.",
         "El teu navegador només recorda el teu idioma i el zoom del programa si els canvies. Això es queda al teu dispositiu.",
+        "Recordem el lloc que triïs en aquest dispositiu.",
         "La teva adreça IP es fa servir durant aproximadament un minut per protegir el servei d'abusos (límit de peticions), per mostrar-te primer els esdeveniments propers i per triar un idioma per defecte (català si ets a Catalunya) (ubicació aproximada a partir de la IP). leyenda.ink en si no la desa.",
         "Si toques \"Afegeix a Google Calendar\", Google rep les dades d'aquest esdeveniment.",
       ],
@@ -67,6 +68,7 @@ export const privacyCa: PrivacyNotice = {
         "__Host-atlas_oauth: només mentre inicies la sessió (10 minuts).",
         "__Host-atlas_session: et manté connectat (7 dies).",
         "atlas.lang i atlas.schedule.zoom: les teves eleccions d'idioma i de zoom, desades al teu navegador.",
+        "atlas.place: el lloc que tries per a la cartellera de l'inici (un identificador d'una llista fixa), desat al teu navegador.",
         "atlas.mapIntro.v1: recorda que ja has vist la pista del mapa, perquè no es torni a mostrar.",
         "Totes són estrictament necessàries o només es desen quan tu ho tries, per això no demanem consentiment.",
       ],

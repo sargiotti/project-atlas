@@ -22,6 +22,7 @@ const en: PrivacyNotice = {
       lines: [
         "You don't need an account. We don't use advertising or tracking cookies, and we don't build profiles of visitors. To see how many people use leyenda.ink, we use Cloudflare Web Analytics. It sets no cookies and keeps only aggregate counts of the page visited, the page you came from (referrer), your browser and device type, your country and page load performance. It doesn't identify you or follow you across sites.",
         "Your browser only remembers your language and schedule zoom if you change them. That stays on your device.",
+        "We remember the place you pick on this device.",
         "Your IP address is used for about one minute to protect the service from abuse (rate limiting), to show events near you first, and to pick a default language (Catalan if you're in Catalonia) (approximate location from your IP). leyenda.ink itself doesn't store it.",
         'If you tap "Add to Google Calendar", Google receives that event\'s details.',
       ],
@@ -75,6 +76,7 @@ const en: PrivacyNotice = {
         "__Host-atlas_oauth: used only while you sign in (10 minutes).",
         "__Host-atlas_session: keeps you signed in (7 days).",
         "atlas.lang and atlas.schedule.zoom: your language and zoom choices, stored in your browser.",
+        "atlas.place: the place you pick for the Home billboard (an id from a fixed list), stored in your browser.",
         "atlas.mapIntro.v1: remembers that you have seen the map tip, so it is not shown again.",
         "All of them are strictly necessary or saved only when you choose, so we don't ask for consent.",
       ],
@@ -96,6 +98,7 @@ const es: PrivacyNotice = {
       lines: [
         "No necesitás cuenta. No usamos publicidad ni cookies de seguimiento, y no armamos perfiles de quienes nos visitan. Para saber cuánta gente usa leyenda.ink, usamos Cloudflare Web Analytics. No usa cookies y solo guarda conteos agregados de la página visitada, la página de la que venís (referente), tu navegador y tipo de dispositivo, tu país y el rendimiento de carga. No te identifica ni te sigue entre sitios.",
         "Tu navegador solo recuerda tu idioma y el zoom del programa si los cambiás. Eso queda en tu dispositivo.",
+        "Recordamos el lugar que elegís en este dispositivo.",
         "Tu dirección IP se usa durante aproximadamente un minuto para proteger el servicio de abusos (límite de peticiones), para mostrarte primero los eventos cercanos y para elegir un idioma por defecto (catalán si estás en Cataluña) (ubicación aproximada a partir de la IP). leyenda.ink en sí no la almacena.",
         'Si tocás "Agregar a Google Calendar", Google recibe los datos de ese evento.',
       ],
@@ -149,6 +152,7 @@ const es: PrivacyNotice = {
         "__Host-atlas_oauth: solo mientras iniciás sesión (10 minutos).",
         "__Host-atlas_session: te mantiene conectado (7 días).",
         "atlas.lang y atlas.schedule.zoom: tus elecciones de idioma y zoom, guardadas en tu navegador.",
+        "atlas.place: el lugar que elegís para la cartelera del inicio (un id de una lista fija), guardado en tu navegador.",
         "atlas.mapIntro.v1: recuerda que ya viste la pista del mapa, para no mostrártela otra vez.",
         "Todas son estrictamente necesarias o se guardan solo cuando vos elegís, por eso no pedimos consentimiento.",
       ],
@@ -170,6 +174,7 @@ const da: PrivacyNotice = {
       lines: [
         "Du behøver ikke en konto. Vi bruger ikke reklamer eller sporingscookies, og vi opbygger ikke profiler af besøgende. For at se, hvor mange der bruger leyenda.ink, bruger vi Cloudflare Web Analytics. Det sætter ingen cookies og gemmer kun samlede tal for den besøgte side, siden du kom fra (henvisning), din browser og enhedstype, dit land og sidens indlæsningshastighed. Det identificerer dig ikke og følger dig ikke på tværs af websteder.",
         "Din browser husker kun dit sprog og zoom i programmet, hvis du ændrer dem. Det bliver på din enhed.",
+        "Vi husker det sted, du vælger, på denne enhed.",
         "Din IP-adresse bruges i cirka et minut for at beskytte tjenesten mod misbrug (begrænsning af antal forespørgsler), for at vise begivenheder tæt på dig først og for at vælge et standardsprog (catalansk, hvis du er i Catalonien) (omtrentlig placering ud fra din IP). leyenda.ink gemmer den ikke selv.",
         'Hvis du trykker på "Føj til Google Kalender", modtager Google oplysningerne om den begivenhed.',
       ],
@@ -223,6 +228,7 @@ const da: PrivacyNotice = {
         "__Host-atlas_oauth: bruges kun, mens du logger ind (10 minutter).",
         "__Host-atlas_session: holder dig logget ind (7 dage).",
         "atlas.lang og atlas.schedule.zoom: dine valg af sprog og zoom, gemt i din browser.",
+        "atlas.place: det sted, du vælger til forsiden (et id fra en fast liste), gemt i din browser.",
         "atlas.mapIntro.v1: husker, at du har set kortets tip, så det ikke vises igen.",
         "Alle er strengt nødvendige eller gemmes kun, når du vælger det, så vi beder ikke om samtykke.",
       ],
