@@ -232,3 +232,17 @@ describe("map intro hint", () => {
     expect(localStorage.getItem("atlas.mapIntro.v1")).toBe("1");
   });
 });
+
+describe("example event pill", () => {
+  it("shows the example pill in the header for a demo event and not for a regular one", async () => {
+    mockFetch(() => json({ ...bundle, event: { ...bundle.event, isDemo: true } }));
+    const first = open();
+    expect(await screen.findByText("Example event")).toBeInTheDocument();
+    first.unmount();
+
+    mockFetch(() => json({ ...bundle, event: { ...bundle.event, isDemo: false } }));
+    open();
+    await screen.findByRole("button", { name: "Main Stage, Stage" });
+    expect(screen.queryByText("Example event")).not.toBeInTheDocument();
+  });
+});
