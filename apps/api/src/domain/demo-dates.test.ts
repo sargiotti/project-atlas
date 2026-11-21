@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { addDays } from "@atlas/contract";
 import { demoShiftDays, shiftLocalDateTime, shiftUtcInstant, targetStartDate } from "./demo-dates";
 
 describe("targetStartDate", () => {
@@ -28,6 +29,16 @@ describe("demoShiftDays", () => {
     const days = demoShiftDays("havnelobet", "2026-11-10", "Europe/Copenhagen", now);
     expect(shiftLocalDateTime("2026-11-10T00:00", days).slice(0, 10)).toBe("2026-12-13");
     expect(demoShiftDays("havnelobet", "2026-12-13", "Europe/Copenhagen", now)).toBe(0);
+  });
+});
+
+describe("mercado-medieval-toledo", () => {
+  it("lands on the current weekend's Friday and its 3-day span (Fri-Sun) moves with it", () => {
+    const now = Date.UTC(2026, 10, 21, 12); // Saturday
+    const days = demoShiftDays("mercado-medieval-toledo", "2026-12-11", "Europe/Madrid", now);
+    expect(addDays("2026-12-11", days)).toBe("2026-11-20");
+    expect(addDays("2026-12-13", days)).toBe("2026-11-22");
+    expect(shiftLocalDateTime("2026-12-12T22:00", days)).toBe("2026-11-21T22:00");
   });
 });
 
