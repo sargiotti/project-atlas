@@ -112,6 +112,11 @@ body {
 [hidden] { display: none !important; }
 .app { min-height: 100%; background: var(--bg); color: var(--ink); }
 h1, h2, h3, p { margin: 0; }
+/* Server-rendered event text in #root until the SPA mounts (createRoot replaces it). Always visible. */
+.ssr-event { max-width: 40rem; margin: 0 auto; padding: 2.5rem 1.25rem; display: grid; gap: 0.75rem; background: var(--bg); color: var(--ink); font-family: var(--ui); }
+.ssr-event h1 { font-size: clamp(1.75rem, 6vw, 2.5rem); line-height: 1.1; }
+.ssr-event p { color: var(--ink-2); line-height: 1.5; }
+.ssr-event p:first-of-type { color: var(--ink); font-weight: 600; }
 h1, h2, h3 { font-family: var(--display); font-weight: 800; letter-spacing: -0.02em; }
 .section-title { font-family: var(--ui); font-weight: 700; letter-spacing: 0.08em; }
 a { color: var(--link); }
