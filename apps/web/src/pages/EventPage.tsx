@@ -187,7 +187,7 @@ function EventView({ bundle, imageUrl, onImageError }: { bundle: MapBundle; imag
         <div className="topbar-title">
           <h1>{event.name}</h1>
           <small className="topbar-sub">
-            {event.isDemo && <span className="pp-ex pp-ex-inline">{t("bbExample")}</span>}
+            {event.isDemo && <span className="pp-ex pp-ex-inline">{t("exShort")}</span>}
             <span className="topbar-dates">{formatDates(event.startDate, event.endDate, lang)}</span>
           </small>
         </div>
