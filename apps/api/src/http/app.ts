@@ -2,6 +2,8 @@ import { Hono } from "hono";
 import { slugSchema, geoLangSchema } from "@atlas/contract";
 import { getMapBundle } from "../application/get-map-bundle";
 import { listEvents } from "../application/list-events";
+import { getBillboard } from "../application/get-billboard";
+import { placeLocation } from "../domain/places";
 import { applyGeoOverride, geoLang } from "../domain/geo-lang";
 import { applyNearOverride, parseVisitorLocation } from "../domain/nearby";
 import { D1EventMapRepository } from "../adapters/d1-event-map-repository";
@@ -121,6 +123,28 @@ export function createApp() {
     );
     const body = JSON.stringify(await listEvents(new D1EventListRepository(c.env.DB), visitor));
     if (hasNear) {
+      return new Response(body, {
+        status: 200,
+        headers: { "Cache-Control": "no-store", "Content-Type": "application/json; charset=utf-8" },
+      });
+    }
+    return cachedJson(c, body, "private, max-age=300");
+  });
+
+  // Home billboard (slice 37). Same privacy rules as the list above: the visitor's coarse location (request.cf, or the
+  // `?near=` override, or a `?place=` pick) only computes the per-event `nearby` flag; never stored, logged, returned or
+  // used as a cache key. `place` is an allowlist id from the contract (unknown ids are ignored, never echoed) and beats
+  // `near` and the real location. Any near/place param, valid or not: `no-store`, no ETag. Otherwise `private`.
+  app.get("/api/v1/billboard", async (c) => {
+    const url = new URL(c.req.url);
+    const hasOverride = url.searchParams.has("near") || url.searchParams.has("place");
+    const real = applyNearOverride(
+      parseVisitorLocation((c.req.raw as { cf?: unknown }).cf),
+      url.searchParams.has("near") ? url.searchParams.get("near") : null,
+    );
+    const visitor = placeLocation(url.searchParams.get("place")) ?? real;
+    const body = JSON.stringify(await getBillboard(new D1EventListRepository(c.env.DB), visitor));
+    if (hasOverride) {
       return new Response(body, {
         status: 200,
         headers: { "Cache-Control": "no-store", "Content-Type": "application/json; charset=utf-8" },
