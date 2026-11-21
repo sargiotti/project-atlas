@@ -65,3 +65,11 @@ describe("demo seed programme", () => {
     expect(b.sessions.filter((s) => s.pointId === church.id).length).toBeGreaterThanOrEqual(3);
   });
 });
+
+describe("havnelobet is a one-day race", () => {
+  it("starts and ends on the same day and all its sessions fall on that day", () => {
+    const { seed } = bySlug("havnelobet");
+    expect(seed.event.dates.end).toBe(seed.event.dates.start);
+    for (const s of resolveSessions(seed)) expect(sessionDay(parseUtcInstant(s.start)!, seed.event.timeZone, seed.event.dayStart)).toBe(seed.event.dates.start);
+  });
+});

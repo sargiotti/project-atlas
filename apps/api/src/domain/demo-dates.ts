@@ -9,7 +9,7 @@ export type DemoPlacement = "now" | "weekend" | "coming-up";
 export const DEMO_PLACEMENTS: Readonly<Record<string, DemoPlacement>> = {
   "nightfall-meadows": "now", // 4 days, starts yesterday: today is its day 2
   "fiestas-la-alameda": "weekend", // 4 days, starts the Friday of the current or next weekend
-  havnelobet: "coming-up", // 13 days, starts in 3 weeks
+  havnelobet: "coming-up", // 1 day (a race), in 3 weeks
 };
 export const DEMO_SLUGS = Object.keys(DEMO_PLACEMENTS);
 
