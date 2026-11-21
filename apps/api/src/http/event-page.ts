@@ -5,9 +5,13 @@
  * query, cookies, Accept-Language, User-Agent, Host or IP (B7). Text only ever reaches the HTML through
  * HTMLRewriter `setAttribute("content", ...)` on tags that already exist in the shell, and
  * `setInnerContent(text)` on `<title>` (escaped by the rewriter). No HTML is built from strings (B4).
+ *
+ * Slice 26 adds, for Google: readable event text inside `#root` (fixed tags as constants, every organizer value as
+ * text), a schema.org/Event JSON-LD block (one sink: `jsonLdScript`), and `noindex` for demo events.
  */
 import type { Context } from "hono";
 import { slugSchema } from "@atlas/contract";
+import { buildEventJsonLd, type EventPreview } from "../domain/event-preview";
 import { getEventPreview } from "../application/get-event-preview";
 import { D1EventPreviewRepository } from "../adapters/d1-event-preview-repository";
 import { etagMatches, etagOf } from "./etag";
@@ -29,6 +33,7 @@ const GONE_CACHE = "public, max-age=30";
 
 /** Placeholder contract with apps/web/index.html. Every selector must match exactly once. */
 const SEL = {
+  root: "#root",
   title: "title",
   description: 'meta[name="description"]',
   ogUrl: 'meta[property="og:url"]',
@@ -42,12 +47,29 @@ const SEL = {
   twImageAlt: 'meta[name="twitter:image:alt"]',
 } as const;
 
+const BS = String.fromCharCode(0x5c);
+
+/** The one place organizer data becomes script content: JSON with every HTML-significant character as a \uXXXX escape (S3). */
+export function jsonLdScript(data: unknown): string {
+  const json = JSON.stringify(data)
+    .replaceAll("<", BS + "u003c")
+    .replaceAll(">", BS + "u003e")
+    .replaceAll("&", BS + "u0026")
+    .replaceAll(String.fromCharCode(0x2028), BS + "u2028")
+    .replaceAll(String.fromCharCode(0x2029), BS + "u2029");
+  return `<script type="application/ld+json">${json}</script>`;
+}
+
 interface MetaValues {
   title: string;
   description: string;
   url: string;
   /** Null: the event has no generated image; the shell's brand card tags stay as they are. */
   image: { url: string; alt: string } | null;
+  /** Slice 26: visible text for `#root`, and the head extras. `jsonLd` is null for demo events. */
+  page: EventPreview["page"];
+  isDemo: boolean;
+  jsonLd: Record<string, unknown> | null;
 }
 
 /** Fixed `https://host[:port]` origin from configuration; anything else is a deployment error. */
@@ -91,6 +113,28 @@ async function rewriteShell(shell: string, meta: MetaValues): Promise<string> {
   });
   const rw = new HTMLRewriter();
   rw.on("head", canonicalLink(meta.url));
+  rw.on("head", {
+    element(el: Element) {
+      if (meta.isDemo) el.append('<meta name="robots" content="noindex">', { html: true });
+      else if (meta.jsonLd) el.append(jsonLdScript(meta.jsonLd), { html: true });
+    },
+  });
+  rw.on(SEL.root, {
+    element(el: Element) {
+      seen.set(SEL.root, (seen.get(SEL.root) ?? 0) + 1);
+      // Fixed tags are constants; every organizer value goes in as text (escaped by the rewriter) (S2).
+      el.append('<main class="ssr-event"><h1>', { html: true });
+      el.append(meta.page.heading);
+      el.append("</h1>", { html: true });
+      for (const line of [meta.page.dates, meta.page.place, meta.page.description]) {
+        if (line === null) continue;
+        el.append("<p>", { html: true });
+        el.append(line);
+        el.append("</p>", { html: true });
+      }
+      el.append("</main>", { html: true });
+    },
+  });
   rw.on(SEL.title, {
       element(el) {
         seen.set(SEL.title, (seen.get(SEL.title) ?? 0) + 1);
@@ -111,7 +155,7 @@ async function rewriteShell(shell: string, meta: MetaValues): Promise<string> {
   }
   const out = await rw.transform(new Response(shell)).text();
 
-  const expected: string[] = [SEL.title, SEL.description, SEL.ogUrl, SEL.ogTitle, SEL.ogDescription, SEL.twTitle, SEL.twDescription];
+  const expected: string[] = [SEL.root, SEL.title, SEL.description, SEL.ogUrl, SEL.ogTitle, SEL.ogDescription, SEL.twTitle, SEL.twDescription];
   if (meta.image) expected.push(SEL.ogImage, SEL.ogImageAlt, SEL.twImage, SEL.twImageAlt);
   for (const selector of expected) {
     if (seen.get(selector) !== 1) throw new Error(`shell placeholder ${selector} matched ${seen.get(selector) ?? 0} times`);
@@ -180,19 +224,28 @@ export async function handleEventPage(c: Context<{ Bindings: EventPageEnv; Varia
     const preview = await getEventPreview(new D1EventPreviewRepository(c.env.DB), slug.data);
     if (!preview) return goneResponse(shell);
 
+    const url = `${origin}/e/${slug.data}`;
+    const imageUrl = `${origin}${preview.imagePath}`;
     const meta: MetaValues = {
       title: preview.title,
       description: preview.description,
-      url: `${origin}/e/${slug.data}`,
-      image: preview.imagePath ? { url: `${origin}${preview.imagePath}`, alt: preview.imageAlt } : null,
+      url,
+      image: preview.imagePath ? { url: imageUrl, alt: preview.imageAlt } : null,
+      page: preview.page,
+      isDemo: preview.isDemo,
+      jsonLd: preview.isDemo ? null : buildEventJsonLd(preview, url, imageUrl),
     };
     const body = await rewriteShell(shell, meta);
     // Weak ETag over the shell as served plus the injected values: changes with a deploy or an edit.
     const etag = await etagOf(`${shell}\u0000${JSON.stringify(meta)}`);
     if (etagMatches(c.req.header("if-none-match"), etag)) {
-      return new Response(null, { status: 304, headers: htmlHeaders(REVALIDATE, etag) });
+      const notModified = new Response(null, { status: 304, headers: htmlHeaders(REVALIDATE, etag) });
+      if (meta.isDemo) notModified.headers.set("X-Robots-Tag", "noindex");
+      return notModified;
     }
-    return html(body, 200, REVALIDATE, etag);
+    const res = html(body, 200, REVALIDATE, etag);
+    if (meta.isDemo) res.headers.set("X-Robots-Tag", "noindex");
+    return res;
   } catch (err) {
     // R4: fail open with the unmodified shell (brand meta), never cached.
     logError(err);

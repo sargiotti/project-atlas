@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { toneOf } from "@atlas/contract";
-import { buildEventPreview, cleanText, countryName, formatDateRange } from "./event-preview";
+import { buildEventPreview, cleanText, countryName, formatDateRange, indexedDescription } from "./event-preview";
 
 describe("formatDateRange", () => {
   it.each([
@@ -10,6 +10,18 @@ describe("formatDateRange", () => {
     ["2026-12-30", "2027-01-02", "30 Dec 2026 – 2 Jan 2027"],
     ["2026-09-01", "2026-09-09", "1–9 Sep 2026"],
   ])("%s .. %s", (a, b, out) => expect(formatDateRange(a, b)).toBe(out));
+});
+
+describe("indexedDescription (slice 26, S5)", () => {
+  it("drops links, including ones split with invisible characters, and caps at 300", () => {
+    const zw = String.fromCharCode(0x200b);
+    expect(indexedDescription(`Join us https://evil.example/x or www.evil.example or ht${zw}tps://sneaky.example today`)).toBe("Join us or or today");
+    expect(Array.from(indexedDescription("a ".repeat(400))!)).toHaveLength(300);
+  });
+  it("is null when nothing readable is left", () => {
+    expect(indexedDescription("https://only.example")).toBeNull();
+    expect(indexedDescription(null)).toBeNull();
+  });
 });
 
 describe("buildEventPreview", () => {
@@ -22,10 +34,12 @@ describe("buildEventPreview", () => {
     city: "København",
     country: "DK",
     ogKey: null,
+    description: null,
+    isDemo: false,
   };
 
   it("builds title, description and alt", () => {
-    expect(buildEventPreview(base)).toEqual({
+    expect(buildEventPreview(base)).toMatchObject({
       title: "Havneløbet 2026",
       description: "10–22 Nov 2026 · København, Denmark",
       imagePath: `/tone-og/${toneOf("evt-1")}.jpg`,
