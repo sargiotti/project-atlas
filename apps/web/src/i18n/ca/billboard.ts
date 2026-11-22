@@ -19,7 +19,7 @@ export const bbCa: Record<keyof typeof bbEs, string> = {
   bbNone: "Encara no hi ha res a prop. Això és el que hi ha pel món.",
   bbNonePlace: "Encara no hi ha res a prop de {place}. Això és el que hi ha pel món.",
   bbCtaTitle: "Organitzes alguna cosa?",
-  bbCtaButton: "Afegeix el teu esdeveniment",
+  bbCtaButton: "Posa-ho al mapa. Gratis.",
   bbCtaFirst: "Encara no hi ha res. Sigues el primer!",
   bbError: "No hem pogut carregar la cartellera.",
   bbLoading: "Carregant la cartellera…",

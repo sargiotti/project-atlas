@@ -106,6 +106,7 @@ export default function Organizers() {
               <div className="org-htext">
                 <p className="org-eyebrow">{t("orgEyebrow")}</p>
                 <h1 id="org-h1">{t("orgH1")}</h1>
+                <p className="org-tagline">{t("orgTagline")}</p>
                 <p className="org-lead">{t("orgLead")}</p>
                 <div className="org-cta"><Cta /></div>
                 <p className="org-micro"><span>{t("orgMicro1")}</span><span>{t("orgMicro2")}</span></p>

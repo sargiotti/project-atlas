@@ -18,7 +18,7 @@ export const bbEs = {
   bbNone: "Nada cerca todavía. Esto es lo que hay en el mundo.",
   bbNonePlace: "Nada cerca de {place} todavía. Esto es lo que hay en el mundo.",
   bbCtaTitle: "¿Organizas algo?",
-  bbCtaButton: "Añade tu evento",
+  bbCtaButton: "Ponlo en el mapa. Gratis.",
   bbCtaFirst: "Todavía no hay nada. ¡Sé el primero!",
   bbError: "No pudimos cargar la cartelera.",
   bbLoading: "Cargando la cartelera…",
@@ -27,7 +27,7 @@ export const bbEs = {
 export const bbEsVos: Partial<Record<keyof typeof bbEs, string>> = {
   bbNearYou: "Cerca tuyo",
   bbCtaTitle: "¿Organizás algo?",
-  bbCtaButton: "Agregá tu evento",
+  bbCtaButton: "Ponelo en el mapa. Gratis.",
 };
 export const bbEn: Record<keyof typeof bbEs, string> = {
   bbTitle: "What's on",
@@ -46,8 +46,8 @@ export const bbEn: Record<keyof typeof bbEs, string> = {
   exShort: "Example",
   bbNone: "Nothing near you yet. Here's what's on around the world.",
   bbNonePlace: "Nothing near {place} yet. Here's what's on around the world.",
-  bbCtaTitle: "Organizing something?",
-  bbCtaButton: "Add your event",
+  bbCtaTitle: "Running an event?",
+  bbCtaButton: "Put it on the map. Free.",
   bbCtaFirst: "Nothing on yet. Be the first!",
   bbError: "We couldn't load the billboard.",
   bbLoading: "Loading the billboard…",
