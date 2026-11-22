@@ -1,9 +1,9 @@
-# Claude / agent configuration (local only)
+# Local tooling
 .claude/
 CLAUDE.md
 CLAUDE.local.md
 
-# Agent-written project docs (local only)
+# Local docs
 docs/
 
 # Dependencies and build output
@@ -29,7 +29,7 @@ apps/web/public/og/
 .DS_Store
 Thumbs.db
 
-# Design: only final approved assets are versioned (deliverables stay local)
+# Design: only final assets are versioned
 design/*
 !design/assets/
 
