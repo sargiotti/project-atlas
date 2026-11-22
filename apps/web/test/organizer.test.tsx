@@ -194,3 +194,60 @@ describe("use-case example links", () => {
     expect(screen.getAllByRole("link", { name: /See example/ })).toHaveLength(4);
   });
 });
+
+describe("organizer language URLs (slice 42)", () => {
+  const at = (path: string) => window.history.replaceState({}, "", path);
+  afterEach(() => {
+    at("/");
+    localStorage.clear();
+    vi.unstubAllGlobals();
+  });
+
+  it("an English URL renders English for a Spanish browser and does not store the language", () => {
+    at("/en/organizers");
+    vi.stubGlobal("navigator", { languages: ["es-ES"], language: "es-ES" });
+    render(
+      <I18nProvider>
+        <Organizers />
+      </I18nProvider>,
+    );
+    expect(document.documentElement.lang).toBe("en");
+    expect(document.title).toMatch(/Create your event/);
+    expect(localStorage.getItem("atlas.lang")).toBeNull();
+  });
+
+  it("tapping the Catalan flag goes to the Catalan URL and stores the choice", async () => {
+    at("/en/organizers");
+    const user = userEvent.setup();
+    render(
+      <I18nProvider>
+        <Organizers />
+      </I18nProvider>,
+    );
+    await user.click(screen.getByRole("button", { name: /English/ }));
+    await user.click(screen.getByRole("menuitemradio", { name: /Català/ }));
+    expect(window.location.pathname).toBe("/ca/organitzadors");
+    expect(localStorage.getItem("atlas.lang")).toBe("ca");
+    expect(document.documentElement.lang).toBe("ca");
+  });
+
+  it("/organizadores keeps the vos copy for an es-AR browser, other URLs never do", () => {
+    at("/organizadores");
+    vi.stubGlobal("navigator", { languages: ["es-AR"], language: "es-AR" });
+    const { unmount } = render(
+      <I18nProvider>
+        <Organizers />
+      </I18nProvider>,
+    );
+    const vosText = document.body.textContent;
+    unmount();
+    at("/en/organizers");
+    render(
+      <I18nProvider>
+        <Organizers />
+      </I18nProvider>,
+    );
+    expect(document.documentElement.lang).toBe("en");
+    expect(vosText).toMatch(/vos|tenés|pedí|podés/i);
+  });
+});

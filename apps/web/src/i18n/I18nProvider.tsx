@@ -4,6 +4,8 @@ import { fetchGeoLang, knownGeoLang, shouldAskGeo } from "./geoLang";
 import { MESSAGES, type Lang, type MessageKey } from "./messages";
 import { ES_VOS } from "./organizerMessages";
 import { prefersVos } from "./detect";
+import { organizerPathForLang, organizerRouteForPath } from "@atlas/contract";
+import { navigate, usePath } from "../lib/router";
 
 type Ctx = {
   lang: Lang;
@@ -20,8 +22,12 @@ export function I18nProvider({ children, initial, vos }: { children: ReactNode; 
   // Precedence: stored manual choice > Catalonia geo default (slice 21b) > browser language > Spanish.
   // The geo answer lives in memory only; just an explicit pick (setLang) writes atlas.lang.
   const [askGeo] = useState(() => loadStoredLang() === null && shouldAskGeo());
-  const [lang, setLangState] = useState<Lang>(() => (askGeo ? knownGeoLang() : null) ?? initial ?? initialLang());
+  const [storedLang, setLangState] = useState<Lang>(() => (askGeo ? knownGeoLang() : null) ?? initial ?? initialLang());
   const picked = useRef(false);
+  // Slice 42 (ADR 0017): on the four organizer URLs the URL decides the language (fixed route table, exact paths).
+  // Nothing is stored by landing there; leaving the page falls back to the usual precedence below.
+  const routeLang = organizerRouteForPath(usePath())?.lang ?? null;
+  const lang: Lang = routeLang ?? storedLang;
 
   useEffect(() => {
     if (!askGeo) return;
@@ -43,6 +49,8 @@ export function I18nProvider({ children, initial, vos }: { children: ReactNode; 
     picked.current = true;
     setLangState(l);
     storeLang(l);
+    // On the organizer page the flags move to that language's URL (constant paths from the route table).
+    if (organizerRouteForPath(window.location.pathname)) navigate(organizerPathForLang(l as any));
   }, []);
 
   const value = useMemo<Ctx>(

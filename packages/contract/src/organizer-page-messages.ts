@@ -71,7 +71,7 @@ export const orgPageEs = {
   orgFaq5A: "Sí. Los cambios se ven al instante y el QR sigue siendo el mismo, no hace falta reimprimir.",
   orgFree: "Gratis durante el piloto. Para tu público, siempre.",
   orgMetaDesc: "Crea el mapa interactivo de tu evento: escenarios, comida, baños y horarios en el móvil de tu público, sin app. Gratis durante el piloto.",
-  orgImageAlt: "Ilustración generada con IA de una plaza en fiesta y un celular con el mapa del evento",
+  orgImageAlt: "Ilustración generada con IA de una plaza en fiesta y un móvil con el mapa del evento",
 };
 
 export const orgPageEn = {
