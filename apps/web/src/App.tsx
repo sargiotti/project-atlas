@@ -1,3 +1,4 @@
+import { organizerRouteForPath } from "@atlas/contract";
 import { lazy, Suspense } from "react";
 import { I18nProvider } from "./i18n/I18nProvider";
 import { matchEventSlug, usePath } from "./lib/router";
@@ -23,7 +24,7 @@ export function Routes() {
   const slug = matchEventSlug(path);
   if (slug !== null) return <EventPage key={slug} slug={slug} />;
   if (path === "/" || path === "") return <Home />;
-  if (path === "/organizadores" || path === "/organizadores/") {
+  if (organizerRouteForPath(path)) {
     return (
       <Suspense fallback={null}>
         <Organizers />

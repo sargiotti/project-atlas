@@ -1,4 +1,5 @@
 import { useEffect, useMemo, type MouseEvent } from "react";
+import { ORGANIZER_FORM_ID } from "@atlas/contract";
 import LangSwitch from "../components/LangSwitch";
 import QrSvg from "../components/QrSvg";
 import { useI18n } from "../i18n/I18nProvider";
@@ -12,7 +13,7 @@ import { BenefitIcon, MapScreen, Phone, PinSymbol, SCENE_NAMES, Scenery, UC_CATS
 import OrganizerForm from "./organizers/OrganizerForm";
 import "./organizers/organizers.css";
 
-const FORM_ID = "pedi-tu-mapa"; // same anchor in every language
+const FORM_ID = ORGANIZER_FORM_ID; // same anchor in every language
 const DEMO_SLUG = "fiestas-la-alameda";
 const DEMO_EVENT = { name: "Fiestas de La Alameda", startDate: "2026-12-04", endDate: "2026-12-07", city: "Valencia" };
 const CONTACT = "contact@leyenda.ink";

@@ -45,6 +45,10 @@ describe("/sitemap.xml", () => {
     expect(xml).toContain("<loc>https://leyenda.ink/</loc>");
     expect(xml).toContain("<loc>https://leyenda.ink/privacy</loc>");
     expect(xml).toContain("<loc>https://leyenda.ink/terms</loc>");
+    expect(xml).toContain("<loc>https://leyenda.ink/organizadores</loc>");
+    expect(xml).toContain("<loc>https://leyenda.ink/en/organizers</loc>");
+    expect(xml).toContain("<loc>https://leyenda.ink/ca/organitzadors</loc>");
+    expect(xml).not.toContain("arrangorer");
     expect(xml).toContain("<loc>https://leyenda.ink/e/ev-published</loc><lastmod>2025-11-18</lastmod>");
     for (const s of ["draft", "in-review", "rejected", "unpublished-admin"]) expect(xml).not.toContain(`/e/ev-${s}<`);
     expect(xml).not.toMatch(/\/(panel|api|media)/);
@@ -69,7 +73,7 @@ describe("SPA routes and 404", () => {
       "/privacy": ["<title>Privacy · leyenda.ink</title>", '<meta property="og:url" content="https://leyenda.ink/privacy"'],
       "/terms": ["<title>Terms of use · leyenda.ink</title>", '<meta property="og:url" content="https://leyenda.ink/terms"'],
       "/organizadores": [
-        "<title>Crea el mapa interactivo de tu evento · leyenda.ink</title>",
+        "<title>Crea el mapa de tu evento · leyenda.ink</title>",
         '<meta property="og:image" content="https://leyenda.ink/organizers/og.jpg"',
       ],
     };
