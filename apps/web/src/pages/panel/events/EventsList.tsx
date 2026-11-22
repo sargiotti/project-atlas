@@ -102,7 +102,7 @@ export default function EventsList() {
             <li key={k} className={k} aria-current={k === "now" ? "step" : undefined}>
               <span className="node" aria-hidden="true">{i + 1}</span>
               <span className="txt"><b>{t(`peStep${i + 1}` as any)}</b><span className="sub">{t(`peStepSub${i + 1}` as any)}</span></span>
-              <span className="state">{t(k === "now" ? "peStateNow" : k === "next" ? "peStateNext" : "peStateLast")}</span>
+              <span className="pe-state">{t(k === "now" ? "peStateNow" : k === "next" ? "peStateNext" : "peStateLast")}</span>
             </li>
           ))}
         </ol>

@@ -122,7 +122,7 @@ export default function SessionsPanel({
             <span className={"pill " + (running ? "now" : "next")}>{running ? t("sNow") : t("sNext")}</span>
             {heroSub && <small>{heroSub}</small>}
           </div>
-          <div className="hero-title">{hero.title}</div>
+          <div className="ses-title">{hero.title}</div>
           <div className="hero-meta">
             {clock(hero.startMs)} – {clock(hero.endMs)}
           </div>
