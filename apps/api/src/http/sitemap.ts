@@ -1,5 +1,5 @@
 /**
- * `GET|HEAD /sitemap.xml` (slice 25). Home, /privacy, /organizadores and every published event (demo events excluded: slice 26).
+ * `GET|HEAD /sitemap.xml` (slice 25). Home, /privacy, /terms, the indexable organizer language URLs (slice 42) and every published event (demo events excluded: slice 26).
  *
  * Every URL is PUBLIC_ORIGIN + a fixed path or `/e/<slug>`; Host and X-Forwarded-Host are never read. Visibility
  * comes from the shared publishedEvent() predicate, the same switch as the public event page, so drafts, events in
@@ -7,7 +7,7 @@
  * edge for an hour keyed on the canonical URL.
  */
 import type { Context } from "hono";
-import { SLUG_REGEX } from "@atlas/contract";
+import { ORGANIZER_ROUTES, SLUG_REGEX } from "@atlas/contract";
 import { publishedEvent } from "../adapters/sql";
 import { parsePublicOrigin } from "./event-page";
 import { errorResponse } from "./errors";
@@ -53,7 +53,8 @@ export async function handleSitemap(c: Context<AppEnv>): Promise<Response> {
     `SELECT slug, updated_at FROM events WHERE ${publishedEvent()} AND owner_id IS NOT NULL ORDER BY start_date, slug LIMIT ${MAX_URLS}`,
   ).all<{ slug: string; updated_at: number }>();
 
-  const urls = [entry(`${origin}/`), entry(`${origin}/privacy`), entry(`${origin}/terms`), entry(`${origin}/organizadores`)];
+  const urls = [entry(`${origin}/`), entry(`${origin}/privacy`), entry(`${origin}/terms`)];
+  for (const r of ORGANIZER_ROUTES) if (r.indexable) urls.push(entry(`${origin}${r.path}`));
   for (const row of results) {
     if (!SLUG_REGEX.test(row.slug)) continue;
     urls.push(entry(`${origin}/e/${row.slug}`, Number.isFinite(row.updated_at) ? row.updated_at : undefined));
