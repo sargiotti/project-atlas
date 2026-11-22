@@ -135,7 +135,12 @@
 .org-ucb h3 { font-size: 19px; }
 .org-ucb ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .org-ucb li { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 3px 10px 3px 4px; font-size: 13.5px; font-weight: 600; }
+.org-uc.linked { position: relative; }
 .org-uc-link { font-weight: 700; }
+.org-uc-link::after { content: ""; position: absolute; inset: 0; border-radius: 20px; }
+.org-uc-link:focus-visible { outline: none; }
+.org-uc-link:focus-visible::after { outline: 3px solid var(--accent); outline-offset: -3px; }
+.org-uc.linked:hover { border-color: var(--accent); }
 .org-hint { margin-top: 10px; font-size: 14px; color: var(--ink-2); }
 
 /* FAQ */

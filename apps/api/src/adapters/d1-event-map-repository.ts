@@ -22,6 +22,7 @@ interface MapRow extends CoverJoinRow {
   description: string | null;
   website: string | null;
   venue_address: string | null;
+  owner_id: string | null;
   map_id: string;
   theme: "light" | "dark";
   width: number;
@@ -43,6 +44,7 @@ interface UploadedMapRow extends CoverJoinRow {
   description: string | null;
   website: string | null;
   venue_address: string | null;
+  owner_id: string | null;
   event_id: string;
   theme: "light" | "dark";
   format: "webp" | "jpeg";
@@ -118,7 +120,7 @@ export class D1EventMapRepository implements EventMapRepository {
       this.db
         .prepare(
           `SELECT e.slug, e.name, e.start_date, e.end_date, e.language, e.time_zone, e.day_start, e.id AS event_id,
-                  e.city, e.country, e.description, e.website, e.venue_address,
+                  e.city, e.country, e.description, e.website, e.venue_address, e.owner_id,
                   m.id AS map_id, m.theme, m.width, m.height, m.image_key, m.image_format, ${COVER_JOIN_COLUMNS}
            FROM event_maps m JOIN events e ON e.id = m.event_id LEFT JOIN event_covers c ON c.event_id = e.id
            WHERE m.id = ${FIRST_MAP_ID} AND ${publishedEvent("e")}`,
@@ -142,7 +144,7 @@ export class D1EventMapRepository implements EventMapRepository {
       this.db
         .prepare(
           `SELECT e.slug, e.name, e.start_date, e.end_date, e.language, e.time_zone, e.day_start, e.id AS event_id,
-                  e.city, e.country, e.description, e.website, e.venue_address,
+                  e.city, e.country, e.description, e.website, e.venue_address, e.owner_id,
                   m.theme, m.format, m.full_key, m.full_width, m.full_height, m.small_key, m.small_width, ${COVER_JOIN_COLUMNS}
            FROM events e JOIN event_map_images m ON m.event_id = e.id LEFT JOIN event_covers c ON c.event_id = e.id
            WHERE e.slug = ?1 AND ${publishedEvent("e")}`,
@@ -180,6 +182,7 @@ export class D1EventMapRepository implements EventMapRepository {
           language: up.language,
           timeZone: up.time_zone,
           dayStart: up.day_start,
+          isDemo: up.owner_id === null,
           ...aboutOf(up, up.event_id),
         },
         map: {
@@ -210,6 +213,7 @@ export class D1EventMapRepository implements EventMapRepository {
         language: row.language,
         timeZone: row.time_zone,
         dayStart: row.day_start,
+        isDemo: row.owner_id === null,
         ...aboutOf(row, row.event_id),
       },
       map: {

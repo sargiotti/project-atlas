@@ -180,3 +180,17 @@ describe("admin requests list", () => {
     expect(screen.queryByRole("button", { name: "Load more" })).toBeNull();
   });
 });
+
+describe("use-case example links", () => {
+  it("links four cards to their example event and leaves the others without a link", () => {
+    page(false, "en");
+    const href = (name: string) => document.querySelector(`[data-usecase="${name}"] a`)?.getAttribute("href") ?? null;
+    expect(href("fiestas")).toBe("/e/fiestas-la-alameda");
+    expect(href("musica")).toBe("/e/nightfall-meadows");
+    expect(href("carrera")).toBe("/e/havnelobet");
+    expect(href("mercado")).toBe("/e/mercado-medieval-toledo");
+    expect(href("congreso")).toBeNull();
+    expect(href("escuela")).toBeNull();
+    expect(screen.getAllByRole("link", { name: /See example/ })).toHaveLength(4);
+  });
+});

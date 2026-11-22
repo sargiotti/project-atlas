@@ -15,6 +15,7 @@ export const bbCa: Record<keyof typeof bbEs, string> = {
   bbNext: "Més esdeveniments",
   bbNearYou: "A prop teu",
   bbExample: "Esdeveniment d'exemple",
+  exShort: "Exemple",
   bbNone: "Encara no hi ha res a prop. Això és el que hi ha pel món.",
   bbNonePlace: "Encara no hi ha res a prop de {place}. Això és el que hi ha pel món.",
   bbCtaTitle: "Organitzes alguna cosa?",

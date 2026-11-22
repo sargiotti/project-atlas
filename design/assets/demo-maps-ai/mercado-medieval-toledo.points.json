@@ -1,0 +1,237 @@
+{
+  "event": {
+    "slug": "mercado-medieval-toledo",
+    "name": "Mercado Medieval de Toledo 2026",
+    "dates": {
+      "start": "2026-12-11",
+      "end": "2026-12-13"
+    },
+    "city": "Toledo",
+    "latitude": 39.86,
+    "longitude": -4.02,
+    "country": "ES",
+    "cover": {
+      "width": 960,
+      "height": 640
+    },
+    "language": "es",
+    "mapTheme": "light",
+    "timeZone": "Europe/Madrid",
+    "dayStart": "06:00"
+  },
+  "map": {
+    "file": "mercado-medieval-toledo.webp",
+    "width": 1104,
+    "height": 1472
+  },
+  "points": [
+    {
+      "id": "puerta-vieja",
+      "name": "Puerta Vieja de la Muralla",
+      "category": "entrance-exit",
+      "description": "Entrada principal al mercado por el arco de la muralla. Desde aquí sale el pasacalles de apertura el viernes a las 18:00.",
+      "x": 0.5236,
+      "y": 0.8492
+    },
+    {
+      "id": "catedral",
+      "name": "Catedral",
+      "category": "landmark",
+      "description": "Visitas guiadas al templo durante el mercado, sábado y domingo a las 11:00. Plazas limitadas: apúntate en el punto de información.",
+      "x": 0.5888,
+      "y": 0.2242
+    },
+    {
+      "id": "claustro-oficios",
+      "name": "Claustro de los Oficios",
+      "category": "landmark",
+      "description": "Talleres de oficios en el jardín del claustro: caligrafía, forja, cerámica y escudos para niños. Material incluido.",
+      "x": 0.4121,
+      "y": 0.1664
+    },
+    {
+      "id": "palenque",
+      "name": "Palenque del Torneo",
+      "category": "stage",
+      "description": "Campo de arena con gradas de madera. Justas a caballo, exhibiciones de cetrería y espectáculo de fuego.",
+      "x": 0.2627,
+      "y": 0.2989
+    },
+    {
+      "id": "escenario-plaza",
+      "name": "Escenario de la Plaza",
+      "category": "stage",
+      "description": "Escenario circular bajo el toldo, junto al jardín. Música medieval, danzas, títeres y el pregón de apertura.",
+      "x": 0.7808,
+      "y": 0.4755
+    },
+    {
+      "id": "calle-artesanos",
+      "name": "Calle de los Artesanos",
+      "category": "merch",
+      "description": "Más de 40 puestos de cuero, cerámica, jabones, joyería, madera tallada y telas tejidas a mano.",
+      "x": 0.2989,
+      "y": 0.4959
+    },
+    {
+      "id": "meson-zoco",
+      "name": "Mesón del Zoco",
+      "category": "food",
+      "description": "Asados a la brasa, migas, pan de horno de leña, quesos manchegos y mazapán. Mesas corridas para comer y barra con refrescos.",
+      "x": 0.2717,
+      "y": 0.7541
+    },
+    {
+      "id": "informacion",
+      "name": "Punto de información",
+      "category": "info",
+      "description": "Programa, inscripciones a talleres y visitas, objetos perdidos y niños extraviados. Abierto en todo el horario del mercado.",
+      "x": 0.2944,
+      "y": 0.8458
+    },
+    {
+      "id": "aseos",
+      "name": "Aseos",
+      "category": "toilets",
+      "description": "Aseos junto a la muralla, uno de ellos adaptado. Hay cambiador para bebés.",
+      "x": 0.6703,
+      "y": 0.6929
+    },
+    {
+      "id": "puesto-sanitario",
+      "name": "Puesto sanitario",
+      "category": "first-aid",
+      "description": "Voluntarios sanitarios en la carpa blanca, junto al escenario, en todo el horario del mercado. En una urgencia, llama al 112.",
+      "x": 0.7473,
+      "y": 0.574
+    }
+  ],
+  "sessions": [
+    {
+      "id": "vie-pasacalles",
+      "point": "escenario-plaza",
+      "title": "Pasacalles de apertura",
+      "start": "2026-12-11T18:00",
+      "end": "2026-12-11T18:45",
+      "description": "Gaiteros, tambores y zancudos salen de la Puerta Vieja y llegan a la plaza."
+    },
+    {
+      "id": "vie-pregon",
+      "point": "escenario-plaza",
+      "title": "Pregón y apertura del mercado",
+      "start": "2026-12-11T18:45",
+      "end": "2026-12-11T19:15"
+    },
+    {
+      "id": "vie-cetreria",
+      "point": "palenque",
+      "title": "Exhibición de cetrería",
+      "start": "2026-12-11T19:30",
+      "end": "2026-12-11T20:15",
+      "description": "Vuelos de halcones, águilas y búhos sobre el palenque."
+    },
+    {
+      "id": "vie-musica",
+      "point": "escenario-plaza",
+      "title": "Música sefardí y andalusí",
+      "start": "2026-12-11T21:00",
+      "end": "2026-12-11T22:30"
+    },
+    {
+      "id": "sab-visita",
+      "point": "catedral",
+      "title": "Visita guiada a la catedral",
+      "start": "2026-12-12T11:00",
+      "end": "2026-12-12T12:00",
+      "description": "Plazas limitadas. Apúntate en el punto de información."
+    },
+    {
+      "id": "sab-caligrafia",
+      "point": "claustro-oficios",
+      "title": "Taller de caligrafía con pluma",
+      "start": "2026-12-12T11:00",
+      "end": "2026-12-12T13:00"
+    },
+    {
+      "id": "sab-cetreria",
+      "point": "palenque",
+      "title": "Exhibición de cetrería",
+      "start": "2026-12-12T12:30",
+      "end": "2026-12-12T13:15"
+    },
+    {
+      "id": "sab-forja",
+      "point": "claustro-oficios",
+      "title": "Taller de forja y cerámica",
+      "start": "2026-12-12T17:00",
+      "end": "2026-12-12T19:00",
+      "description": "El herrero y la alfarera enseñan su oficio. A partir de 10 años."
+    },
+    {
+      "id": "sab-justas",
+      "point": "palenque",
+      "title": "Torneo de justas a caballo",
+      "start": "2026-12-12T18:00",
+      "end": "2026-12-12T19:00",
+      "description": "Cuatro caballeros compiten en el palenque. Llega con tiempo para coger sitio en las gradas."
+    },
+    {
+      "id": "sab-danzas",
+      "point": "escenario-plaza",
+      "title": "Danzas medievales",
+      "start": "2026-12-12T20:00",
+      "end": "2026-12-12T21:00"
+    },
+    {
+      "id": "sab-fuego",
+      "point": "palenque",
+      "title": "Espectáculo de fuego y juglares",
+      "start": "2026-12-12T22:00",
+      "end": "2026-12-12T22:45"
+    },
+    {
+      "id": "dom-visita",
+      "point": "catedral",
+      "title": "Visita guiada a la catedral",
+      "start": "2026-12-13T11:00",
+      "end": "2026-12-13T12:00",
+      "description": "Plazas limitadas. Apúntate en el punto de información."
+    },
+    {
+      "id": "dom-escudos",
+      "point": "claustro-oficios",
+      "title": "Taller infantil de escudos",
+      "start": "2026-12-13T11:00",
+      "end": "2026-12-13T12:30",
+      "description": "Para niños de 4 a 10 años."
+    },
+    {
+      "id": "dom-cetreria",
+      "point": "palenque",
+      "title": "Exhibición de cetrería",
+      "start": "2026-12-13T12:00",
+      "end": "2026-12-13T12:45"
+    },
+    {
+      "id": "dom-titeres",
+      "point": "escenario-plaza",
+      "title": "Títeres: el dragón de la muralla",
+      "start": "2026-12-13T13:00",
+      "end": "2026-12-13T14:00"
+    },
+    {
+      "id": "dom-torneo",
+      "point": "palenque",
+      "title": "Gran torneo final",
+      "start": "2026-12-13T17:30",
+      "end": "2026-12-13T18:30"
+    },
+    {
+      "id": "dom-despedida",
+      "point": "escenario-plaza",
+      "title": "Pasacalles de despedida",
+      "start": "2026-12-13T19:00",
+      "end": "2026-12-13T19:45"
+    }
+  ]
+}

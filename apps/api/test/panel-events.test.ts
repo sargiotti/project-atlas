@@ -324,7 +324,7 @@ describe("venue address (slice 08d)", () => {
     await publish(ev.id);
     const { event } = await bundleOf(ev.slug);
     expect(event).toMatchObject({ city: "Galway", country: "IE", description: valid.description, website: "https://example.com/", venueAddress: "Strandvejen 1" });
-    expect(Object.keys(event).sort()).toEqual(["city", "country", "cover", "dayStart", "description", "endDate", "language", "name", "slug", "startDate", "timeZone", "tone", "venueAddress", "website"]);
+    expect(Object.keys(event).sort()).toEqual(["city", "country", "cover", "dayStart", "description", "endDate", "isDemo", "language", "name", "slug", "startDate", "timeZone", "tone", "venueAddress", "website"]);
 
     const before = (await env.DB.prepare("SELECT updated_at AS u FROM events WHERE id = ?1").bind(ev.id).first<{ u: number }>())!.u;
     await new Promise((r) => setTimeout(r, 5));

@@ -27,6 +27,7 @@ describe("GET /api/v1/events/:slug/map-bundle", () => {
       country: "IE",
       cover: null,
       tone: toneOf("evt_tiny-fest"),
+      isDemo: true, // seeded: owner_id IS NULL
     });
     expect(bundle.map.theme).toBe("dark");
     expect(bundle.map.image.variants).toEqual([
@@ -57,6 +58,22 @@ describe("GET /api/v1/events/:slug/map-bundle", () => {
       },
       { id: "tiny-fest-s-sat-burgers", pointId: "tiny-fest-burgers", title: "Burger eating contest", start: "2026-07-11T12:00:00Z", end: "2026-07-11T13:00:00Z" },
     ]);
+  });
+
+  it("isDemo is false for an organizer's event (owner_id set)", async () => {
+    await env.DB.batch([
+      env.DB.prepare(
+        "INSERT OR IGNORE INTO organizers (id, google_sub, email, display_name, role, created_at) VALUES ('org_bundle', 'sub-bundle', 'bundle@example.test', 'Bundle', 'organizer', 0)",
+      ),
+      env.DB.prepare(
+        "INSERT INTO events (id, slug, name, start_date, end_date, language, publish_state, owner_id, created_at, updated_at) VALUES ('evt_owned', 'owned-fest', 'Owned', '2026-08-01', '2026-08-02', 'en', 'published', 'org_bundle', 0, 0)",
+      ),
+      env.DB.prepare(
+        "INSERT INTO event_maps (id, event_id, position, width, height, theme, image_key, image_format, created_at, updated_at) VALUES ('map_owned', 'evt_owned', 1, 10, 10, 'light', 'owned.aaaaaaaa.svg', 'svg', 0, 0)",
+      ),
+    ]);
+    const bundle = mapBundleSchema.parse(await (await get("/api/v1/events/owned-fest/map-bundle")).json());
+    expect(bundle.event.isDemo).toBe(false);
   });
 
   it("serves an empty sessions list for an event without a programme", async () => {
