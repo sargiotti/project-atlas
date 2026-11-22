@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { AdminReviewResponse } from "@atlas/contract";
 import { adminApprove, adminReject, adminReview, adminUnpublish, type FailCode } from "../../../api/publication";
 import { useI18n } from "../../../i18n/I18nProvider";
@@ -39,6 +39,30 @@ export default function AdminReview({ id }: { id: string }) {
       .catch(() => {});
     return () => ctrl.abort();
   }, [id, attempt]);
+
+  const rvRef = useRef<HTMLDivElement>(null);
+  const loaded = typeof state === "object";
+  // Below 1024px the decision bar is sticky at the bottom: size the stage to the room left above it (min 280px).
+  useLayoutEffect(() => {
+    const root = rvRef.current;
+    const stage = root?.querySelector<HTMLElement>(".ad-stage");
+    const bar = root?.querySelector<HTMLElement>(".ad-bar");
+    if (!root || !stage || !bar) return;
+    const mq = window.matchMedia("(max-width: 1023.98px)");
+    const fit = () => {
+      if (!mq.matches) return root.style.removeProperty("--ad-stage-h");
+      const top = stage.getBoundingClientRect().top + window.scrollY;
+      const gap = parseFloat(getComputedStyle(stage).marginBottom) || 0;
+      const h = document.documentElement.clientHeight - top - bar.offsetHeight - gap;
+      root.style.setProperty("--ad-stage-h", `${Math.max(280, Math.floor(h))}px`);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(bar);
+    ro.observe(document.documentElement);
+    mq.addEventListener("change", fit);
+    return () => { ro.disconnect(); mq.removeEventListener("change", fit); };
+  }, [loaded, lang, note, rv0(state)]);
 
   if (state === "loading") return <Loading />;
   if (state === "error") return <LoadError onRetry={() => setAttempt((n) => n + 1)} />;
@@ -100,7 +124,7 @@ export default function AdminReview({ id }: { id: string }) {
           <Ic n="left" size={18} />{rv.status === "published" ? t("adBackPublished") : t("adBackPending")}
         </Link>
       </div>
-      <div className="ad-rv">
+      <div className="ad-rv" ref={rvRef}>
         <div className="ad-stage">
           <PreviewStage data={data} />
         </div>
@@ -138,6 +162,11 @@ export default function AdminReview({ id }: { id: string }) {
       )}
     </div>
   );
+}
+
+/** Re-fit when the event under review (and so the bar contents) changes. */
+function rv0(state: unknown) {
+  return typeof state === "object" && state ? (state as AdminReviewResponse).review.status : "";
 }
 
 function NoteBox({ note, onReload }: { note: Exclude<Note, null>; onReload: () => void }) {
