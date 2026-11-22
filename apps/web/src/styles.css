@@ -444,18 +444,24 @@ svg.ln { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: roun
 
 /* ---- home: event cards (design deliverable 04, layout B) ---------------------------------- */
 .app.wide .shell-header, .app.wide .shell-main { max-width: 960px; }
-.home-hero { display: flex; gap: var(--s-3); align-items: flex-start; margin: 0 0 var(--s-5); }
+/* Slice 47. Two deliberate exceptions to the spacing/em rules:
+   - desktop pin is a fixed 30px (0.91em of 33px), not 0.76em: keeps whole 3px cells so it stays crisp on 1x screens;
+   - the -0.03em headline margin is an optical correction (aligns the "F" ink with "What's on"), not spacing. */
+.home-hero { display: flex; gap: var(--s-3); align-items: center; margin: 0 0 var(--s-6); }
 .home-hero-text { flex: 1; min-width: 0; }
-.h-tagline { font: 800 1.75rem/1.05 var(--display); letter-spacing: -0.03em; margin: 0 0 var(--s-2); }
-.home-hero-value { margin: 0; font-size: 15px; line-height: 1.4; color: var(--ink-2); max-width: 46ch; }
-.home-hero-lead { font-weight: 700; color: var(--ink); }
-.home-hero-tile { flex: none; display: block; width: 84px; height: 84px; border-radius: 18px; border: 1px solid var(--line); }
-@media (max-width: 359px) { .h-tagline { font-size: 1.5rem; } }
+.h-tagline { font: 800 2rem/1 var(--display); letter-spacing: -0.03em; margin: 0 0 0 -0.03em; }
+.home-hero-tile { flex: none; display: block; width: 56px; height: 56px; border-radius: 14px; border: 1px solid var(--line); }
+@media (max-width: 359px) { .h-tagline { font-size: 1.75rem; } }
 @media (min-width: 640px) {
-  .home-hero { gap: var(--s-8); align-items: center; }
-  .h-tagline { font-size: 3rem; line-height: 1.02; margin-bottom: var(--s-3); }
-  .home-hero-value { font-size: 18px; }
-  .home-hero-tile { width: 128px; height: 128px; border-radius: 24px; }
+  .home-hero { gap: var(--s-8); margin-bottom: var(--s-8); }
+  .h-tagline { font-size: 3.5rem; }
+  .home-hero-tile { width: 96px; height: 96px; border-radius: 20px; }
+}
+@media (min-width: 1024px) {
+  .shell-header,
+  .app.wide .shell-header { max-width: none; padding: var(--s-5) var(--s-8) var(--s-2); }
+  .shell-header .wordmark { font-size: 33px; }
+  .shell-header .wordmark .wm-pin { width: 30px; height: 30px; }
 }
 @media (forced-colors: active) { .home-hero-tile { display: none; } }
 .h-tagline-em { color: var(--em); text-transform: uppercase; }

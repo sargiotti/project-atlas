@@ -14,8 +14,6 @@ export const mainCa = {
   ended: "Finalitzat",
   loadingEvents: "Carregant esdeveniments…",
   emptyTitle: "Encara no hi ha esdeveniments",
-  homeValueLead: "Menys voltes, més festa.",
-  homeValue: "Escenaris, menjar i lavabos al mapa del teu esdeveniment.",
   emptyText: "Quan un esdeveniment publiqui el seu mapa, apareixerà aquí.",
   errorTitle: "No hem pogut carregar els esdeveniments",
   errorText: "Revisa la connexió i torna-ho a provar.",

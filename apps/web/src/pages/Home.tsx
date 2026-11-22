@@ -150,7 +150,6 @@ export default function Home() {
       <div className="home-hero">
         <div className="home-hero-text">
           <h1 className="h-tagline" lang={lang === "en" ? undefined : "en"}>Find <span className="h-tagline-em">your</span> way</h1>
-          <p className="home-hero-value"><strong className="home-hero-lead">{t("homeValueLead")}</strong> {t("homeValue")}</p>
         </div>
         <HomeTrailTile className="home-hero-tile" />
       </div>
