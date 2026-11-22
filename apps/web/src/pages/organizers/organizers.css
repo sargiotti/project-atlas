@@ -10,7 +10,7 @@
 .org *, .org *::before, .org *::after { box-sizing: border-box; }
 .org .px { display: inline-block; }
 .org h1, .org h2, .org h3 { font-family: var(--display); font-weight: 800; letter-spacing: -0.025em; line-height: 1.06; text-wrap: balance; }
-.org p { margin: 0; }
+:where(.org) p { margin: 0; }
 .org-w { max-width: calc(var(--maxw) + 2 * var(--pad)); margin: 0 auto; padding: 0 var(--pad); }
 .org [id] { scroll-margin-top: 88px; }
 
@@ -45,10 +45,10 @@
 }
 .org-htext { position: relative; z-index: 2; margin-top: -34px; }
 .org-eyebrow { font: 800 12.5px var(--ui); letter-spacing: 1.4px; text-transform: uppercase; color: var(--sun); }
-.org-top h1 { font-size: 40px; color: var(--ink); margin-top: 10px; }
-.org-lead { font-size: 17px; color: var(--on-night); margin-top: 10px; max-width: 560px; }
-.org-cta { margin-top: 20px; }
-.org-micro { font-size: 14px; color: var(--on-night); margin-top: 10px; display: flex; gap: 6px 14px; flex-wrap: wrap; }
+.org-top h1 { font-size: 40px; color: var(--ink); margin-top: var(--s-2); }
+.org-lead { font-size: 17px; color: var(--on-night); margin-top: var(--s-3); max-width: 560px; }
+.org-cta { margin-top: var(--s-6); }
+.org-micro { font-size: 14px; color: var(--on-night); margin-top: var(--s-4); display: flex; gap: 6px 14px; flex-wrap: wrap; }
 .org-micro span::before { content: "✓ "; font-weight: 800; color: var(--mint); }
 
 /* tangerine "no app" band */
@@ -65,7 +65,7 @@
 .org-s-tight { padding-top: 0; }
 .org-shead { margin-bottom: var(--head); }
 .org-h2 { font-size: 30px; }
-.org-lead2 { font-size: 17px; color: var(--ink-3); margin-top: 10px; max-width: 560px; }
+.org-lead2 { font-size: 17px; color: var(--ink-3); margin-top: var(--s-3); max-width: 560px; }
 .org-lead2 a { color: inherit; font-weight: 700; text-decoration-color: var(--tan); text-decoration-thickness: 2px; text-underline-offset: 3px; }
 
 /* rails: sideways on mobile, grids from 720 */
@@ -141,7 +141,7 @@
 .org-uc-link:focus-visible { outline: none; }
 .org-uc-link:focus-visible::after { outline: 3px solid var(--accent); outline-offset: -3px; }
 .org-uc.linked:hover { border-color: var(--accent); }
-.org-hint { margin-top: 10px; font-size: 14px; color: var(--ink-2); }
+.org-hint { margin-top: var(--s-3); font-size: 14px; color: var(--ink-2); }
 
 /* FAQ */
 .org-faq details { border-bottom: 1px solid var(--line); padding: 14px 0; }
@@ -186,7 +186,7 @@
 /* footer */
 .org-ftr { background: var(--night); color: var(--ink); padding: 34px 0 40px; text-align: center; }
 .org-ftr .wordmark { font-size: 30px; }
-.org-free { font: 800 34px var(--display); color: var(--sun); margin-top: 12px; }
+.org-free { font: 800 34px var(--display); color: var(--sun); margin-top: var(--s-3); }
 .org-links { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; font-size: 14px; color: var(--on-night); margin-top: 12px; }
 .org-links a { color: inherit; padding: 8px 0; }
 
@@ -217,10 +217,10 @@
   .org-after { display: grid; list-style: none; padding: 0; margin: 8px 0 0; gap: 12px; }
   .org-after li { display: flex; gap: 12px; align-items: center; font-size: 16px; }
   .org-after b { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--ink); color: var(--bg); font-family: var(--display); }
-  .org-mailalt { display: block; margin-top: 28px; padding-top: 20px; border-top: 1px solid #D6CDBE; color: var(--ink-3); font-size: 15.5px; max-width: 420px; }
+  .org-mailalt { display: block; margin-top: var(--s-8); padding-top: 20px; border-top: 1px solid #D6CDBE; color: var(--ink-3); font-size: 15.5px; max-width: 420px; }
   .org-mailalt a { font-weight: 700; color: inherit; text-decoration-color: var(--tan); text-decoration-thickness: 2px; text-underline-offset: 3px; }
   .org-fcard { background: var(--surface); border-radius: 22px; padding: 28px; box-shadow: 0 1px 0 var(--line), 0 14px 36px rgba(30, 35, 64, 0.1); max-width: 640px; margin-top: 28px; }
-  .org-row2 { grid-template-columns: 1fr 1fr; }
+  .org-row2 { grid-template-columns: 1fr 1fr; align-items: end; }
 }
 @media (max-width: 719.98px) {
   .org-fcard { padding: 0; }
