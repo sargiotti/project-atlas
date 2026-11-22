@@ -138,7 +138,7 @@ describe("Spanish variant", () => {
         <Organizers />
       </I18nProvider>,
     );
-    expect(screen.getAllByText("Pedí tu mapa").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Creá el mapa de tu evento").length).toBeGreaterThan(0);
     vi.restoreAllMocks();
   });
 });

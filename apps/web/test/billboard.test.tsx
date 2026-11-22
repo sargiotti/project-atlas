@@ -70,8 +70,8 @@ describe("home billboard", () => {
     expect(within(nav).getAllByRole("button").map((b) => b.textContent)).toEqual(["Now 1", "This weekend 2", "Coming up 1"]);
 
     const cta = within(rail()).getAllByRole("link").at(-1)!;
-    expect(cta).toHaveTextContent("Organizing something?");
-    expect(cta).toHaveTextContent("Add your event");
+    expect(cta).toHaveTextContent("Running an event?");
+    expect(cta).toHaveTextContent("Put it on the map. Free.");
     // Nearby event: the accessible name carries "Near you"; and since one is near, there is no "nothing near" line.
     expect(screen.getByRole("link", { name: /Name run-now.*Near you/ })).toBeInTheDocument();
     expect(screen.queryByText(/Nothing near you yet/)).not.toBeInTheDocument();
@@ -89,7 +89,7 @@ describe("home billboard", () => {
 
   it("with zero events shows the CTA card alone (no trail), and says when nothing is near", async () => {
     openHome(() => json({ windows: [] }));
-    const cta = await screen.findByRole("link", { name: /Add your event/ });
+    const cta = await screen.findByRole("link", { name: /Put it on the map. Free./ });
     expect(cta).toHaveTextContent("Nothing on yet. Be the first!");
     expect(cta).toHaveAttribute("href", "/organizadores");
     expect(within(rail()).getAllByRole("link")).toHaveLength(1);
