@@ -105,6 +105,17 @@ function EventView({ bundle, imageUrl, onImageError }: { bundle: MapBundle; imag
     };
   }, [event.name, t]);
 
+  // Panes below the top bar read its real height (it grows on phones when the title wraps).
+  const pageRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const page = pageRef.current;
+    const bar = page?.querySelector("header.topbar");
+    if (!page || !bar || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => page.style.setProperty("--topbar-h", `${bar.getBoundingClientRect().height}px`));
+    ro.observe(bar);
+    return () => ro.disconnect();
+  }, []);
+
   const categoryLabel = useCallback((c: string) => t(`cat_${c}` as any), [t]);
 
   const showView = (v: "map" | "list" | "schedule") => {
@@ -137,7 +148,7 @@ function EventView({ bundle, imageUrl, onImageError }: { bundle: MapBundle; imag
   };
 
   return (
-    <div className={`app event-page v-${view}${selected && view !== "list" ? " sheet-open" : ""}`} data-theme={map.theme}>
+    <div ref={pageRef} className={`app event-page v-${view}${selected && view !== "list" ? " sheet-open" : ""}`} data-theme={map.theme}>
       <div className="stage" aria-hidden={shareOpen || undefined}>
         <div className="view-pane" hidden={view !== "map"}>
           <Suspense fallback={<div className="map-status" role="status">{t("loading")}</div>}>

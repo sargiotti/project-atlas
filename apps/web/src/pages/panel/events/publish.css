@@ -64,6 +64,8 @@
 .ad-row .m span { display: flex; gap: 6px; align-items: center; min-width: 0; }
 .ad-row .m .em { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ad-row .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.ad-row .tags:not(:empty) { margin-bottom: var(--s-2); }
+.ad-row h3 + .m { margin-top: var(--s-1); }
 .ad-row .acts { display: flex; gap: 8px; flex-wrap: wrap; }
 .ad-row .acts .btn { flex: 1; }
 .ad-empty { text-align: center; padding: 40px 12px; display: grid; justify-items: center; gap: 10px; color: var(--ink-2); }
@@ -106,6 +108,7 @@
 .ad-stage { position: relative; height: 70vh; min-height: 460px; display: flex; flex-direction: column; margin: 8px 0; }
 .ad-stage .pe-pvstage { flex: 1; border-radius: 22px; }
 .ad-bar .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+@media (max-width: 1023.98px) { .ad-stage { height: clamp(360px, calc(100dvh - 320px), 70vh); min-height: 0; } }
 @media (min-width: 1024px) { .ad-stage { margin: 20px 0; } }
 .ad-bar .who .org { display: grid; color: var(--ink); font-weight: 700; }
 .ad-bar .who .org span:nth-child(2) { font-weight: 400; color: var(--ink-2); }
