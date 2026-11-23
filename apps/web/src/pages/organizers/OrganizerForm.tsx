@@ -13,6 +13,7 @@ import type { MessageKey } from "../../i18n/messages";
 import { Link } from "../../lib/router";
 import { loadTurnstile, siteKey, type TurnstileApi } from "../../lib/turnstile";
 import { LogoMark } from "../../markers/Pixel";
+import { captureSourceRef, readSourceRef } from "../../lib/sourceRef";
 
 type Field = "name" | "email" | "eventName" | "eventDate" | "city" | "role" | "message";
 const EMPTY: Record<Field, string> = { name: "", email: "", eventName: "", eventDate: "", city: "", role: "", message: "" };
@@ -44,6 +45,9 @@ export default function OrganizerForm() {
   const doneHead = useRef<HTMLHeadingElement>(null);
   const uid = useId();
   const id = (f: string) => `${uid}-${f}`;
+
+  // Slice 44: remember a valid ?ref= for this tab (a reload or a language switch keeps it).
+  useEffect(() => captureSourceRef(), []);
 
   // Turnstile: the script is only fetched on this route, once the form is near the screen (right away without IntersectionObserver).
   useEffect(() => {
@@ -135,8 +139,11 @@ export default function OrganizerForm() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (busy) return;
+    const sourceRef = readSourceRef();
     const body = {
       ...values,
+      ...(sourceRef ? { sourceRef } : {}),
+      pageLang: lang,
       locale: (lang === "es" && vos ? "es-vos" : lang) as OrganizerLocale,
       website,
       elapsedMs: Math.min(Date.now() - startedAt.current, LIM.maxElapsedMs),

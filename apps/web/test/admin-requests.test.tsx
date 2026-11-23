@@ -7,9 +7,14 @@ import AdminRequests from "../src/pages/panel/admin/AdminRequests";
 
 const row = (id: string, over: any = {}) => ({
   id, name: `Name ${id}`, email: `p${id}@example.com`, eventName: `Event ${id}`, eventDate: null, city: null, role: null, message: null,
-  emailStatus: "sent", createdAt: 1763500000000, status: "pending", locale: "ca", invitedAt: null, inviteExpiresAt: null, inviteState: null, ...over,
+  emailStatus: "sent", createdAt: 1763500000000, status: "pending", locale: "ca", invitedAt: null, inviteExpiresAt: null, inviteState: null, sourceRef: null, pageLang: null, ...over,
 });
 const invited = (id: string) => row(id, { status: "invited", invitedAt: 1763600000000, inviteExpiresAt: 1764200000000, inviteState: "active" });
+
+const win = (total: number, o: any = {}) => ({
+  total, byLang: { es: 2, ca: 0, en: 1, da: 0, none: 1 }, byRef: { top: [{ ref: "mail-fiestas-1", count: 2 }], other: 1, none: 3 }, ...o,
+});
+const SUMMARY = { last7d: win(4), last30d: win(9) };
 
 /** Routes the page's calls: the list and the POST actions. `post` decides the answer to a POST. */
 function api(rows: any[], post: (url: string, body: any) => Response | Promise<Response>) {
@@ -18,6 +23,7 @@ function api(rows: any[], post: (url: string, body: any) => Response | Promise<R
     const body = init?.body ? JSON.parse(init.body as string) : undefined;
     calls.push({ url, body });
     if (init?.method === "POST") return post(url, body);
+    if (url.endsWith("/summary")) return json(SUMMARY);
     return json({ requests: rows, nextCursor: null });
   });
   vi.stubGlobal("fetch", fn);
@@ -162,5 +168,21 @@ describe("admin requests: row actions", () => {
     expect(screen.queryByRole("button", { name: /Name 3/ })).toBeNull();
     expect(screen.getByRole("button", { name: "Restore: Name 4" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Invite: Name 4" })).toBeNull();
+  });
+});
+
+describe("admin requests: source summary (slice 44)", () => {
+  it("shows the counts per window, 'direct' for no ref and each row's language and ref as plain text", async () => {
+    api([row("1", { pageLang: "ca", sourceRef: "mail-fiestas-1" }), row("2", { pageLang: null, sourceRef: null })], () => json({}));
+    page();
+    expect(await screen.findByText("Event 1")).toBeInTheDocument();
+    const box = within(screen.getByRole("group", { name: "Summary" }));
+    expect(await box.findByText("Last 7 days")).toBeInTheDocument();
+    expect(box.getAllByText(/mail-fiestas-1 2 · Other 1 · direct 3/)).toHaveLength(2);
+    expect(box.getAllByText(/ES 2 · EN 1 · — 1/).length).toBeGreaterThan(0);
+    const rows = screen.getAllByRole("listitem");
+    expect(within(rows[0]).getByText("CA")).toBeInTheDocument();
+    expect(within(rows[0]).getByText("mail-fiestas-1")).toBeInTheDocument();
+    expect(within(rows[1]).getByText("direct")).toBeInTheDocument();
   });
 });

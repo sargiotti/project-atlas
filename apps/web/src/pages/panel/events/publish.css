@@ -143,3 +143,10 @@
 .req-err { color: var(--danger); font-weight: 700; display: grid; gap: var(--s-2); justify-items: start; margin-top: var(--s-3); }
 .req-err p { margin: 0; }
 .req-link .linkbox { margin: var(--s-2) 0 var(--s-3); }
+
+/* Slice 44: counts by source */
+.req-sum { display: grid; gap: var(--s-3); grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-block: var(--s-3); }
+.req-sum-win { display: grid; gap: var(--s-2); padding: var(--s-4); border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface); min-width: 0; }
+.req-sum-win h2 { margin: 0; font-size: 1rem; }
+.req-sum-total { margin: 0; color: var(--ink-2); }
+.req-sum-total b { color: var(--ink); font-size: 1.4rem; }

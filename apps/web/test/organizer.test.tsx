@@ -146,7 +146,7 @@ describe("Spanish variant", () => {
 describe("admin requests list", () => {
   const row = (id: string, over: any = {}) => ({
     id, name: `Name ${id}`, email: `p${id}@example.com`, eventName: `Event ${id}`, eventDate: null, city: null, role: null, message: null,
-    emailStatus: "sent", createdAt: 1763500000000, status: "pending", locale: "es", invitedAt: null, inviteExpiresAt: null, inviteState: null, ...over,
+    emailStatus: "sent", createdAt: 1763500000000, status: "pending", locale: "es", invitedAt: null, inviteExpiresAt: null, inviteState: null, sourceRef: null, pageLang: null, ...over,
   });
 
   it("renders every field as text, builds mailto only from a valid email and loads more with the cursor", async () => {
@@ -249,5 +249,48 @@ describe("organizer language URLs (slice 42)", () => {
     );
     expect(document.documentElement.lang).toBe("en");
     expect(vosText).toMatch(/vos|tenés|pedí|podés/i);
+  });
+});
+
+describe("organizer form: source ref (slice 44)", () => {
+  afterEach(() => {
+    window.sessionStorage.clear();
+    window.history.replaceState(null, "", "/");
+  });
+
+  async function submitBody(url: string) {
+    window.history.replaceState(null, "", url);
+    const fetchSpy = vi.fn(async () => json({ ok: true }, 201));
+    vi.stubGlobal("fetch", fetchSpy);
+    const user = userEvent.setup();
+    page();
+    await waitFor(() => expect(ts.render).toHaveBeenCalled());
+    await fillValid(user);
+    await user.click(within(form()).getByRole("button", { name: "Enviar solicitud" }));
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+    return JSON.parse((fetchSpy.mock.calls[0] as any)[1].body as string);
+  }
+
+  it("sends the ref and the page language, and never shows the ref", async () => {
+    const body = await submitBody("/?ref=Mail-Fiestas-1 ");
+    expect(body).toMatchObject({ sourceRef: "mail-fiestas-1", pageLang: "es" });
+    expect(document.body.textContent).not.toContain("mail-fiestas-1");
+  });
+
+  it("does not send an invalid ref", async () => {
+    const body = await submitBody("/?ref=bad ref!<script>");
+    expect(body.sourceRef).toBeUndefined();
+    expect(body.pageLang).toBe("es");
+  });
+
+  it("keeps the ref after a remount in the same session (the URL no longer has it)", async () => {
+    window.history.replaceState(null, "", "/?ref=newsletter");
+    vi.stubGlobal("fetch", vi.fn());
+    const first = page();
+    await waitFor(() => expect(ts.render).toHaveBeenCalled());
+    first.unmount();
+    ts.render.mockClear();
+    const body = await submitBody("/");
+    expect(body.sourceRef).toBe("newsletter");
   });
 });
