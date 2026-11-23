@@ -5,7 +5,7 @@ import type { AppEnv } from "./types";
  * Slice 38: the last migration file the deployed code expects to find applied. EVERY new migration in
  * apps/api/migrations must bump this constant; test-node/health-migration.test.ts fails otherwise.
  */
-export const EXPECTED_MIGRATION = "0017_terms_acceptance.sql";
+export const EXPECTED_MIGRATION = "0018_request_source.sql";
 
 // Constant SQL only. Zero rows are read: LIMIT 0 still makes D1 resolve every named table and column,
 // so a missing migration (0015 columns, 0017 terms columns) fails the probe.

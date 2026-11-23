@@ -2,6 +2,8 @@ import {
   INVITE_EMAIL_DAILY_CAP,
   MAX_PENDING_INVITES,
   type OrganizerLocale,
+  type OrganizerRequestSummary,
+  type PageLang,
   type OrganizerRequestParsed,
   type OrganizerRequestRow,
   type RequestFilter,
@@ -39,6 +41,8 @@ interface Row {
   email_status: EmailStatus;
   created_at: number;
   locale: OrganizerLocale;
+  source_ref: string | null;
+  page_lang: PageLang | null;
   status: StoredStatus;
   invited_at: number | null;
   invite_id: string | null;
@@ -91,6 +95,8 @@ function toRow(r: Row, now: number): OrganizerRequestRow {
     invitedAt: r.invited_at,
     inviteExpiresAt: r.inv_expires_at,
     inviteState,
+    sourceRef: r.source_ref,
+    pageLang: r.page_lang,
   };
 }
 
@@ -105,16 +111,39 @@ export class D1OrganizerRequestRepository {
     const dayStart = utcDayStart(now);
     const res = await this.db
       .prepare(
-        `INSERT INTO organizer_requests (name, email, event_name, event_date, city, role, message, email_status, created_at, locale)
-         SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, 'pending', ?8, ?12
+        `INSERT INTO organizer_requests (name, email, event_name, event_date, city, role, message, email_status, created_at, locale, source_ref, page_lang)
+         SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, 'pending', ?8, ?12, ?13, ?14
          WHERE (SELECT COUNT(*) FROM organizer_requests WHERE created_at >= ?9) < ?10
            AND (SELECT COUNT(*) FROM organizer_requests WHERE email = ?2 AND created_at >= ?9) < ?11`,
       )
-      .bind(input.name, input.email, input.eventName, input.eventDate ?? null, input.city ?? null, input.role ?? null, input.message ?? null, now, dayStart, GLOBAL_DAILY_CAP, EMAIL_DAILY_CAP, input.locale)
+      .bind(input.name, input.email, input.eventName, input.eventDate ?? null, input.city ?? null, input.role ?? null, input.message ?? null, now, dayStart, GLOBAL_DAILY_CAP, EMAIL_DAILY_CAP, input.locale, input.sourceRef, input.pageLang)
       .run();
     if (res.meta.changes > 0) return { kind: "stored", id: res.meta.last_row_id };
     const total = await this.db.prepare(`SELECT COUNT(*) AS n FROM organizer_requests WHERE created_at >= ?1`).bind(dayStart).first<{ n: number }>();
     return (total?.n ?? 0) >= GLOBAL_DAILY_CAP ? { kind: "global_cap" } : { kind: "email_cap" };
+  }
+
+  /** Slice 44: counts per rolling window ending at `now`. Every request counts, whatever its status. */
+  async summary(now: number): Promise<OrganizerRequestSummary> {
+    const one = async (since: number): Promise<OrganizerRequestSummary["last7d"]> => {
+      const [langs, refs] = await this.db.batch([
+        this.db.prepare(`SELECT page_lang AS k, COUNT(*) AS n FROM organizer_requests WHERE created_at >= ?1 GROUP BY page_lang`).bind(since),
+        this.db
+          .prepare(`SELECT source_ref AS k, COUNT(*) AS n FROM organizer_requests WHERE created_at >= ?1 AND source_ref IS NOT NULL GROUP BY source_ref ORDER BY n DESC, k ASC LIMIT 10`)
+          .bind(since),
+      ]);
+      const byLang = { es: 0, ca: 0, en: 0, da: 0, none: 0 };
+      let total = 0;
+      for (const r of (langs?.results ?? []) as { k: PageLang | null; n: number }[]) {
+        byLang[r.k ?? "none"] += r.n;
+        total += r.n;
+      }
+      const top = ((refs?.results ?? []) as { k: string; n: number }[]).map((r) => ({ ref: r.k, count: r.n }));
+      const none = (await this.db.prepare(`SELECT COUNT(*) AS n FROM organizer_requests WHERE created_at >= ?1 AND source_ref IS NULL`).bind(since).first<{ n: number }>())?.n ?? 0;
+      const other = total - none - top.reduce((a, t) => a + t.count, 0);
+      return { total, byLang, byRef: { top, other, none } };
+    };
+    return { last7d: await one(now - 7 * DAY_MS), last30d: await one(now - 30 * DAY_MS) };
   }
 
   async setEmailStatus(id: number, status: EmailStatus): Promise<void> {

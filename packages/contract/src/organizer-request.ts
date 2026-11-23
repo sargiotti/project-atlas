@@ -39,6 +39,16 @@ export const organizerLocaleSchema = z.enum(ORGANIZER_LOCALES);
 export type OrganizerLocale = z.infer<typeof organizerLocaleSchema>;
 export const DEFAULT_ORGANIZER_LOCALE: OrganizerLocale = "es";
 
+/**
+ * Slice 44: where an access request came from. Both are optional and best effort: any missing, malformed or wrong-type value
+ * becomes `null` and never causes a 400. The server does no normalisation (no trim, no lowercase).
+ * `sourceRef` is a campaign tag from `?ref=`; `pageLang` is the language of the page the form was on.
+ */
+export const SOURCE_REF_RE = /^[a-z0-9-]{1,40}$/;
+export const PAGE_LANGS = ["es", "ca", "en", "da"] as const;
+export const pageLangSchema = z.enum(PAGE_LANGS);
+export type PageLang = z.infer<typeof pageLangSchema>;
+
 const FIELD_CODE_SET: ReadonlySet<string> = new Set(FIELD_ERROR_CODES);
 
 const norm = (s: string) => s.normalize("NFC").replace(/\r\n/g, "\n").trim();
@@ -91,6 +101,9 @@ export const organizerRequestSchema = z.strictObject({
   eventName: requiredText(ORGANIZER_REQUEST_LIMITS.eventName),
   /** Slice 31. Missing means `es`; an unknown value is a 400 (`locale` / `invalid`). */
   locale: organizerLocaleSchema.default(DEFAULT_ORGANIZER_LOCALE),
+  /** Slice 44. Invalid or missing becomes null, never a 400. */
+  sourceRef: z.string().regex(SOURCE_REF_RE).nullable().catch(null),
+  pageLang: pageLangSchema.nullable().catch(null),
   eventDate: optionalText(ORGANIZER_REQUEST_LIMITS.eventDate),
   city: optionalText(ORGANIZER_REQUEST_LIMITS.city),
   role: optionalText(ORGANIZER_REQUEST_LIMITS.role),
@@ -101,7 +114,10 @@ export const organizerRequestSchema = z.strictObject({
   turnstileToken: z.string(missing).min(1, "required").max(ORGANIZER_REQUEST_LIMITS.turnstileToken, "too_long"),
 });
 /** What the web sends. */
-export type OrganizerRequestInput = z.input<typeof organizerRequestSchema>;
+export type OrganizerRequestInput = Omit<z.input<typeof organizerRequestSchema>, "sourceRef" | "pageLang"> & {
+  sourceRef?: string | null;
+  pageLang?: PageLang | null;
+};
 /** What the server works with after parsing. */
 export type OrganizerRequestParsed = z.output<typeof organizerRequestSchema>;
 
@@ -187,6 +203,9 @@ export const organizerRequestRowSchema = z.object({
   invitedAt: z.number().int().nullable(),
   inviteExpiresAt: z.number().int().nullable(),
   inviteState: z.enum(REQUEST_INVITE_STATES).nullable(),
+  /** Slice 44. */
+  sourceRef: z.string().nullable(),
+  pageLang: pageLangSchema.nullable(),
 });
 export type OrganizerRequestRow = z.infer<typeof organizerRequestRowSchema>;
 
@@ -252,3 +271,26 @@ export type InviteFromRequestResponse = z.infer<typeof inviteFromRequestResponse
 /** 200 of `POST /:id/discard` and `POST /:id/restore`. */
 export const organizerRequestActionResponseSchema = z.object({ request: organizerRequestRowSchema });
 export type OrganizerRequestActionResponse = z.infer<typeof organizerRequestActionResponseSchema>;
+
+// --- Slice 44: Admin counts by source ---------------------------------------------------------------
+const windowCountsSchema = z.object({
+  total: z.number().int().min(0),
+  byLang: z.object({
+    es: z.number().int().min(0),
+    ca: z.number().int().min(0),
+    en: z.number().int().min(0),
+    da: z.number().int().min(0),
+    none: z.number().int().min(0),
+  }),
+  byRef: z.object({
+    /** Top 10 refs by count (ties by ref ascending). */
+    top: z.array(z.object({ ref: z.string(), count: z.number().int().min(1) })).max(10),
+    /** Requests with a ref that is not in `top`. */
+    other: z.number().int().min(0),
+    /** Requests with no ref (null). */
+    none: z.number().int().min(0),
+  }),
+});
+/** `GET /api/v1/admin/organizer-requests/summary`. Rolling windows from the server clock; every request counts, whatever its status. */
+export const organizerRequestSummarySchema = z.object({ last7d: windowCountsSchema, last30d: windowCountsSchema });
+export type OrganizerRequestSummary = z.infer<typeof organizerRequestSummarySchema>;
