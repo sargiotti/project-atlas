@@ -19,6 +19,14 @@ export const skEs = {
   skPrintHint: "En el cuadro de impresión, elige «Guardar como PDF» si quieres un archivo.",
 };
 
+/** Rioplatense (vos) overrides for the base Spanish above (slice 34). Spread into ES_VOS in organizerMessages.ts. */
+export const skEsVos: Partial<Record<keyof typeof skEs, string>> = {
+  skLead: "Tu mapa está publicado. Llevalo a la calle: enlace, QR y cartel.",
+  skCopyFail: "No se pudo copiar solo. El enlace está seleccionado: copialo con Ctrl+C.",
+  skPngFail: "No se pudo crear la imagen. Probá de nuevo.",
+  skPrintHint: "En el cuadro de impresión, elegí «Guardar como PDF» si querés un archivo.",
+};
+
 export const skEn: Record<keyof typeof skEs, string> = {
   skTitle: "Share your map",
   skLead: "Your map is published. Take it to the street: link, QR and flyer.",

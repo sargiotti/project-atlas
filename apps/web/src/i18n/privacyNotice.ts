@@ -4,7 +4,7 @@ import type { Lang } from "./messages";
 import { privacyCa } from "./ca/privacy";
 
 /** Date shown as "Last updated". Change this single value when the text changes (and at merge time). */
-export const PRIVACY_LAST_UPDATED = "2026-11-19";
+export const PRIVACY_LAST_UPDATED = "2026-11-23";
 
 export type PrivacySection = { heading: string; lines: string[] };
 export type PrivacyNotice = { title: string; updatedLabel: string; sections: PrivacySection[] };
@@ -91,27 +91,27 @@ const es: PrivacyNotice = {
   sections: [
     {
       heading: "Quién es responsable",
-      lines: ["leyenda.ink es responsable de tus datos.", "Está en una prueba cerrada y todavía no está abierto al público. Para consultas de privacidad, escribí a contact@leyenda.ink."],
+      lines: ["leyenda.ink es responsable de tus datos.", "Está en una prueba cerrada y todavía no está abierto al público. Para consultas de privacidad, escribe a contact@leyenda.ink."],
     },
     {
-      heading: "Si visitás mapas de eventos",
+      heading: "Si visitas mapas de eventos",
       lines: [
-        "No necesitás cuenta. No usamos publicidad ni cookies de seguimiento, y no armamos perfiles de quienes nos visitan. Para saber cuánta gente usa leyenda.ink, usamos Cloudflare Web Analytics. No usa cookies y solo guarda conteos agregados de la página visitada, la página de la que venís (referente), tu navegador y tipo de dispositivo, tu país y el rendimiento de carga. No te identifica ni te sigue entre sitios.",
-        "Tu navegador solo recuerda tu idioma y el zoom del programa si los cambiás. Eso queda en tu dispositivo.",
-        "Recordamos el lugar que elegís en este dispositivo.",
+        "No necesitas cuenta. No usamos publicidad ni cookies de seguimiento, y no creamos perfiles de quienes nos visitan. Para saber cuánta gente usa leyenda.ink, usamos Cloudflare Web Analytics. No usa cookies y solo guarda conteos agregados de la página visitada, la página de la que vienes (referente), tu navegador y tipo de dispositivo, tu país y el rendimiento de carga. No te identifica ni te sigue entre sitios.",
+        "Tu navegador solo recuerda tu idioma y el zoom del programa si los cambias. Eso queda en tu dispositivo.",
+        "Recordamos el lugar que eliges en este dispositivo.",
         "Tu dirección IP se usa durante aproximadamente un minuto para proteger el servicio de abusos (límite de peticiones), para mostrarte primero los eventos cercanos y para elegir un idioma por defecto (catalán si estás en Cataluña) (ubicación aproximada a partir de la IP). leyenda.ink en sí no la almacena.",
-        'Si tocás "Agregar a Google Calendar", Google recibe los datos de ese evento.',
+        'Si tocas «Añadir al calendario» y eliges Google Calendar, Google recibe los datos de ese evento.',
       ],
     },
     {
-      heading: "Si sos organizador o te invitaron",
+      heading: "Si eres organizador o te han invitado",
       lines: [
         "Cuando te invitan, guardamos tu email para comprobar la invitación. Borramos la invitación 30 días después de que se use, se revoque o venza.",
-        "Después de que aceptás, tu email queda en tu cuenta de organizador, porque lo usamos para reconocerte cuando entrás con Google.",
-        "Cuando entrás con Google, recibimos y guardamos el identificador de tu cuenta de Google, tu email y tu nombre. No recibimos tu contraseña ni nada más de tu cuenta.",
+        "Cuando aceptas, tu email queda en tu cuenta de organizador, porque lo usamos para reconocerte cuando entras con Google.",
+        "Cuando entras con Google, recibimos y guardamos el identificador de tu cuenta de Google, tu email y tu nombre. No recibimos tu contraseña ni nada más de tu cuenta.",
         "Una cookie de sesión te mantiene conectado hasta 7 días. Las sesiones vencidas se eliminan.",
         "El panel de organizadores (/panel) también se mide con Cloudflare Web Analytics, con los mismos datos agregados descritos arriba. La página de invitación no.",
-        "Tus eventos se guardan hasta que los borres. Cuando un evento se publica, su información es pública. Sos responsable de lo que publicás: no incluyas datos personales de otras personas sin su permiso.",
+        "Tus eventos se guardan hasta que los borres. Cuando un evento se publica, su información es pública. Eres responsable de lo que publicas: no incluyas datos personales de otras personas sin su permiso.",
       ],
     },
     {
@@ -122,8 +122,8 @@ const es: PrivacyNotice = {
       heading: "Quién nos ayuda",
       lines: [
         "Cloudflare aloja leyenda.ink. Nuestra base de datos está en la UE. Algunos registros técnicos pueden procesarse fuera de la UE, protegidos por el Marco de Privacidad de Datos UE–EE. UU. y cláusulas contractuales tipo.",
-        "Las imágenes de mapa que subís se guardan en Cloudflare R2, en la UE. Antes de guardarlas, tu navegador las achica y les quita la ubicación y otros metadatos (como el GPS y los datos de la cámara). Borramos la imagen de un mapa cuando la reemplazás o cuando eliminás el evento.",
-        "Las imágenes de portada de tus eventos se guardan en Cloudflare R2, en la UE. Tu navegador las achica y les quita la ubicación y otros metadatos (como el GPS y los datos de la cámara) antes de guardarlas. Una portada es pública apenas se publica el evento y la puede ver cualquiera que tenga el enlace, así que usá solo fotos que puedas compartir. Borramos la portada cuando la reemplazás o la quitás, o cuando eliminás el evento.",
+        "Las imágenes de mapa que subes se guardan en Cloudflare R2, en la UE. Antes de guardarlas, tu navegador las reduce y les quita la ubicación y otros metadatos (como el GPS y los datos de la cámara). Borramos la imagen de un mapa cuando la reemplazas o cuando eliminas el evento.",
+        "Las imágenes de portada de tus eventos se guardan en Cloudflare R2, en la UE. Tu navegador las reduce y les quita la ubicación y otros metadatos (como el GPS y los datos de la cámara) antes de guardarlas. Una portada es pública en cuanto se publica el evento y la puede ver cualquiera que tenga el enlace, así que usa solo fotos que puedas compartir. Borramos la portada cuando la reemplazas o la quitas, o cuando eliminas el evento.",
         "Como nuestro proveedor de hosting, Cloudflare registra datos básicos de cada solicitud (dirección IP, país aproximado, página solicitada y hora) en su analítica de tráfico. Podemos verlos durante hasta unos 30 días, solo para diagnosticar problemas y frenar abusos. También vemos estadísticas generales de tráfico, como las visitas por país, que no identifican a nadie.",
         "Google ofrece el inicio de sesión y es responsable de tu cuenta de Google según su propia política de privacidad.",
       ],
@@ -143,18 +143,18 @@ const es: PrivacyNotice = {
     {
       heading: "Tus derechos",
       lines: [
-        "Podés pedir ver, corregir, exportar o borrar tus datos, u oponerte a cómo los usamos. También podés reclamar ante la Agencia Española de Protección de Datos (AEPD, www.aepd.es).",
+        "Puedes pedir ver, corregir, exportar o borrar tus datos, u oponerte a cómo los usamos. También puedes reclamar ante la Agencia Española de Protección de Datos (AEPD, www.aepd.es).",
       ],
     },
     {
       heading: "Cookies y almacenamiento",
       lines: [
-        "__Host-atlas_oauth: solo mientras iniciás sesión (10 minutos).",
+        "__Host-atlas_oauth: solo mientras inicias sesión (10 minutos).",
         "__Host-atlas_session: te mantiene conectado (7 días).",
         "atlas.lang y atlas.schedule.zoom: tus elecciones de idioma y zoom, guardadas en tu navegador.",
-        "atlas.place: el lugar que elegís para la cartelera del inicio (un id de una lista fija), guardado en tu navegador.",
-        "atlas.mapIntro.v1: recuerda que ya viste la pista del mapa, para no mostrártela otra vez.",
-        "Todas son estrictamente necesarias o se guardan solo cuando vos elegís, por eso no pedimos consentimiento.",
+        "atlas.place: el lugar que eliges para la cartelera del inicio (un id de una lista fija), guardado en tu navegador.",
+        "atlas.mapIntro.v1: recuerda que ya has visto la pista del mapa, para no mostrártela otra vez.",
+        "Todas son estrictamente necesarias o se guardan solo cuando tú eliges, por eso no pedimos consentimiento.",
       ],
     },
     { heading: "Cambios", lines: ["Si este aviso cambia, actualizamos la fecha de arriba."] },
@@ -237,8 +237,7 @@ const da: PrivacyNotice = {
   ],
 };
 
-// Slice 30: the organizer request form (/organizadores). Inserted after the organizer section. The Spanish text avoids second-person verbs
-// on purpose, so it reads the same for vos and tú readers.
+// Slice 30: the organizer request form (/organizadores). Inserted after the organizer section. Spanish is the single tú version (slice 34).
 const ORGANIZER_FORM: Record<Lang, PrivacySection> = {
   en: {
     heading: "If you request a map (organizer form)",
@@ -257,11 +256,11 @@ const ORGANIZER_FORM: Record<Lang, PrivacySection> = {
     heading: "Si se pide un mapa (formulario de organizadores)",
     lines: [
       "Responsable: leyenda.ink. Contacto para cualquier consulta sobre este formulario: contact@leyenda.ink.",
-      "Datos que se recogen: los 7 que se escriben en el formulario (nombre, email, nombre del evento, fecha aproximada, ciudad, rol en la organización y un mensaje). Los últimos cuatro son opcionales. No guardamos la dirección IP, los datos del dispositivo o del navegador ni el token de la comprobación de seguridad junto con el pedido.",
-      "Finalidad: responder y evaluar el pedido de un mapa para un evento. Base legal: artículo 6.1.b del RGPD, medidas previas a dar acceso, aplicadas a petición de la persona interesada.",
-      "Plazo de conservación: 12 meses; después el pedido se borra automáticamente.",
+      "Datos que se recogen: los 7 que se escriben en el formulario (nombre, email, nombre del evento, fecha aproximada, ciudad, rol en la organización y un mensaje). Los últimos cuatro son opcionales. No guardamos la dirección IP, los datos del dispositivo o del navegador ni el token de la comprobación de seguridad junto con la solicitud.",
+      "Finalidad: responder y evaluar la solicitud de un mapa para un evento. Base legal: artículo 6.1.b del RGPD, medidas previas a dar acceso, aplicadas a petición de la persona interesada.",
+      "Plazo de conservación: 12 meses; después la solicitud se borra automáticamente.",
       "Quién nos ayuda: Cloudflare aloja el sitio y la base de datos (D1), y su comprobación Turnstile distingue personas de bots; para eso Turnstile procesa la dirección IP y algunas señales del dispositivo y del navegador. Resend entrega el email de aviso que recibimos cuando se envía el formulario (lleva todos los campos). Resend está en Estados Unidos; la transferencia se apoya en el Marco de Privacidad de Datos UE–EE. UU. y en cláusulas contractuales tipo.",
-      "La copia del aviso que se conserva en nuestro buzón contact@leyenda.ink se borra en un plazo máximo de 12 meses, igual que el pedido guardado.",
+      "La copia del aviso que se conserva en nuestro buzón contact@leyenda.ink se borra en un plazo máximo de 12 meses, igual que la solicitud guardada.",
       "No se toman decisiones automatizadas sobre las personas. El único paso automático es la comprobación contra bots.",
       "Derechos: acceso, rectificación, supresión, limitación, oposición y portabilidad. Se ejercen escribiendo a contact@leyenda.ink. También se puede reclamar ante la Agencia Española de Protección de Datos (AEPD, www.aepd.es) o ante la autoridad de control del país de residencia.",
     ],

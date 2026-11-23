@@ -51,7 +51,7 @@ describe("organizer form", () => {
     await waitFor(() => expect(ts.render).toHaveBeenCalled());
     expect(ts.render.mock.calls[0][1]).toMatchObject({ sitekey: "test-key", action: ORGANIZER_TURNSTILE_ACTION });
 
-    await user.click(within(form()).getByRole("button", { name: "Enviar pedido" }));
+    await user.click(within(form()).getByRole("button", { name: "Enviar solicitud" }));
     expect(await screen.findByText("Escribe tu nombre.")).toBeInTheDocument();
     expect(screen.getByText("Escribe tu email.")).toBeInTheDocument();
     expect(screen.getByText("Escribe el nombre del evento.")).toBeInTheDocument();
@@ -61,7 +61,7 @@ describe("organizer form", () => {
     await user.type(field(/^Tu nombre/), "Marta");
     await user.type(field(/^Email/), "sin-arroba");
     await user.type(field(/^Nombre del evento/), "Fiestas");
-    await user.click(within(form()).getByRole("button", { name: "Enviar pedido" }));
+    await user.click(within(form()).getByRole("button", { name: "Enviar solicitud" }));
     expect(await screen.findByText(/Ese email no parece válido/)).toBeInTheDocument();
     expect(fetchSpy).not.toHaveBeenCalled();
   });
@@ -73,7 +73,7 @@ describe("organizer form", () => {
     page();
     await waitFor(() => expect(ts.render).toHaveBeenCalled());
     await fillValid(user);
-    await user.click(within(form()).getByRole("button", { name: "Enviar pedido" }));
+    await user.click(within(form()).getByRole("button", { name: "Enviar solicitud" }));
 
     expect(await screen.findByRole("heading", { name: "¡Gracias! Te vamos a escribir." })).toBeInTheDocument();
     const [url, init] = fetchSpy.mock.calls[0] as unknown as [string, RequestInit];
@@ -90,9 +90,9 @@ describe("organizer form", () => {
     page();
     await waitFor(() => expect(ts.render).toHaveBeenCalled());
     await fillValid(user);
-    await user.click(within(form()).getByRole("button", { name: "Enviar pedido" }));
+    await user.click(within(form()).getByRole("button", { name: "Enviar solicitud" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/Recibimos muchos pedidos desde tu conexión/);
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Hemos recibido muchas solicitudes desde tu conexión/);
     expect(field(/^Tu nombre/)).toHaveValue("Marta Ferrer");
     expect(ts.reset).toHaveBeenCalledWith("widget-1");
   });
@@ -103,7 +103,7 @@ describe("organizer form", () => {
     page();
     await waitFor(() => expect(ts.render).toHaveBeenCalled());
     await fillValid(user);
-    await user.click(within(form()).getByRole("button", { name: "Enviar pedido" }));
+    await user.click(within(form()).getByRole("button", { name: "Enviar solicitud" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("contact@leyenda.ink");
   });
 
@@ -116,7 +116,7 @@ describe("organizer form", () => {
     page();
     await waitFor(() => expect(ts.render).toHaveBeenCalled());
     await fillValid(user);
-    await user.click(within(form()).getByRole("button", { name: "Enviar pedido" }));
+    await user.click(within(form()).getByRole("button", { name: "Enviar solicitud" }));
     expect(await screen.findByText(/Ese email no parece válido/)).toBeInTheDocument();
     expect(ts.reset).toHaveBeenCalled();
   });

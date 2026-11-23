@@ -5,9 +5,15 @@ export const clusterEs = {
   clusterGroup: "Puntos cercanos",
   clusterClose: "Cerrar grupo",
   clusterZoomed: "Mapa acercado: {n} puntos a la vista",
+  clusterListTitle: "{n} puntos aquí",
+  clusterListHint: "Elige uno para verlo en el mapa.",
+  clusterListClose: "Cerrar lista",
+};
+
+/** Rioplatense (vos) overrides for the base Spanish above (slice 34). Spread into ES_VOS in organizerMessages.ts. */
+export const clusterEsVos: Partial<Record<keyof typeof clusterEs, string>> = {
   clusterListTitle: "{n} puntos acá",
   clusterListHint: "Elegí uno para verlo en el mapa.",
-  clusterListClose: "Cerrar lista",
 };
 export const clusterEn: Record<keyof typeof clusterEs, string> = {
   clusterLabel: "{n} points: {names}",
