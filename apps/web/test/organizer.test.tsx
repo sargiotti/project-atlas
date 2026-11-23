@@ -182,16 +182,16 @@ describe("admin requests list", () => {
 });
 
 describe("use-case example links", () => {
-  it("links four cards to their example event and leaves the others without a link", () => {
+  it("links every card to its example event", () => {
     page(false, "en");
     const href = (name: string) => document.querySelector(`[data-usecase="${name}"] a`)?.getAttribute("href") ?? null;
     expect(href("fiestas")).toBe("/e/fiestas-la-alameda");
     expect(href("musica")).toBe("/e/nightfall-meadows");
     expect(href("carrera")).toBe("/e/havnelobet");
     expect(href("mercado")).toBe("/e/mercado-medieval-toledo");
-    expect(href("congreso")).toBeNull();
-    expect(href("escuela")).toBeNull();
-    expect(screen.getAllByRole("link", { name: /See example/ })).toHaveLength(4);
+    expect(href("congreso")).toBe("/e/lisboa-tech-summit");
+    expect(href("escuela")).toBe("/e/portes-obertes-escola-bcn");
+    expect(screen.getAllByRole("link", { name: /See example/ })).toHaveLength(6);
   });
 });
 
