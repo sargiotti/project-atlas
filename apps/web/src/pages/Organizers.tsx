@@ -24,6 +24,8 @@ export const UC_EXAMPLE_SLUGS: Partial<Record<(typeof SCENE_NAMES)[number], stri
   musica: "nightfall-meadows",
   carrera: "havnelobet",
   mercado: "mercado-medieval-toledo",
+  congreso: "lisboa-tech-summit",
+  escuela: "portes-obertes-escola-bcn",
 };
 
 const BENEFITS: ["toilets" | "refresh" | "lang" | "free", MessageKey, MessageKey][] = [

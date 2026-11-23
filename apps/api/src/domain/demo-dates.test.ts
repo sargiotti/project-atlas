@@ -42,6 +42,20 @@ describe("mercado-medieval-toledo", () => {
   });
 });
 
+describe("lisboa-tech-summit and portes-obertes-escola-bcn", () => {
+  const now = Date.UTC(2026, 10, 23, 12); // Monday 2026-11-23, coming-up = 2026-12-14
+  it("the 2-day Lisbon summit keeps its span and session times", () => {
+    const days = demoShiftDays("lisboa-tech-summit", "2026-12-10", "Europe/Lisbon", now);
+    expect(addDays("2026-12-10", days)).toBe("2026-12-14");
+    expect(addDays("2026-12-11", days)).toBe("2026-12-15");
+    expect(shiftLocalDateTime("2026-12-11T17:30", days)).toBe("2026-12-15T17:30");
+  });
+  it("the 1-day Barcelona open day stays one day", () => {
+    const days = demoShiftDays("portes-obertes-escola-bcn", "2026-12-12", "Europe/Madrid", now);
+    expect(addDays("2026-12-12", days)).toBe("2026-12-14");
+  });
+});
+
 describe("shifting sessions", () => {
   it("keeps the local wall-clock time across a DST change", () => {
     // 2026-10-24 20:00 Madrid (UTC+2) moved 7 days is 2026-10-31 20:00 (still UTC+1 after 25 Oct): 19:00Z.
