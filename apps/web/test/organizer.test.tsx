@@ -275,6 +275,7 @@ describe("organizer form: source ref (slice 44)", () => {
     const body = await submitBody("/?ref=Mail-Fiestas-1 ");
     expect(body).toMatchObject({ sourceRef: "mail-fiestas-1", pageLang: "es" });
     expect(document.body.textContent).not.toContain("mail-fiestas-1");
+    await waitFor(() => expect(window.sessionStorage.getItem("atlas.sourceRef")).toBeNull());
   });
 
   it("does not send an invalid ref", async () => {

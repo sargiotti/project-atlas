@@ -13,7 +13,7 @@ import type { MessageKey } from "../../i18n/messages";
 import { Link } from "../../lib/router";
 import { loadTurnstile, siteKey, type TurnstileApi } from "../../lib/turnstile";
 import { LogoMark } from "../../markers/Pixel";
-import { captureSourceRef, readSourceRef } from "../../lib/sourceRef";
+import { captureSourceRef, clearSourceRef, readSourceRef } from "../../lib/sourceRef";
 
 type Field = "name" | "email" | "eventName" | "eventDate" | "city" | "role" | "message";
 const EMPTY: Record<Field, string> = { name: "", email: "", eventName: "", eventDate: "", city: "", role: "", message: "" };
@@ -161,6 +161,7 @@ export default function OrganizerForm() {
     const r = await submitOrganizerRequest(body);
     setBusy(false);
     if (r.status === "ok") {
+      clearSourceRef();
       setDone({ event: parsed.data.eventName, email: parsed.data.email });
       return;
     }

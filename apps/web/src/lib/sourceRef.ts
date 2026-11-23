@@ -26,3 +26,12 @@ export function readSourceRef(): string | null {
     return null;
   }
 }
+
+/** Drop the stored ref once the request was sent (the privacy notice promises it). */
+export function clearSourceRef(): void {
+  try {
+    window.sessionStorage.removeItem(KEY);
+  } catch {
+    // storage unavailable: nothing to clear
+  }
+}
