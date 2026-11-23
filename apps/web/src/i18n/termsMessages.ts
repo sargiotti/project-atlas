@@ -5,6 +5,12 @@ export const termsEs = {
   termsAcceptPre: "Acepto los",
   err_terms_not_accepted: "Para continuar tienes que aceptar los Términos de uso.",
 };
+
+/** Rioplatense (vos) overrides for the base Spanish above (slice 34). Spread into ES_VOS in organizerMessages.ts. */
+export const termsEsVos: Partial<Record<keyof typeof termsEs, string>> = {
+  termsFormPre: "Al enviar aceptás los",
+  err_terms_not_accepted: "Para continuar tenés que aceptar los Términos de uso.",
+};
 export const termsEn: Record<keyof typeof termsEs, string> = {
   termsLink: "Terms of use",
   termsFormPre: "By sending you accept the",

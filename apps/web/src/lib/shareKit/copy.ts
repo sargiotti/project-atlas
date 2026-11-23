@@ -5,8 +5,15 @@ export type KitLang = (typeof KIT_LANGS)[number];
 export const isKitLang = (v: unknown): v is KitLang => typeof v === "string" && (KIT_LANGS as readonly string[]).includes(v);
 export const toKitLang = (v: unknown): KitLang => (isKitLang(v) ? v : "es");
 
-export const KIT_TEXT: Record<KitLang, { badgeCta: string; flyerCta: string; flyerSub: string }> = {
+/** Spanish for Argentina and Uruguay uses "vos" on the poster. A kit is never mixed: one text variant per piece. */
+export type KitTextKey = KitLang | "es-vos";
+export const VOS_COUNTRIES = ["AR", "UY"];
+export const kitTextKey = (lang: KitLang, country?: string | null): KitTextKey =>
+  lang === "es" && !!country && VOS_COUNTRIES.includes(country.toUpperCase()) ? "es-vos" : lang;
+
+export const KIT_TEXT: Record<KitTextKey, { badgeCta: string; flyerCta: string; flyerSub: string }> = {
   es: { badgeCta: "Escanea para ver el mapa", flyerCta: "Escanea para ver *el mapa* y los horarios", flyerSub: "Se abre en el navegador. Sin descargar nada." },
+  "es-vos": { badgeCta: "Escaneá para ver el mapa", flyerCta: "Escaneá para ver *el mapa* y los horarios", flyerSub: "Se abre en el navegador. Sin descargar nada." },
   en: { badgeCta: "Scan to see the map", flyerCta: "Scan to see the *map* and the schedule", flyerSub: "Opens in your browser. Nothing to download." },
   ca: { badgeCta: "Escaneja per veure el mapa", flyerCta: "Escaneja per veure *el mapa* i els horaris", flyerSub: "S’obre al navegador. Sense baixar res." },
   da: { badgeCta: "Scan for at se kortet", flyerCta: "Scan for at se *kortet* og programmet", flyerSub: "Åbner i din browser. Ingen download." },

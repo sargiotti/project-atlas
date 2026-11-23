@@ -1,5 +1,17 @@
-import type { welEs } from "./welcomeMessages";
+import type { MessageKey } from "./messages";
 import { bbEsVos } from "./billboardMessages";
+import { mainEsVos } from "./mainVos";
+import { clusterEsVos } from "./clusterMessages";
+import { welEsVos } from "./welcomeMessages";
+import { termsEsVos } from "./termsMessages";
+import { panelEsVos } from "./panelMessages";
+import { eventEsVos } from "./eventMessages";
+import { mapEsVos } from "./mapMessages";
+import { pubEsVos } from "./publishMessages";
+import { pedEsVos } from "./pointsEditorMessages";
+import { sedEsVos } from "./scheduleEditorMessages";
+import { coverEsVos } from "./coverMessages";
+import { skEsVos } from "./shareKitMessages";
 import { orgPageCa, orgPageDa, orgPageEn, orgPageEs } from "@atlas/contract";
 // Slice 30: organizer page (/organizadores), Home banner, map foot link and the admin Requests list.
 // Merged into the main catalogs in messages.ts. Base Spanish is "tú"; ES_VOS below overrides only the keys that
@@ -28,9 +40,9 @@ export const orgEs = {
   orgUcPoints: "Puntos de ejemplo",
   orgUcExample: "Ver ejemplo",
   orgFaqLead: "¿Otra duda? Escríbenos a",
-  orgFormH: "Crea el mapa de tu evento.",
-  orgFormLead: "Cuéntanos de tu evento y te escribimos.",
-  orgAfter1: "Leemos tu pedido.",
+  orgFormH: "Pide acceso y crea el mapa de tu evento.",
+  orgFormLead: "Háblanos de tu evento y te escribimos.",
+  orgAfter1: "Leemos tu solicitud.",
   orgAfter2: "Te escribimos para darte acceso.",
   orgAfter3: "Armas tu mapa y lo compartes.",
   orgMailAlt: "¿Prefieres escribirnos?",
@@ -47,9 +59,9 @@ export const orgEs = {
   orgFRolePh: "Ej.: comisión de fiestas, productora, AMPA",
   orgFMessage: "Mensaje",
   orgFMessageHelp: "Cuéntanos quién eres y para qué quieres usar leyenda.ink.",
-  orgSubmit: "Enviar pedido",
+  orgSubmit: "Enviar solicitud",
   orgSubmitting: "Enviando…",
-  orgCollects: "Guardamos lo que escribes aquí solo para responderte y evaluar tu pedido, hasta 12 meses.",
+  orgCollects: "Guardamos lo que escribes aquí solo para responderte y evaluar tu solicitud, hasta 12 meses.",
   orgTsLabel: "Comprobación de seguridad",
   orgTsLoading: "Cargando la comprobación de seguridad…",
   orgErrSummary: "Revisa los campos marcados.",
@@ -61,27 +73,27 @@ export const orgEs = {
   orgErrControl: "Quita los saltos de línea y los caracteres especiales.",
   orgErrInvalid: "Revisa este campo.",
   orgErrTs: "Completa la comprobación de seguridad antes de enviar.",
-  orgErrRejected: "No pudimos enviar tu pedido. Inténtalo de nuevo; tus datos siguen aquí.",
-  orgErrRate: "Recibimos muchos pedidos desde tu conexión. Inténtalo de nuevo en un rato. Tus datos siguen aquí.",
-  orgErrDaily: "Hoy ya recibimos todos los pedidos que podemos atender. Escríbenos a contact@leyenda.ink o inténtalo mañana.",
+  orgErrRejected: "No pudimos enviar tu solicitud. Inténtalo de nuevo; tus datos siguen aquí.",
+  orgErrRate: "Recibimos muchas solicitudes desde tu conexión. Inténtalo de nuevo en un rato. Tus datos siguen aquí.",
+  orgErrDaily: "Hoy ya recibimos todas las solicitudes que podemos atender. Escríbenos a contact@leyenda.ink o inténtalo mañana.",
   orgErr503: "El servicio no está disponible ahora. Inténtalo de nuevo en unos minutos. Tus datos siguen aquí.",
   orgErrNetwork: "No pudimos conectar. Revisa tu conexión e inténtalo de nuevo.",
   orgErrGeneric: "Algo salió mal. Inténtalo de nuevo.",
   orgDoneH: "¡Gracias! Te vamos a escribir.",
-  orgDoneP: "Recibimos tu pedido para {event}. Te contestamos a {email}.",
+  orgDoneP: "Recibimos tu solicitud para {event}. Te contestamos a {email}.",
   orgDoneBack: "Volver al inicio",
   orgFootHome: "Inicio",
   orgBannerT: "¿Organizas algo?",
   orgBannerP: "Ponlo en el mapa. Gratis.",
   // Admin: Requests list
-  reqNav: "Pedidos",
-  reqTitle: "Pedidos de organizadores",
+  reqNav: "Solicitudes",
+  reqTitle: "Solicitudes de organizadores",
   reqLead: "Lo que llegó por el formulario de /organizadores, del más nuevo al más viejo.",
-  reqLoading: "Cargando pedidos…",
-  reqEmpty: "Todavía no hay pedidos.",
-  reqError: "No pudimos cargar los pedidos.",
+  reqLoading: "Cargando solicitudes…",
+  reqEmpty: "Todavía no hay solicitudes.",
+  reqError: "No pudimos cargar las solicitudes.",
   reqMore: "Cargar más",
-  reqMoreFailed: "No pudimos cargar más pedidos.",
+  reqMoreFailed: "No pudimos cargar más solicitudes.",
   reqEvent: "Evento",
   reqDate: "Fecha",
   reqCity: "Ciudad",
@@ -111,19 +123,19 @@ export const orgEs = {
   reqRestore: "Restaurar",
   reqInviteTitle: "Invitar a {name}",
   reqInviteAgainTitle: "Invitar de nuevo a {name}",
-  reqInviteText: "Se envía un enlace de invitación válido 7 días al email del pedido.",
+  reqInviteText: "Se envía un enlace de invitación válido 7 días al email de la solicitud.",
   reqInviteAgainText: "Esto anula el enlace anterior y envía uno nuevo.",
   reqToLabel: "Email del destinatario",
   reqNoteLabel: "Nota personal",
   reqNoteOptional: "(opcional)",
-  reqNoteHint: "La nota va arriba del texto fijo del email.",
+  reqNoteHint: "La nota va encima del texto fijo del email.",
   reqNoteCount: "{n} / 1000",
   reqSend: "Enviar invitación",
   reqSending: "Enviando…",
   reqDone: "Listo",
   reqSentToast: "Invitación enviada a {email}",
-  reqDiscardedToast: "Pedido descartado",
-  reqRestoredToast: "Pedido restaurado",
+  reqDiscardedToast: "Solicitud descartada",
+  reqRestoredToast: "Solicitud restaurada",
   reqEmailFailedT: "El email falló: copia este enlace ahora",
   reqEmailSkippedT: "No se envió el email: copia este enlace ahora",
   reqLinkOnce: "No se volverá a mostrar. Si lo pierdes, usa «Invitar de nuevo».",
@@ -135,17 +147,29 @@ export const orgEs = {
   reqRefresh: "Actualizar",
   reqErrPending: "Ya hay una invitación activa para este email.",
   reqErrRegistered: "Esta persona ya tiene una cuenta.",
-  reqErrCap: "Llegaste al máximo de invitaciones pendientes. Revoca alguna en Invitaciones.",
+  reqErrCap: "Has llegado al máximo de invitaciones pendientes. Revoca alguna en Invitaciones.",
   reqErrNote: "La nota es demasiado larga.",
   reqErrGeneric: "No se pudo completar la acción. Inténtalo de nuevo.",
   reqActionFailed: "No se pudo completar la acción.",
-  reqFiltered: "No hay pedidos con este estado.",
+  reqFiltered: "No hay solicitudes con este estado.",
 };
 
 type Org = Record<keyof typeof orgEs, string>;
 
 /** Rioplatense (vos) overrides for base Spanish. Same keys, only the ones whose text changes. */
-export const ES_VOS: Partial<Org & Record<keyof typeof welEs | "peEmptyTitle" | "peEmptyText", string>> = {
+export const ES_VOS: Partial<Record<MessageKey, string>> = {
+  ...mainEsVos,
+  ...clusterEsVos,
+  ...welEsVos,
+  ...termsEsVos,
+  ...panelEsVos,
+  ...eventEsVos,
+  ...mapEsVos,
+  ...pubEsVos,
+  ...pedEsVos,
+  ...sedEsVos,
+  ...coverEsVos,
+  ...skEsVos,
   ...bbEsVos,
   // slice 35 (empty panel)
   peEmptyTitle: "Creá tu primer evento",
@@ -169,7 +193,7 @@ export const ES_VOS: Partial<Org & Record<keyof typeof welEs | "peEmptyTitle" | 
   orgUcHint: "← Deslizá para ver más →",
   orgFaqLead: "¿Otra duda? Escribinos a",
   orgFaq3A: "Una imagen del plano del lugar (sirve una foto o un dibujo) y la lista de puntos que querés marcar.",
-  orgFormH: "Creá el mapa de tu evento.",
+  orgFormH: "Pedí acceso y creá el mapa de tu evento.",
   orgFormLead: "Contanos de tu evento y te escribimos.",
   orgAfter3: "Armás tu mapa y lo compartís.",
   orgMailAlt: "¿Preferís escribirnos?",
@@ -192,6 +216,32 @@ export const ES_VOS: Partial<Org & Record<keyof typeof welEs | "peEmptyTitle" | 
   orgErrGeneric: "Algo salió mal. Probá de nuevo.",
   orgBannerT: "¿Organizás algo?",
   orgBannerP: "Ponelo en el mapa. Gratis.",
+  // slice 34: base Spanish now says "solicitud"; vos keeps "pedido"; tú strings that lacked a vos override
+  orgBen3P: "Español, inglés, catalán y danés, para tu público y para quien viene de afuera.",
+  orgUc3P2: "Patio de comidas",
+  orgUc6P1: "Acto en el patio",
+  orgUc6P2: "Kermés",
+  orgAfter1: "Leemos tu pedido.",
+  orgSubmit: "Enviar pedido",
+  orgDoneP: "Recibimos tu pedido para {event}. Te contestamos a {email}.",
+  reqNav: "Pedidos",
+  reqTitle: "Pedidos de organizadores",
+  reqLoading: "Cargando pedidos…",
+  reqEmpty: "Todavía no hay pedidos.",
+  reqError: "No pudimos cargar los pedidos.",
+  reqMoreFailed: "No pudimos cargar más pedidos.",
+  reqInviteText: "Se envía un enlace de invitación válido 7 días al email del pedido.",
+  reqNoteHint: "La nota va arriba del texto fijo del email.",
+  reqDiscardedToast: "Pedido descartado",
+  reqRestoredToast: "Pedido restaurado",
+  reqErrCap: "Llegaste al máximo de invitaciones pendientes. Revocá alguna en Invitaciones.",
+  reqFiltered: "No hay pedidos con este estado.",
+  reqLinkOnce: "No se volverá a mostrar. Si lo perdés, usá «Invitar de nuevo».",
+  reqCopyFailed: "No se pudo copiar: seleccioná el enlace a mano.",
+  reqErrStale: "La lista cambió. Actualizá para ver el estado actual.",
+  reqErrGeneric: "No se pudo completar la acción. Probá de nuevo.",
+  reqEmailFailedT: "El email falló: copiá este enlace ahora",
+  reqEmailSkippedT: "No se envió el email: copiá este enlace ahora",
 };
 
 export const orgEn: Org = {
@@ -355,7 +405,7 @@ export const orgCa: Org = {
   orgUcPoints: "Punts d'exemple",
   orgUcExample: "Veure exemple",
   orgFaqLead: "Un altre dubte? Escriu-nos a",
-  orgFormH: "Crea el mapa del teu esdeveniment.",
+  orgFormH: "Demana accés i crea el mapa del teu esdeveniment.",
   orgFormLead: "Explica'ns el teu esdeveniment i t'escrivim.",
   orgAfter1: "Llegim la teva sol·licitud.",
   orgAfter2: "T'escrivim per donar-te accés.",
@@ -492,7 +542,7 @@ export const orgDa: Org = {
   orgUcPoints: "Eksempler på steder",
   orgUcExample: "Se eksempel",
   orgFaqLead: "Et andet spørgsmål? Skriv til os på",
-  orgFormH: "Lav kortet til jeres arrangement.", // needs native review (slice 45)
+  orgFormH: "Bed om adgang og lav kortet til jeres arrangement.", // needs native review (slice 45)
   orgFormLead: "Fortæl os om din begivenhed, så skriver vi til dig.",
   orgAfter1: "Vi læser din forespørgsel.",
   orgAfter2: "Vi skriver til dig og giver dig adgang.",

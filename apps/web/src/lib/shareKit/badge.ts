@@ -1,5 +1,5 @@
 import { CREAM, INK, PAPER, PIN_BODY, PIN_WINDOW, QUIET, TANGERINE, drawQr, type Qr } from "./qr";
-import { KIT_TEXT, kitMeta, type KitLang } from "./copy";
+import { KIT_TEXT, kitMeta, type KitLang, type KitTextKey } from "./copy";
 
 export const BADGE_W = 1080;
 export const BADGE_H = 1350;
@@ -75,7 +75,7 @@ function drawPin(ctx: CanvasRenderingContext2D, x: number, y: number, side: numb
   ctx.restore();
 }
 
-export type BadgeInput = { name: string; startDate: string; endDate: string; city: string; qr: Qr; lang: KitLang };
+export type BadgeInput = { name: string; startDate: string; endDate: string; city: string; qr: Qr; lang: KitLang; textKey?: KitTextKey };
 
 /** Option 1B: ink card, 1080x1350. All organizer text goes through fillText with a fixed max width. */
 export function drawBadge(canvas: HTMLCanvasElement, b: BadgeInput): boolean {
@@ -128,7 +128,7 @@ export function drawBadge(canvas: HTMLCanvasElement, b: BadgeInput): boolean {
   // CTA.
   ctx.font = `700 50px ${BODY}`;
   ctx.fillStyle = CREAM;
-  ctx.fillText(KIT_TEXT[b.lang].badgeCta, BADGE_W / 2, 1196, maxW);
+  ctx.fillText(KIT_TEXT[b.textKey ?? b.lang].badgeCta, BADGE_W / 2, 1196, maxW);
 
   // Wordmark "leyenda<pin>ink", centred.
   const fs = 46;

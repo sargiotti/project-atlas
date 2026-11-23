@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactElement } from "react";
 import QrSvg from "../../../components/QrSvg";
-import { KIT_TEXT, kitMeta, splitEmphasis, type KitLang } from "../../../lib/shareKit/copy";
+import { KIT_TEXT, kitMeta, splitEmphasis, type KitLang, type KitTextKey } from "../../../lib/shareKit/copy";
 import { INK, PIN_BODY, PIN_WINDOW, TANGERINE, type Qr } from "../../../lib/shareKit/qr";
 
 export type FlyerProps = {
@@ -11,6 +11,7 @@ export type FlyerProps = {
   qr: Qr;
   url: string;
   lang: KitLang;
+  textKey?: KitTextKey;
 };
 
 function Wordmark() {
@@ -30,8 +31,8 @@ function Wordmark() {
 export const nameMm = (name: string) => (name.length <= 30 ? 21 : name.length <= 42 ? 17 : 14);
 
 /** Option 2A: big QR. Every length is in mm (--mm), so the same markup previews on screen and prints at A4. */
-function FlyerA({ name, startDate, endDate, city, qr, url, lang }: FlyerProps) {
-  const txt = KIT_TEXT[lang];
+function FlyerA({ name, startDate, endDate, city, qr, url, lang, textKey }: FlyerProps) {
+  const txt = KIT_TEXT[textKey ?? lang];
   return (
     <div className="fl fl-a">
       <h3 className="fl-name" dir="auto" style={{ "--fs": nameMm(name) } as CSSProperties}>{name}</h3>

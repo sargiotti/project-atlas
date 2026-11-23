@@ -3,7 +3,7 @@ import type { PanelEvent } from "@atlas/contract";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { LANG_NAMES } from "../../../i18n/messages";
 import { BADGE_H, BADGE_W, canvasToPng, drawBadge, loadKitFonts } from "../../../lib/shareKit/badge";
-import { KIT_LANGS, isKitLang, toKitLang, type KitLang } from "../../../lib/shareKit/copy";
+import { KIT_LANGS, isKitLang, kitTextKey, toKitLang, type KitLang } from "../../../lib/shareKit/copy";
 import { copyText, downloadBlob } from "../../../lib/shareKit/download";
 import { buildEventUrl, kitFilename, makeQr, qrSvgMarkup } from "../../../lib/shareKit/qr";
 import ShareDialog from "../../../components/ShareDialog";
@@ -35,8 +35,9 @@ function Kit({ event }: { event: PanelEvent }) {
   // The only encoded text: public origin + "/e/" + validated slug.
   const url = useMemo(() => buildEventUrl(event.slug), [event.slug]);
   const qr = useMemo(() => makeQr(url), [url]);
-  const badge = { name: event.name, startDate: event.startDate, endDate: event.endDate, city: event.city, qr, lang };
-  const key = JSON.stringify([event.name, event.startDate, event.endDate, event.city, url, lang]);
+  const textKey = kitTextKey(lang, event.country);
+  const badge = { name: event.name, startDate: event.startDate, endDate: event.endDate, city: event.city, qr, lang, textKey };
+  const key = JSON.stringify([event.name, event.startDate, event.endDate, event.city, url, lang, textKey]);
 
   // Preview = the same canvas that is exported, drawn after the bundled fonts are ready.
   useEffect(() => {
@@ -137,7 +138,7 @@ function Kit({ event }: { event: PanelEvent }) {
         <Suspense fallback={null}>
           <FlyerDialog
             slug={event.slug}
-            flyer={{ name: event.name, startDate: event.startDate, endDate: event.endDate, city: event.city, qr, url, lang }}
+            flyer={{ name: event.name, startDate: event.startDate, endDate: event.endDate, city: event.city, qr, url, lang, textKey }}
             onClose={() => setFlyer(false)}
           />
         </Suspense>

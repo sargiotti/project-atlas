@@ -6,16 +6,16 @@ export const welEs = {
   peWelcomeSub: "Te damos la bienvenida a leyenda.ink",
   peStepSub1: "Nombre, fechas y lugar",
   peStepSub2: "Una imagen o plano de tu evento",
-  peStepSub3: "Link y QR para tu público",
+  peStepSub3: "Enlace y QR para tu público",
   peStateNow: "Ahora",
   peStateNext: "Después",
   peStateLast: "Al final",
   peExampleTag: "Ejemplo",
   peExampleTitle: "Así se ve un evento terminado",
-  peExampleText: "Tu público abre el link desde el celular y ve el mapa con escenarios, comida y servicios, más el programa del día. Sin descargar nada.",
+  peExampleText: "Tu público abre el enlace desde el móvil y ve el mapa con escenarios, comida y servicios, más el programa del día. Sin descargar nada.",
   peExampleF1: "Los datos dan el título, las fechas y el lugar.",
   peExampleF2: "El mapa es la imagen de fondo; los puntos se marcan encima.",
-  peExampleF3: "Al publicar, compartes un link y un QR.",
+  peExampleF3: "Al publicar, compartes un enlace y un QR.",
   peExampleLink: "Ver un evento de ejemplo",
   peHowLink: "Cómo funciona leyenda.ink",
   peExampleAlt: "Ejemplo de mapa de un evento terminado: una fiesta de barrio ilustrada, con puestos, un escenario y una iglesia",
@@ -24,6 +24,12 @@ export const welEs = {
   peMockMap: "Mapa",
   peMockList: "Lista",
   peMockProgram: "Programa",
+};
+
+/** Rioplatense (vos) overrides for the base Spanish above (slice 34). Spread into ES_VOS in organizerMessages.ts. */
+export const welEsVos: Partial<Record<keyof typeof welEs, string>> = {
+  peStepSub3: "Link y QR para tu público",
+  peExampleText: "Tu público abre el link desde el celular y ve el mapa con escenarios, comida y servicios, más el programa del día. Sin descargar nada.",
 };
 type Wel = Record<keyof typeof welEs, string>;
 
