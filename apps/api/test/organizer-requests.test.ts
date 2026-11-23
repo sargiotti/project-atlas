@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import app from "../src/index";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { errorResponseSchema, organizerRequestListResponseSchema, organizerRequestSchema, toOrganizerFieldErrors, type OrganizerRequestInput } from "@atlas/contract";
+import { errorResponseSchema, organizerRequestSummarySchema, organizerRequestListResponseSchema, organizerRequestSchema, toOrganizerFieldErrors, type OrganizerRequestInput } from "@atlas/contract";
 import { randomToken, sha256Hex } from "../src/adapters/crypto";
 import { isAllowedTurnstileHostname } from "../src/application/turnstile";
 import { buildNotification, defang } from "../src/application/organizer-notify";
@@ -59,6 +59,16 @@ describe("organizerRequestSchema", () => {
   it("normalizes: trims, lowercases the email and treats blank optionals as absent", () => {
     const r = organizerRequestSchema.parse(form({ name: "  Ana  ", eventDate: "   ", city: "" }));
     expect(r).toMatchObject({ name: "Ana", email: "ana@example.com", eventDate: undefined, city: undefined });
+  });
+
+  it("keeps a valid sourceRef and pageLang; anything else becomes null and is never an error (slice 44)", () => {
+    const parse = (extra: Record<string, unknown>) => organizerRequestSchema.safeParse({ ...form(), ...extra });
+    expect(parse({ sourceRef: "fest-2026", pageLang: "ca" })).toMatchObject({ success: true, data: { sourceRef: "fest-2026", pageLang: "ca" } });
+    expect(parse({})).toMatchObject({ success: true, data: { sourceRef: null, pageLang: null } });
+    for (const bad of ["Fest", "a".repeat(41), "<script>alert(1)</script>", " fest", "", "a_b", 7, {}, ["x"]]) {
+      expect(parse({ sourceRef: bad })).toMatchObject({ success: true, data: { sourceRef: null } });
+    }
+    for (const bad of ["fr", "ES", "es-vos", 1, null]) expect(parse({ pageLang: bad })).toMatchObject({ success: true, data: { pageLang: null } });
   });
 
   it("reports stable codes per field and never the values", () => {
@@ -245,5 +255,78 @@ describe("GET /api/v1/admin/organizer-requests", () => {
     expect(page2.requests.map((r) => r.name)).toEqual(["n1"]);
     expect(page2.nextCursor).toBeNull();
     expect((await get("/api/v1/admin/organizer-requests?limit=999", session)).status).toBe(400);
+  });
+});
+
+describe("slice 44: source stored and summarized", () => {
+  const get = (path: string, session?: string) =>
+    app.fetch(new Request(`${ORIGIN}${path}`, { headers: { "cf-connecting-ip": "203.0.113.10", ...(session ? { cookie: `__Host-atlas_session=${session}` } : {}) } }), baseEnv as unknown as typeof env);
+  let seq = 100;
+  async function user(role: "organizer" | "admin") {
+    const n = ++seq;
+    const session = randomToken();
+    await env.DB.batch([
+      env.DB.prepare("INSERT INTO organizers (id, google_sub, email, display_name, role, created_at) VALUES (?1, ?2, ?3, 'P', ?4, 0)").bind(`org_src${n}`, `srcsub${n}`, `src${n}@example.com`, role),
+      env.DB.prepare("INSERT INTO sessions (token_hash, organizer_id, created_at, expires_at) VALUES (?1, ?2, 0, ?3)").bind(await sha256Hex(session), `org_src${n}`, Date.now() + 3_600_000),
+    ]);
+    return session;
+  }
+  const seed = (n: number, createdAt: number, ref: string | null, lang: string | null, status = "pending") =>
+    env.DB.prepare("INSERT INTO organizer_requests (name, email, event_name, email_status, created_at, source_ref, page_lang, status) VALUES ('n', ?1, 'e', 'sent', ?2, ?3, ?4, ?5)").bind(`s${n}@example.com`, createdAt, ref, lang, status);
+
+  it("stores the source from the form, null when malformed, and lists it", async () => {
+    expect((await post(form({ sourceRef: "fest-26", pageLang: "da" }))).status).toBe(201);
+    expect((await post(form({ email: "b@example.com", sourceRef: "BAD REF", pageLang: "xx" } as never))).status).toBe(201);
+    const rows = (await env.DB.prepare("SELECT email, source_ref, page_lang FROM organizer_requests ORDER BY id").all()).results;
+    expect(rows).toEqual([
+      { email: "ana@example.com", source_ref: "fest-26", page_lang: "da" },
+      { email: "b@example.com", source_ref: null, page_lang: null },
+    ]);
+    const list = organizerRequestListResponseSchema.parse(await (await get("/api/v1/admin/organizer-requests?status=all", await user("admin"))).json());
+    expect(list.requests.map((r) => [r.sourceRef, r.pageLang])).toEqual([[null, null], ["fest-26", "da"]]);
+  });
+
+  it("stores no source on a honeypot hit", async () => {
+    await post(form({ website: "http://spam", sourceRef: "x", pageLang: "es" }));
+    expect(await count()).toBe(0);
+  });
+
+  it("denies the summary to anonymous (401) and organizers (403)", async () => {
+    expect((await get("/api/v1/admin/organizer-requests/summary")).status).toBe(401);
+    expect((await get("/api/v1/admin/organizer-requests/summary", await user("organizer"))).status).toBe(403);
+  });
+
+  it("counts rolling 7 and 30 day windows, top 10 refs plus other plus none, whatever the status", async () => {
+    const now = Date.now();
+    const D = 86_400_000;
+    const rows: D1PreparedStatement[] = [];
+    let n = 0;
+    // 12 distinct refs in the 7d window: ref-01 has 3, ref-02 has 2, ref-03..ref-12 one each (ties break by name).
+    for (const [ref, times] of [["ref-01", 3], ["ref-02", 2], ["ref-03", 1], ["ref-04", 1], ["ref-05", 1], ["ref-06", 1], ["ref-07", 1], ["ref-08", 1], ["ref-09", 1], ["ref-10", 1], ["ref-11", 1], ["ref-12", 1]] as const) {
+      for (let i = 0; i < times; i++) rows.push(seed(n++, now - D + n, ref, "es", n === 1 ? "discarded" : "pending"));
+    }
+    rows.push(seed(n++, now - 2 * D, null, "ca"), seed(n++, now - 3 * D, null, null));
+    // Outside 7d, inside 30d; just inside / outside the boundaries; older than 30d.
+    rows.push(seed(n++, now - 8 * D, "ref-01", "en"), seed(n++, now - 7 * D + 60_000, "edge-in", "da"), seed(n++, now - 7 * D - 60_000, "edge-out", "da"));
+    rows.push(seed(n++, now - 30 * D + 60_000, null, "es"), seed(n++, now - 30 * D - 60_000, "old", "es"), seed(n++, now - 60 * D, "old", "es"));
+    await env.DB.batch(rows);
+
+    const res = await get("/api/v1/admin/organizer-requests/summary", await user("admin"));
+    expect(res.status).toBe(200);
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    const body = organizerRequestSummarySchema.parse(await res.json());
+    // 7d: 15 requests with the 12 refs, 2 without a ref, plus edge-in.
+    expect(body.last7d.total).toBe(18);
+    expect(body.last7d.byLang).toEqual({ es: 15, ca: 1, en: 0, da: 1, none: 1 });
+    expect(body.last7d.byRef.top).toHaveLength(10);
+    expect(body.last7d.byRef.top.slice(0, 2)).toEqual([{ ref: "ref-01", count: 3 }, { ref: "ref-02", count: 2 }]);
+    expect(body.last7d.byRef.none).toBe(2);
+    expect(body.last7d.byRef.other).toBe(3); // ref-11, ref-12 and edge-in
+    expect(body.last7d.byRef.top.reduce((a, t) => a + t.count, 0) + body.last7d.byRef.other + body.last7d.byRef.none).toBe(18);
+    // 30d adds: ref-01 (8d), edge-out (7d+), the null-ref one just inside 30d. Excludes the two older than 30d.
+    expect(body.last30d.total).toBe(21);
+    expect(body.last30d.byRef.none).toBe(3);
+    expect(body.last30d.byLang).toEqual({ es: 16, ca: 1, en: 1, da: 2, none: 1 });
+    expect(body.last30d.byRef.top[0]).toEqual({ ref: "ref-01", count: 4 });
   });
 });

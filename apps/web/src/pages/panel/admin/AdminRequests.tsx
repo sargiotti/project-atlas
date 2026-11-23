@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { z } from "zod";
-import { DEFAULT_REQUEST_FILTER, REQUEST_FILTERS, type OrganizerRequestRow, type RequestFilter } from "@atlas/contract";
-import { listOrganizerRequests, requestAction } from "../../../api/organizerRequest";
+import { DEFAULT_REQUEST_FILTER, REQUEST_FILTERS, type OrganizerRequestRow, type OrganizerRequestSummary, type RequestFilter } from "@atlas/contract";
+import { getRequestSummary, listOrganizerRequests, requestAction } from "../../../api/organizerRequest";
 import { useI18n } from "../../../i18n/I18nProvider";
 import type { MessageKey } from "../../../i18n/messages";
 import { Link, navigate } from "../../../lib/router";
@@ -29,6 +29,39 @@ function readFilter(): RequestFilter {
   }
 }
 
+/** Counts box (slice 44). Refs and languages are rendered only as React text, never in an href, title, class or style. */
+function Summary({ data }: { data: OrganizerRequestSummary }) {
+  const { t } = useI18n();
+  const win = (title: MessageKey, w: OrganizerRequestSummary["last7d"]) => {
+    const langs = [["ES", w.byLang.es], ["CA", w.byLang.ca], ["EN", w.byLang.en], ["DA", w.byLang.da], ["—", w.byLang.none]] as const;
+    return (
+      <section className="req-sum-win">
+        <h2>{t(title)}</h2>
+        <p className="req-sum-total"><b>{w.total}</b> {t("reqSumUnit")}</p>
+        <dl className="req-fields">
+          <div><dt>{t("reqSumLang")}</dt><dd>{langs.filter(([, n]) => n > 0).map(([l, n]) => `${l} ${n}`).join(" · ") || t("reqNone")}</dd></div>
+          <div>
+            <dt>{t("reqSumRef")}</dt>
+            <dd>
+              {[
+                ...w.byRef.top.map((r) => `${r.ref} ${r.count}`),
+                ...(w.byRef.other ? [`${t("reqSumOther")} ${w.byRef.other}`] : []),
+                ...(w.byRef.none ? [`${t("reqDirect")} ${w.byRef.none}`] : []),
+              ].join(" · ") || t("reqNone")}
+            </dd>
+          </div>
+        </dl>
+      </section>
+    );
+  };
+  return (
+    <div className="req-sum" aria-label={t("reqSumTitle")} role="group">
+      {win("reqSum7", data.last7d)}
+      {win("reqSum30", data.last30d)}
+    </div>
+  );
+}
+
 /**
  * Admin list of organizer requests (slice 30) with the invite actions of slice 31. Every field is rendered as React text:
  * no HTML injection and the message is never turned into links. The server enforces access (401/403) and every
@@ -45,6 +78,7 @@ export default function AdminRequests() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [rowError, setRowError] = useState<{ id: string; key: MessageKey } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [summary, setSummary] = useState<OrganizerRequestSummary | null>(null);
   const fmt = new Intl.DateTimeFormat(lang, { dateStyle: "medium", timeStyle: "short" });
   const day = new Intl.DateTimeFormat(lang, { day: "numeric", month: "short" });
 
@@ -60,6 +94,12 @@ export default function AdminRequests() {
       .catch(() => {}); // aborted
     return () => ctrl.abort();
   }, [attempt, filter]);
+
+  useEffect(() => {
+    const ctrl = new AbortController();
+    void getRequestSummary(ctrl.signal).then((r) => !ctrl.signal.aborted && setSummary(r));
+    return () => ctrl.abort();
+  }, []);
 
   const pickFilter = (f: RequestFilter) => {
     if (f === filter) return;
@@ -131,6 +171,7 @@ export default function AdminRequests() {
       <Link to="/panel" className="pe-back"><Ic n="left" size={18} />{t("myEvents")}</Link>
       <div className="ad-head"><h1>{t("reqTitle")}</h1></div>
       <p className="ad-lead">{t("reqLead")}</p>
+      {summary && <Summary data={summary} />}
       <div className="req-filter" role="group" aria-label={t("reqFilterLabel")}>
         {REQUEST_FILTERS.map((f) => (
           <button key={f} type="button" className="req-chip" aria-pressed={filter === f} onClick={() => pickFilter(f)}>
@@ -163,6 +204,8 @@ export default function AdminRequests() {
               <dl className="req-fields">
                 {field("reqDate", r.eventDate)}
                 {field("reqCity", r.city)}
+                {field("reqLangLbl", r.pageLang ? r.pageLang.toUpperCase() : null)}
+                <div><dt>{t("reqRefLbl")}</dt><dd>{r.sourceRef ?? t("reqDirect")}</dd></div>
                 {field("reqRole", r.role)}
               </dl>
               {r.message && (

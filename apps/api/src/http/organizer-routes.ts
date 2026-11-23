@@ -6,6 +6,7 @@ import {
   ORGANIZER_REQUEST_LIMITS,
   ORGANIZER_TURNSTILE_ACTION,
   organizerRequestListQuerySchema,
+  type OrganizerRequestSummary,
   organizerRequestSchema,
   toOrganizerFieldErrors,
   type InviteFromRequestResponse,
@@ -133,6 +134,11 @@ export function registerOrganizerRoutes(app: Hono<AppEnv>): void {
   // earlier by registerAuthRoutes and runs first.
   // The wildcard also covers the list itself and every /:id action (slice 31).
   app.use("/api/v1/admin/organizer-requests/*", adminLimiter);
+  // Slice 44: no query parameters; the windows come from the server clock.
+  app.get("/api/v1/admin/organizer-requests/summary", async (c) => {
+    const body: OrganizerRequestSummary = await new D1OrganizerRequestRepository(c.env.DB).summary(Date.now());
+    return c.json(body, 200, { "Cache-Control": NO_STORE });
+  });
   app.get("/api/v1/admin/organizer-requests", async (c) => {
     const parsed = organizerRequestListQuerySchema.safeParse(c.req.query());
     if (!parsed.success) return errorResponse(c, 400, "validation_error", NO_STORE);

@@ -2,6 +2,8 @@ import {
   inviteFromRequestResponseSchema,
   organizerRequestActionResponseSchema,
   organizerRequestListResponseSchema,
+  organizerRequestSummarySchema,
+  type OrganizerRequestSummary,
   type InviteFromRequestResponse,
   type OrganizerRequestRow,
   type RequestFilter,
@@ -105,5 +107,16 @@ export async function requestAction(id: string, action: RequestAction, note?: st
     return { status: "error" };
   } catch {
     return { status: "error" };
+  }
+}
+
+/** GET /api/v1/admin/organizer-requests/summary (slice 44). Any failure just hides the box: null. */
+export async function getRequestSummary(signal?: AbortSignal): Promise<OrganizerRequestSummary | null> {
+  try {
+    const res = await fetch(`${BASE}/admin/organizer-requests/summary`, { signal, headers: { Accept: "application/json" } });
+    if (!res.ok) return null;
+    return organizerRequestSummarySchema.parse(await res.json());
+  } catch {
+    return null;
   }
 }
