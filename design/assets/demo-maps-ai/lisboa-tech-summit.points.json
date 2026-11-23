@@ -1,0 +1,215 @@
+{
+  "event": {
+    "slug": "lisboa-tech-summit",
+    "name": "Lisboa Tech Summit 2026",
+    "dates": {
+      "start": "2026-12-10",
+      "end": "2026-12-11"
+    },
+    "city": "Lisbon",
+    "latitude": 38.7,
+    "longitude": -9.17,
+    "country": "PT",
+    "cover": {
+      "width": 960,
+      "height": 640
+    },
+    "language": "en",
+    "mapTheme": "light",
+    "timeZone": "Europe/Lisbon",
+    "dayStart": "06:00"
+  },
+  "map": {
+    "file": "lisboa-tech-summit.webp",
+    "width": 1104,
+    "height": 1472
+  },
+  "points": [
+    {
+      "id": "main-stage",
+      "name": "Main Stage – Warehouse 1",
+      "category": "stage",
+      "description": "The big red-brick warehouse by the river. Keynotes, the panel and the closing party. 600 seats; doors open 15 minutes before each session.",
+      "x": 0.4348,
+      "y": 0.2717
+    },
+    {
+      "id": "room-a",
+      "name": "Room A – Tile House",
+      "category": "stage",
+      "description": "Talk room in the upper stone house. Engineering talks and the hands-on workshops. 80 seats, laptops welcome.",
+      "x": 0.0861,
+      "y": 0.3804
+    },
+    {
+      "id": "room-b",
+      "name": "Room B – Cork House",
+      "category": "stage",
+      "description": "Talk room in the lower stone house. Product, design and AI talks. 80 seats.",
+      "x": 0.1721,
+      "y": 0.4755
+    },
+    {
+      "id": "expo-hall",
+      "name": "Expo Hall",
+      "category": "landmark",
+      "description": "Glass pavilion with 30 sponsor and startup stands, live demos and the job board.",
+      "x": 0.5072,
+      "y": 0.5231
+    },
+    {
+      "id": "river-terrace",
+      "name": "River Terrace",
+      "category": "drinks",
+      "description": "Wooden deck on the Tagus with coffee, juices and deck chairs. The networking spot between talks, with a view of the bridge.",
+      "x": 0.8062,
+      "y": 0.4144
+    },
+    {
+      "id": "food-court",
+      "name": "Food Court",
+      "category": "food",
+      "description": "Food trucks and picnic tables: bifanas, salads, vegetarian bowls and pastéis de nata. Lunch is included with your badge.",
+      "x": 0.5435,
+      "y": 0.6861
+    },
+    {
+      "id": "registration",
+      "name": "Registration Desk",
+      "category": "info",
+      "description": "Pick up your badge here with the QR code from your ticket. Lost and found, Wi-Fi details and accessibility help.",
+      "x": 0.8424,
+      "y": 0.8573
+    },
+    {
+      "id": "main-gate",
+      "name": "Main Gate",
+      "category": "entrance-exit",
+      "description": "Entrance through the old stone arch on the riverside avenue. Tram 15 stops right outside.",
+      "x": 0.5254,
+      "y": 0.8764
+    },
+    {
+      "id": "toilets",
+      "name": "Toilets",
+      "category": "toilets",
+      "description": "Toilets next to the main gate, one of them accessible. More toilets inside Warehouse 1.",
+      "x": 0.6929,
+      "y": 0.9035
+    },
+    {
+      "id": "first-aid",
+      "name": "First Aid",
+      "category": "first-aid",
+      "description": "Medical volunteers in the white tent all day. In an emergency, call 112.",
+      "x": 0.8333,
+      "y": 0.6148
+    }
+  ],
+  "sessions": [
+    {
+      "id": "d1-keynote",
+      "point": "main-stage",
+      "title": "Opening keynote: building for the next billion users",
+      "start": "2026-12-10T09:30",
+      "end": "2026-12-10T10:30",
+      "description": "Welcome from the organizers, then the opening keynote."
+    },
+    {
+      "id": "d1-edge",
+      "point": "room-a",
+      "title": "Running apps at the edge",
+      "start": "2026-12-10T11:00",
+      "end": "2026-12-10T11:45"
+    },
+    {
+      "id": "d1-design",
+      "point": "room-b",
+      "title": "Design systems that survive growth",
+      "start": "2026-12-10T11:00",
+      "end": "2026-12-10T11:45"
+    },
+    {
+      "id": "d1-demos",
+      "point": "expo-hall",
+      "title": "Startup demo hour",
+      "start": "2026-12-10T12:00",
+      "end": "2026-12-10T13:00",
+      "description": "Ten startups, five minutes each, live on the expo floor."
+    },
+    {
+      "id": "d1-workshop",
+      "point": "room-a",
+      "title": "Workshop: accessible web forms",
+      "start": "2026-12-10T14:30",
+      "end": "2026-12-10T16:30",
+      "description": "Hands-on. Bring a laptop. 30 places, sign up at the registration desk."
+    },
+    {
+      "id": "d1-ai",
+      "point": "room-b",
+      "title": "Shipping AI features people trust",
+      "start": "2026-12-10T14:30",
+      "end": "2026-12-10T15:15"
+    },
+    {
+      "id": "d1-panel",
+      "point": "main-stage",
+      "title": "Panel: open source and the business behind it",
+      "start": "2026-12-10T17:00",
+      "end": "2026-12-10T18:00"
+    },
+    {
+      "id": "d2-keynote",
+      "point": "main-stage",
+      "title": "Morning keynote: what a decade of mobile taught us",
+      "start": "2026-12-11T09:30",
+      "end": "2026-12-11T10:15"
+    },
+    {
+      "id": "d2-privacy",
+      "point": "room-a",
+      "title": "Privacy by default, in practice",
+      "start": "2026-12-11T10:45",
+      "end": "2026-12-11T11:30"
+    },
+    {
+      "id": "d2-research",
+      "point": "room-b",
+      "title": "User research on a small budget",
+      "start": "2026-12-11T10:45",
+      "end": "2026-12-11T11:30"
+    },
+    {
+      "id": "d2-workshop",
+      "point": "room-a",
+      "title": "Workshop: your first serverless API",
+      "start": "2026-12-11T14:00",
+      "end": "2026-12-11T16:00",
+      "description": "Hands-on. Bring a laptop. 30 places, sign up at the registration desk."
+    },
+    {
+      "id": "d2-lightning",
+      "point": "room-b",
+      "title": "Lightning talks",
+      "start": "2026-12-11T14:00",
+      "end": "2026-12-11T15:00",
+      "description": "Eight five-minute talks from attendees."
+    },
+    {
+      "id": "d2-closing",
+      "point": "main-stage",
+      "title": "Closing keynote and awards",
+      "start": "2026-12-11T17:00",
+      "end": "2026-12-11T18:00"
+    },
+    {
+      "id": "d2-party",
+      "point": "main-stage",
+      "title": "Closing party",
+      "start": "2026-12-11T19:00",
+      "end": "2026-12-11T23:00",
+      "description": "DJ sets in Warehouse 1 and drinks on the River Terrace."
+    }
+  ]
+}
