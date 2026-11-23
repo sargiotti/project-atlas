@@ -1,0 +1,187 @@
+{
+  "event": {
+    "slug": "portes-obertes-escola-bcn",
+    "name": "Jornada de portes obertes 2026 · Escola Turó dels Plàtans",
+    "dates": {
+      "start": "2026-12-12",
+      "end": "2026-12-12"
+    },
+    "city": "Barcelona",
+    "latitude": 41.39,
+    "longitude": 2.17,
+    "country": "ES",
+    "cover": {
+      "width": 960,
+      "height": 640
+    },
+    "language": "ca",
+    "mapTheme": "light",
+    "timeZone": "Europe/Madrid",
+    "dayStart": "06:00"
+  },
+  "map": {
+    "file": "portes-obertes-escola-bcn.webp",
+    "width": 1104,
+    "height": 1472
+  },
+  "points": [
+    {
+      "id": "porta",
+      "name": "Porta principal",
+      "category": "entrance-exit",
+      "description": "Entrada única per a la jornada. Accés sense graons. Si veniu amb cotxet, el podeu deixar al costat de la recepció.",
+      "x": 0.4964,
+      "y": 0.8322
+    },
+    {
+      "id": "recepcio",
+      "name": "Recepció i informació",
+      "category": "info",
+      "description": "Recolliu el programa i l'adhesiu del vostre grup de visita. També us informem sobre la preinscripció, el menjador i les extraescolars.",
+      "x": 0.5299,
+      "y": 0.8832
+    },
+    {
+      "id": "sala-actes",
+      "name": "Sala d'actes",
+      "category": "stage",
+      "description": "A l'edifici principal, planta baixa. Benvinguda de la direcció, sortida de les visites guiades i concert de la coral.",
+      "x": 0.5344,
+      "y": 0.3193
+    },
+    {
+      "id": "gimnas",
+      "name": "Gimnàs",
+      "category": "landmark",
+      "description": "Pavelló esportiu amb pista de bàsquet. Exhibició de l'alumnat i espai per provar els esports de les extraescolars.",
+      "x": 0.7428,
+      "y": 0.4416
+    },
+    {
+      "id": "laboratori",
+      "name": "Laboratori de ciències",
+      "category": "landmark",
+      "description": "Laboratori de secundària. L'alumnat de 3r d'ESO fa demostracions d'experiments per a totes les edats.",
+      "x": 0.1947,
+      "y": 0.5503
+    },
+    {
+      "id": "biblioteca",
+      "name": "Biblioteca",
+      "category": "landmark",
+      "description": "Biblioteca escolar amb més de 8.000 llibres. Contacontes per als petits i torn de preguntes amb el professorat.",
+      "x": 0.2491,
+      "y": 0.4925
+    },
+    {
+      "id": "aula-plastica",
+      "name": "Racó de dibuix al pati",
+      "category": "landmark",
+      "description": "Al pati, al costat de la pista verda. Exposició de treballs de l'alumnat i taller obert de dibuix per a famílies, amb material inclòs.",
+      "x": 0.5634,
+      "y": 0.6793
+    },
+    {
+      "id": "menjador",
+      "name": "Menjador",
+      "category": "food",
+      "description": "Tast del menú de la cuina pròpia de l'escola, amb cafè i aigua per a les famílies a la terrassa coberta.",
+      "x": 0.2083,
+      "y": 0.8016
+    },
+    {
+      "id": "lavabos",
+      "name": "Lavabos",
+      "category": "toilets",
+      "description": "Lavabos al costat del pati, un d'ells adaptat. Hi ha canviador per a nadons.",
+      "x": 0.9149,
+      "y": 0.7269
+    },
+    {
+      "id": "primers-auxilis",
+      "name": "Primers auxilis",
+      "category": "first-aid",
+      "description": "La infermera de l'escola és a la carpa blanca durant tota la jornada. En cas d'urgència, truqueu al 112.",
+      "x": 0.8197,
+      "y": 0.788
+    }
+  ],
+  "sessions": [
+    {
+      "id": "benvinguda",
+      "point": "sala-actes",
+      "title": "Benvinguda i presentació del projecte educatiu",
+      "start": "2026-12-12T10:00",
+      "end": "2026-12-12T10:45",
+      "description": "La directora i l'equip de coordinació expliquen com treballem, d'infantil a l'ESO."
+    },
+    {
+      "id": "taller-dibuix",
+      "point": "aula-plastica",
+      "title": "Taller obert de dibuix per a famílies",
+      "start": "2026-12-12T10:30",
+      "end": "2026-12-12T13:30",
+      "description": "Entreu quan vulgueu. Per a totes les edats."
+    },
+    {
+      "id": "visita-1",
+      "point": "sala-actes",
+      "title": "Visita guiada: grup 1",
+      "start": "2026-12-12T10:45",
+      "end": "2026-12-12T11:30",
+      "description": "Sortida des de la sala d'actes. Recorregut per aules, pati, laboratori i biblioteca."
+    },
+    {
+      "id": "laboratori-1",
+      "point": "laboratori",
+      "title": "Demostració al laboratori: volcans i cristalls",
+      "start": "2026-12-12T11:00",
+      "end": "2026-12-12T11:30"
+    },
+    {
+      "id": "contacontes",
+      "point": "biblioteca",
+      "title": "Contacontes per als més petits",
+      "start": "2026-12-12T11:00",
+      "end": "2026-12-12T11:30",
+      "description": "Per a infants de 3 a 6 anys."
+    },
+    {
+      "id": "esports",
+      "point": "gimnas",
+      "title": "Exhibició esportiva: bàsquet i gimnàstica rítmica",
+      "start": "2026-12-12T11:30",
+      "end": "2026-12-12T12:15"
+    },
+    {
+      "id": "visita-2",
+      "point": "sala-actes",
+      "title": "Visita guiada: grup 2",
+      "start": "2026-12-12T12:00",
+      "end": "2026-12-12T12:45",
+      "description": "Sortida des de la sala d'actes."
+    },
+    {
+      "id": "laboratori-2",
+      "point": "laboratori",
+      "title": "Demostració al laboratori: volcans i cristalls",
+      "start": "2026-12-12T12:30",
+      "end": "2026-12-12T13:00"
+    },
+    {
+      "id": "coral",
+      "point": "sala-actes",
+      "title": "Concert de la coral de l'escola",
+      "start": "2026-12-12T12:45",
+      "end": "2026-12-12T13:15"
+    },
+    {
+      "id": "preguntes",
+      "point": "biblioteca",
+      "title": "Preguntes i respostes amb el professorat",
+      "start": "2026-12-12T13:15",
+      "end": "2026-12-12T14:00",
+      "description": "Tutors d'infantil, primària i secundària responen els vostres dubtes."
+    }
+  ]
+}
