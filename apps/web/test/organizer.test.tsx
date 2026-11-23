@@ -92,7 +92,7 @@ describe("organizer form", () => {
     await fillValid(user);
     await user.click(within(form()).getByRole("button", { name: "Enviar solicitud" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/Recibimos muchas solicitudes desde tu conexión/);
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Hemos recibido muchas solicitudes desde tu conexión/);
     expect(field(/^Tu nombre/)).toHaveValue("Marta Ferrer");
     expect(ts.reset).toHaveBeenCalledWith("widget-1");
   });

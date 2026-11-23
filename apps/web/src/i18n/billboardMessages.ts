@@ -20,7 +20,7 @@ export const bbEs = {
   bbCtaTitle: "¿Organizas algo?",
   bbCtaButton: "Ponlo en el mapa. Gratis.",
   bbCtaFirst: "Todavía no hay nada. ¡Sé el primero!",
-  bbError: "No pudimos cargar la cartelera.",
+  bbError: "No hemos podido cargar la cartelera.",
   bbLoading: "Cargando la cartelera…",
   bbCardLabel: "{name}, {dates}, {city}",
 };
@@ -28,6 +28,7 @@ export const bbEsVos: Partial<Record<keyof typeof bbEs, string>> = {
   bbNearYou: "Cerca tuyo",
   bbCtaTitle: "¿Organizás algo?",
   bbCtaButton: "Ponelo en el mapa. Gratis.",
+  bbError: "No pudimos cargar la cartelera.",
 };
 export const bbEn: Record<keyof typeof bbEs, string> = {
   bbTitle: "What's on",

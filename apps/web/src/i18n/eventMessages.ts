@@ -83,7 +83,7 @@ export const eventEs = {
   peDelNo: "Todavía no coincide con el nombre.",
   peDelYes: "Coincide.",
   peDelBtn: "Eliminar para siempre",
-  peDelFailed: "No pudimos eliminar el evento. Inténtalo de nuevo.",
+  peDelFailed: "No hemos podido eliminar el evento. Inténtalo de nuevo.",
   peDeleted: "Se eliminó «{name}»",
   peDiscTitle: "¿Descartar los cambios?",
   peDiscText: "Lo que has cambiado no se va a guardar.",
@@ -113,7 +113,7 @@ export const eventEs = {
   peDetected: "Detectada en tu navegador",
   peAll: "Todas",
   peNoResults: "Sin resultados para «{q}»",
-  peLoadError: "No pudimos cargar esta página.",
+  peLoadError: "No hemos podido cargar esta página.",
   peLoadingEvent: "Cargando…",
 };
 
@@ -146,6 +146,7 @@ export const eventEsVos: Partial<Record<keyof typeof eventEs, string>> = {
   pePvRejBanner: "No aprobado: solo vos podés verlo",
   pePvMapText: "Acá va a estar el mapa del evento.",
   peErrVenueUrl: "Sacá el enlace: la dirección del lugar es solo calle y número.",
+  peLoadError: "No pudimos cargar esta página.",
 };
 
 export const eventEn: Record<keyof typeof eventEs, string> = {

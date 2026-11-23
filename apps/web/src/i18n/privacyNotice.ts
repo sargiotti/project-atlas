@@ -104,10 +104,10 @@ const es: PrivacyNotice = {
       ],
     },
     {
-      heading: "Si eres organizador o te invitaron",
+      heading: "Si eres organizador o te han invitado",
       lines: [
         "Cuando te invitan, guardamos tu email para comprobar la invitación. Borramos la invitación 30 días después de que se use, se revoque o venza.",
-        "Después de que aceptas, tu email queda en tu cuenta de organizador, porque lo usamos para reconocerte cuando entras con Google.",
+        "Cuando aceptas, tu email queda en tu cuenta de organizador, porque lo usamos para reconocerte cuando entras con Google.",
         "Cuando entras con Google, recibimos y guardamos el identificador de tu cuenta de Google, tu email y tu nombre. No recibimos tu contraseña ni nada más de tu cuenta.",
         "Una cookie de sesión te mantiene conectado hasta 7 días. Las sesiones vencidas se eliminan.",
         "El panel de organizadores (/panel) también se mide con Cloudflare Web Analytics, con los mismos datos agregados descritos arriba. La página de invitación no.",
@@ -122,8 +122,8 @@ const es: PrivacyNotice = {
       heading: "Quién nos ayuda",
       lines: [
         "Cloudflare aloja leyenda.ink. Nuestra base de datos está en la UE. Algunos registros técnicos pueden procesarse fuera de la UE, protegidos por el Marco de Privacidad de Datos UE–EE. UU. y cláusulas contractuales tipo.",
-        "Las imágenes de mapa que subes se guardan en Cloudflare R2, en la UE. Antes de guardarlas, tu navegador las achica y les quita la ubicación y otros metadatos (como el GPS y los datos de la cámara). Borramos la imagen de un mapa cuando la reemplazas o cuando eliminas el evento.",
-        "Las imágenes de portada de tus eventos se guardan en Cloudflare R2, en la UE. Tu navegador las achica y les quita la ubicación y otros metadatos (como el GPS y los datos de la cámara) antes de guardarlas. Una portada es pública en cuanto se publica el evento y la puede ver cualquiera que tenga el enlace, así que usa solo fotos que puedas compartir. Borramos la portada cuando la reemplazas o la quitas, o cuando eliminas el evento.",
+        "Las imágenes de mapa que subes se guardan en Cloudflare R2, en la UE. Antes de guardarlas, tu navegador las reduce y les quita la ubicación y otros metadatos (como el GPS y los datos de la cámara). Borramos la imagen de un mapa cuando la reemplazas o cuando eliminas el evento.",
+        "Las imágenes de portada de tus eventos se guardan en Cloudflare R2, en la UE. Tu navegador las reduce y les quita la ubicación y otros metadatos (como el GPS y los datos de la cámara) antes de guardarlas. Una portada es pública en cuanto se publica el evento y la puede ver cualquiera que tenga el enlace, así que usa solo fotos que puedas compartir. Borramos la portada cuando la reemplazas o la quitas, o cuando eliminas el evento.",
         "Como nuestro proveedor de hosting, Cloudflare registra datos básicos de cada solicitud (dirección IP, país aproximado, página solicitada y hora) en su analítica de tráfico. Podemos verlos durante hasta unos 30 días, solo para diagnosticar problemas y frenar abusos. También vemos estadísticas generales de tráfico, como las visitas por país, que no identifican a nadie.",
         "Google ofrece el inicio de sesión y es responsable de tu cuenta de Google según su propia política de privacidad.",
       ],
@@ -153,7 +153,7 @@ const es: PrivacyNotice = {
         "__Host-atlas_session: te mantiene conectado (7 días).",
         "atlas.lang y atlas.schedule.zoom: tus elecciones de idioma y zoom, guardadas en tu navegador.",
         "atlas.place: el lugar que eliges para la cartelera del inicio (un id de una lista fija), guardado en tu navegador.",
-        "atlas.mapIntro.v1: recuerda que ya viste la pista del mapa, para no mostrártela otra vez.",
+        "atlas.mapIntro.v1: recuerda que ya has visto la pista del mapa, para no mostrártela otra vez.",
         "Todas son estrictamente necesarias o se guardan solo cuando tú eliges, por eso no pedimos consentimiento.",
       ],
     },

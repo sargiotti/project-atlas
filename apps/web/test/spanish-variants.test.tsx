@@ -10,10 +10,20 @@ import { makeQr } from "../src/lib/shareKit/qr";
 // Base Spanish is "tú" (Spain and the default). Rioplatense words and voseo live only in ES_VOS (slice 34).
 const VOS_WORDS = /(?<![\p{L}])(acá|celular|podés|tenés|querés|sos|vos|probá|revisá|elegí|usá|subí|tocá|escaneá|hacé|ubicá|agregá|soltá|arrastrá|ingresá|mirá|volvé)(?![\p{L}])/iu;
 
+// Rioplatense or Latin American wording that marketing replaced with neutral/Spain Spanish in the base. Kept conservative.
+const LATAM_WORDS = /(?<![\p{L}])(apretar|apretá|achica\p{L}*|angost\p{L}*|arriba de|de nuestro lado)(?![\p{L}])|\bigual$|^Pedido /iu;
+
 describe("Spanish variants: the base es catalog is tú and Spain Spanish", () => {
   it("no base es string uses voseo or Rioplatense words", () => {
     const bad = Object.entries(MESSAGES.es).filter(([, v]) => VOS_WORDS.test(v)).map(([k, v]) => `${k}: ${v}`);
     expect(bad).toEqual([]);
+  });
+
+  it("no base es string uses the Rioplatense wording marketing replaced", () => {
+    const bad = Object.entries(MESSAGES.es).filter(([, v]) => LATAM_WORDS.test(v)).map(([k, v]) => `${k}: ${v}`);
+    expect(bad).toEqual([]);
+    const text = PRIVACY_NOTICE.es.sections.flatMap((s) => [s.heading, ...s.lines]).join("\n");
+    expect(text).not.toMatch(LATAM_WORDS);
   });
 
   it("the privacy notice in es has no voseo", () => {

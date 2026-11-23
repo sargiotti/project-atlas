@@ -10,4 +10,8 @@ export const mainEsVos: Record<string, string> = {
   unavailableText: "El mapa no está disponible por un momento. Probá de nuevo en unos instantes.",
   viewHint3: "Explorá a tu manera: mapa, lista o programa.",
   viewHint2: "Explorá a tu manera: mapa o lista.",
+  schOver: "Este evento terminó",
+  errorTitle: "No pudimos cargar los eventos",
+  mapImageFailed: "No pudimos cargar la imagen del mapa.",
+  schError: "No pudimos mostrar el programa. El mapa y la lista siguen funcionando.",
 };
